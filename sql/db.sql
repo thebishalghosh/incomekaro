@@ -317,3 +317,6 @@ CREATE TABLE subscription_plan_services (
     FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 );
+
+
+ALTER TABLE users ADD COLUMN profile_image TEXT NULL;

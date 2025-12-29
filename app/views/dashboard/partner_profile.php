@@ -14,12 +14,22 @@
     </div>
 </div>
 
+<?php flash('ptr_success'); ?>
+<?php flash('ptr_error'); ?>
+
 <div class="row">
     <!-- Left Column: Profile Card -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body text-center p-4">
-                <img src="<?php echo asset($partner['profile']['profile_image'] ?: 'images/default-avatar.png'); ?>" alt="Profile" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid var(--accent-color);">
+                <?php if (!empty($partner['profile']['profile_image'])): ?>
+                    <img src="<?php echo asset($partner['profile']['profile_image']); ?>" alt="Profile" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid var(--accent-color);">
+                <?php else: ?>
+                    <div class="avatar-placeholder mb-3 mx-auto" style="width: 120px; height: 120px; font-size: 3rem; border: 4px solid var(--accent-color);">
+                        <?php echo strtoupper(substr($partner['profile']['full_name'], 0, 1)); ?>
+                    </div>
+                <?php endif; ?>
+
                 <h4 class="card-title mb-1"><?php echo $partner['profile']['full_name']; ?></h4>
                 <p class="text-muted mb-3">
                     <?php if ($partner['partner_type'] == 'PLATFORM'): ?>
@@ -115,10 +125,13 @@
                             <p class="fw-bold"><?php echo $partner['rm_first'] . ' ' . $partner['rm_last']; ?></p>
                             <p class="text-muted mb-0"><?php echo $partner['rm_email']; ?></p>
                             <p class="text-muted"><?php echo $partner['rm_phone']; ?></p>
+                            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                                <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#assignRMModal">Change RM</button>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-muted">Not assigned yet.</p>
                             <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
-                                <button class="btn btn-sm btn-outline-primary mt-2">Assign RM</button>
+                                <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#assignRMModal">Assign RM</button>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -186,6 +199,39 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign RM Modal -->
+<div class="modal fade" id="assignRMModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Relationship Manager</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo url('partner/assign_rm/' . $partner['id']); ?>" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="rm_id" class="form-label">Select RM</label>
+                        <select class="form-select" id="rm_id" name="rm_id" required>
+                            <option value="">-- Select RM --</option>
+                            <?php if (!empty($rms)): ?>
+                                <?php foreach ($rms as $rm): ?>
+                                    <option value="<?php echo $rm['id']; ?>" <?php echo ($partner['rm_id'] == $rm['id']) ? 'selected' : ''; ?>>
+                                        <?php echo $rm['first_name'] . ' ' . $rm['last_name']; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Assignment</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

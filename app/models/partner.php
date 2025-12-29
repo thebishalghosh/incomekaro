@@ -126,6 +126,15 @@ function get_partner_by_id($id) {
     return $partner;
 }
 
+function assign_rm_to_partner($partner_id, $rm_id) {
+    $db = get_db_connection();
+    $sql = "UPDATE partners SET rm_id = :rm_id WHERE id = :partner_id";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':rm_id', $rm_id);
+    $stmt->bindValue(':partner_id', $partner_id);
+    return $stmt->execute();
+}
+
 function create_full_partner($data) {
     $db = get_db_connection();
 

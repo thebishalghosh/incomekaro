@@ -16,6 +16,17 @@ body {
     overflow-x: hidden;
 }
 
+/* Avatar Placeholder */
+.avatar-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
 /* Sidebar */
 .sidebar {
     width: var(--sidebar-width);

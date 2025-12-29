@@ -34,7 +34,13 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo asset($ptr['profile_image'] ?: 'images/default-avatar.png'); ?>" alt="Avatar" style="width: 45px; height: 45px" class="rounded-circle me-3">
+                                        <?php if (!empty($ptr['profile_image'])): ?>
+                                            <img src="<?php echo asset($ptr['profile_image']); ?>" alt="Avatar" style="width: 45px; height: 45px" class="rounded-circle me-3">
+                                        <?php else: ?>
+                                            <div class="avatar-placeholder me-3" style="width: 45px; height: 45px;">
+                                                <?php echo strtoupper(substr($ptr['full_name'], 0, 1)); ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="fw-bold"><?php echo $ptr['full_name']; ?></div>
                                     </div>
                                 </td>

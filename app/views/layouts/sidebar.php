@@ -25,7 +25,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'user') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('user/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'user') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-users"></i> Users
                 </a>
             </li>

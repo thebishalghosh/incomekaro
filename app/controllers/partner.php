@@ -34,7 +34,24 @@ function partner_profile($id) {
         }
     }
 
-    view('dashboard/partner_profile', ['partner' => $partner]);
+    // Fetch available RMs
+    $rms = get_users_by_role('RM');
+
+    view('dashboard/partner_profile', ['partner' => $partner, 'rms' => $rms]);
+}
+
+function partner_assign_rm($partner_id) {
+    require_role('SUPER_ADMIN');
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $rm_id = $_POST['rm_id'];
+        if (assign_rm_to_partner($partner_id, $rm_id)) {
+            flash('ptr_success', 'RM Assigned Successfully');
+        } else {
+            flash('ptr_error', 'Failed to assign RM', 'alert alert-danger');
+        }
+        redirect('partner/profile/' . $partner_id);
+    }
 }
 
 function partner_create() {
@@ -115,7 +132,7 @@ function partner_store() {
             ],
 
             'subscription' => [
-                'plan_name' => $plan_name, // Store plan name for reference
+                'plan_name' => $plan_name,
                 'payment_amount' => trim($_POST['payment_amount']),
                 'due_amount' => trim($_POST['due_amount']),
                 'payment_mode' => trim($_POST['payment_mode']),
