@@ -1,0 +1,23 @@
+# Composer
+/vendor/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+email_log.txt
+
+# Uploads
+/public/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
