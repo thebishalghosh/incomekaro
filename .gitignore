@@ -1,6 +1,3 @@
-# Composer
-/vendor/
-
 # Environment
 .env
 .env.local

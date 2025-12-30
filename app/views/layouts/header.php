@@ -116,4 +116,7 @@ if ($is_dashboard && isLoggedIn()):
 
     <!-- Main Content Wrapper -->
     <div style="margin-top: 70px;">
+        <div class="container mt-3">
+            <?php flash('login_error'); ?>
+        </div>
 <?php endif; ?>

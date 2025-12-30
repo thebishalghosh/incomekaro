@@ -127,6 +127,14 @@ function get_partner_by_id($id) {
     return $partner;
 }
 
+function accept_agreement($partner_id) {
+    $db = get_db_connection();
+    $sql = "UPDATE partners SET agreement_accepted_at = CURRENT_TIMESTAMP WHERE id = :partner_id";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    return $stmt->execute();
+}
+
 function get_partner_documents($partner_id) {
     $db = get_db_connection();
     $sql = "SELECT * FROM partner_documents WHERE partner_id = :partner_id ORDER BY uploaded_at DESC";

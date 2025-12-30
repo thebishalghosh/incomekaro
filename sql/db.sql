@@ -335,3 +335,5 @@ CREATE TABLE partner_documents (
                                    FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
                                    FOREIGN KEY (verified_by) REFERENCES users(id)
 );
+
+ALTER TABLE partners ADD COLUMN agreement_accepted_at TIMESTAMP NULL DEFAULT NULL;

@@ -53,3 +53,34 @@ function require_role($role_code) {
         die('Access Denied');
     }
 }
+
+function require_agreement() {
+    require_login();
+
+    if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        if (empty($user['partner_id'])) return; // Not a partner, skip check
+
+        $partner = get_partner_by_id($user['partner_id']);
+        if (empty($partner['agreement_accepted_at'])) {
+            redirect('agreement/index');
+        }
+    }
+}
+
+function require_kyc_verification() {
+    require_login();
+
+    if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        if (empty($user['partner_id'])) return;
+
+        $partner = get_partner_by_id($user['partner_id']);
+        if ($partner['kyc_status'] === 'PENDING') {
+            // Allow access to the KYC page itself
+            if (strpos($_GET['url'], 'kyc') === false) {
+                redirect('kyc/index');
+            }
+        }
+    }
+}

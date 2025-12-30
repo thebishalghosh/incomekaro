@@ -69,6 +69,20 @@
                     </li>
                 </ul>
             </div>
+            <div class="card-footer bg-light border-0 p-4">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3">Agreement Status</h6>
+                <?php if (!empty($partner['agreement_accepted_at'])): ?>
+                    <div class="text-success fw-bold">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Accepted on <?php echo date('j M Y', strtotime($partner['agreement_accepted_at'])); ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-warning fw-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Pending Acceptance
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
