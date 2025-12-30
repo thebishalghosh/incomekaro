@@ -52,6 +52,15 @@ function find_user_by_id($id) {
     return $user;
 }
 
+function get_user_role($role_id) {
+    $db = get_db_connection();
+    $sql = "SELECT * FROM roles WHERE id = :id";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':id', $role_id);
+    $stmt->execute();
+    return $stmt->fetch();
+}
+
 function get_all_roles() {
     $db = get_db_connection();
     $sql = "SELECT * FROM roles";

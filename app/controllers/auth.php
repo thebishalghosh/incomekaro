@@ -8,12 +8,13 @@ function auth_login() {
 
 function auth_login_post() {
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // Sanitize
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        // Sanitize inputs manually since FILTER_SANITIZE_STRING is deprecated
+        $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+        $password = $_POST['password']; // Don't sanitize password, just trim
 
         $data = [
-            'email' => trim($_POST['email']),
-            'password' => trim($_POST['password']),
+            'email' => trim($email),
+            'password' => trim($password),
             'email_err' => '',
             'password_err' => ''
         ];

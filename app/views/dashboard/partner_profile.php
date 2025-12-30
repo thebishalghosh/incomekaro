@@ -31,14 +31,26 @@
                 <?php endif; ?>
 
                 <h4 class="card-title mb-1"><?php echo $partner['profile']['full_name']; ?></h4>
-                <p class="text-muted mb-3">
+
+                <div class="mb-2">
                     <?php if ($partner['partner_type'] == 'PLATFORM'): ?>
                         <span class="badge bg-primary">Platform Partner</span>
                     <?php else: ?>
                         <span class="badge bg-info text-dark">White Label Partner</span>
                     <?php endif; ?>
-                </p>
-                <a href="<?php echo url('partner/edit/' . $partner['id']); ?>" class="btn btn-primary"><i class="fas fa-edit me-2"></i>Edit Profile</a>
+                </div>
+
+                <div>
+                    <?php
+                        $kyc_status = $partner['kyc_status'] ?? 'PENDING';
+                        $kyc_badge_class = 'bg-warning text-dark';
+                        if ($kyc_status == 'VERIFIED') $kyc_badge_class = 'bg-success';
+                        elseif ($kyc_status == 'REJECTED') $kyc_badge_class = 'bg-danger';
+                    ?>
+                    <span class="badge <?php echo $kyc_badge_class; ?>">KYC <?php echo $kyc_status; ?></span>
+                </div>
+
+                <a href="<?php echo url('partner/edit/' . $partner['id']); ?>" class="btn btn-primary mt-3"><i class="fas fa-edit me-2"></i>Edit Profile</a>
             </div>
             <div class="card-footer bg-white border-0 p-4">
                 <h6 class="fw-bold text-muted text-uppercase small mb-3">Contact Info</h6>
@@ -67,6 +79,9 @@
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab"><i class="fas fa-info-circle me-2"></i>Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="kyc-tab" data-bs-toggle="tab" data-bs-target="#kyc" type="button" role="tab"><i class="fas fa-id-card me-2"></i>KYC Documents</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab"><i class="fas fa-users me-2"></i>Team</button>
@@ -101,6 +116,40 @@
                             <dt class="col-sm-3 text-muted">GST</dt>
                             <dd class="col-sm-9 fw-bold"><?php echo $partner['identity']['gst'] ?: 'N/A'; ?></dd>
                         </dl>
+                    </div>
+
+                    <!-- KYC Tab -->
+                    <div class="tab-pane fade" id="kyc" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold text-primary mb-0">KYC Documents</h5>
+                            <?php if ($partner['kyc_status'] !== 'VERIFIED' && !empty($partner['documents'])): ?>
+                                <div class="btn-group">
+                                    <form action="<?php echo url('partner/verify_kyc/' . $partner['id']); ?>" method="POST" class="d-inline">
+                                        <input type="hidden" name="status" value="VERIFIED">
+                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to verify this KYC?');">Verify KYC</button>
+                                    </form>
+                                    <form action="<?php echo url('partner/verify_kyc/' . $partner['id']); ?>" method="POST" class="d-inline ms-2">
+                                        <input type="hidden" name="status" value="REJECTED">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this KYC?');">Reject KYC</button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (!empty($partner['documents'])): ?>
+                            <div class="list-group">
+                                <?php foreach($partner['documents'] as $doc): ?>
+                                    <a href="<?php echo asset($doc['file_url']); ?>" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            <?php echo str_replace('_', ' ', $doc['document_type']); ?>
+                                        </div>
+                                        <span class="badge bg-secondary"><?php echo $doc['status']; ?></span>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-warning">No KYC documents have been uploaded yet. Verification cannot proceed.</div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Team Tab -->

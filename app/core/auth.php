@@ -40,7 +40,16 @@ function require_login() {
 
 function require_role($role_code) {
     require_login();
-    if ($_SESSION['role_code'] !== $role_code) {
+
+    if (!isset($_SESSION['role_code']) || $_SESSION['role_code'] !== $role_code) {
+        // If role code is missing or mismatch, redirect to home or show error
+        // Ideally, redirect to their allowed dashboard if logged in
+        if (isset($_SESSION['role_code'])) {
+             if ($_SESSION['role_code'] === 'SUPER_ADMIN') redirect('dashboard/super_admin');
+             elseif ($_SESSION['role_code'] === 'WHITE_LABEL') redirect('dashboard/white_label');
+             else redirect('dashboard/index');
+        }
+
         die('Access Denied');
     }
 }

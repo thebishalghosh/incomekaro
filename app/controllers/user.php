@@ -17,7 +17,7 @@ function user_store() {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $profile_image = '';
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
@@ -86,7 +86,7 @@ function user_update($id) {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $profile_image = null;
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {

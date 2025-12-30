@@ -79,7 +79,6 @@ function get_partner_by_id($id) {
 
     // Fetch Plan Details & Services if subscription exists
     if ($partner['subscription']) {
-        // Try to find the plan by name to get GST and Services
         $sql = "SELECT * FROM subscription_plans WHERE name = :name LIMIT 1";
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':name', $partner['subscription']['plan_name']);
@@ -90,7 +89,6 @@ function get_partner_by_id($id) {
             $partner['subscription']['gst_rate'] = $plan_details['gst_rate'];
             $partner['subscription']['base_price'] = $plan_details['price'];
 
-            // Fetch Services
             $sql = "SELECT s.name FROM services s
                     JOIN subscription_plan_services sps ON s.id = sps.service_id
                     WHERE sps.plan_id = :plan_id";
@@ -123,7 +121,42 @@ function get_partner_by_id($id) {
         $partner['bank_details'] = null;
     }
 
+    // Fetch KYC Documents
+    $partner['documents'] = get_partner_documents($id);
+
     return $partner;
+}
+
+function get_partner_documents($partner_id) {
+    $db = get_db_connection();
+    $sql = "SELECT * FROM partner_documents WHERE partner_id = :partner_id ORDER BY uploaded_at DESC";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+function add_partner_document($partner_id, $doc_type, $file_url) {
+    $db = get_db_connection();
+    // Overwrite existing doc of the same type
+    $db->exec("DELETE FROM partner_documents WHERE partner_id = '$partner_id' AND document_type = '$doc_type'");
+
+    $sql = "INSERT INTO partner_documents (id, partner_id, document_type, file_url) VALUES (:id, :partner_id, :doc_type, :file_url)";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':id', uniqid('doc-'));
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->bindValue(':doc_type', $doc_type);
+    $stmt->bindValue(':file_url', $file_url);
+    return $stmt->execute();
+}
+
+function update_kyc_status($partner_id, $status) {
+    $db = get_db_connection();
+    $sql = "UPDATE partners SET kyc_status = :status WHERE id = :id";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':status', $status);
+    $stmt->bindValue(':id', $partner_id);
+    return $stmt->execute();
 }
 
 function assign_rm_to_partner($partner_id, $rm_id) {

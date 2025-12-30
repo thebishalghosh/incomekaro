@@ -320,3 +320,18 @@ CREATE TABLE subscription_plan_services (
 
 
 ALTER TABLE users ADD COLUMN profile_image TEXT NULL;
+
+ALTER TABLE partners ADD COLUMN kyc_status ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING';
+
+CREATE TABLE partner_documents (
+                                   id CHAR(36) PRIMARY KEY,
+                                   partner_id CHAR(36) NOT NULL,
+                                   document_type VARCHAR(100) NOT NULL, -- e.g., 'AADHAAR_FRONT', 'PAN_CARD'
+                                   file_url TEXT NOT NULL,
+                                   status ENUM('UPLOADED', 'VERIFIED', 'REJECTED') DEFAULT 'UPLOADED',
+                                   uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   verified_by CHAR(36), -- User ID of RM/Admin
+                                   verified_at TIMESTAMP NULL,
+                                   FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
+                                   FOREIGN KEY (verified_by) REFERENCES users(id)
+);

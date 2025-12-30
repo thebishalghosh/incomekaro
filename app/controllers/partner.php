@@ -54,6 +54,28 @@ function partner_assign_rm($partner_id) {
     }
 }
 
+function partner_verify_kyc($partner_id) {
+    require_role('SUPER_ADMIN');
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        // Validation: Check if documents exist before verifying
+        $documents = get_partner_documents($partner_id);
+        if (empty($documents)) {
+            flash('ptr_error', 'Cannot verify KYC. No documents have been uploaded.', 'alert alert-danger');
+            redirect('partner/profile/' . $partner_id);
+            return;
+        }
+
+        $status = $_POST['status']; // VERIFIED or REJECTED
+        if (update_kyc_status($partner_id, $status)) {
+            flash('ptr_success', 'KYC Status Updated');
+        } else {
+            flash('ptr_error', 'Failed to update KYC status', 'alert alert-danger');
+        }
+        redirect('partner/profile/' . $partner_id);
+    }
+}
+
 function partner_create() {
     $white_labels = [];
     if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
