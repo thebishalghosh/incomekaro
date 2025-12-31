@@ -89,13 +89,15 @@ function get_partner_by_id($id) {
             $partner['subscription']['gst_rate'] = $plan_details['gst_rate'];
             $partner['subscription']['base_price'] = $plan_details['price'];
 
-            $sql = "SELECT s.name FROM services s
+            // Fetch Full Service Details
+            $sql = "SELECT s.* FROM services s
                     JOIN subscription_plan_services sps ON s.id = sps.service_id
-                    WHERE sps.plan_id = :plan_id";
+                    WHERE sps.plan_id = :plan_id AND s.is_active = 1
+                    ORDER BY s.category, s.name";
             $stmt = $db->prepare($sql);
             $stmt->bindValue(':plan_id', $plan_details['id']);
             $stmt->execute();
-            $partner['subscription']['services'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $partner['subscription']['services'] = $stmt->fetchAll();
         } else {
             $partner['subscription']['services'] = [];
         }
