@@ -47,7 +47,7 @@ This is a step-by-step guide for deploying the IncomeKaro application to a live 
     ```
 
 - [ ] **Set File Permissions:**
-  - Ensure the `public/uploads/` directory and its subdirectories (`logos`, `partners`, `users`) are writable by the server. You may need to set the permissions to `775`.
+  - Ensure the `public/uploads/` directory and its subdirectories (`logos`, `partners`, `users`, `documents`, `services`) are writable by the server. You may need to set the permissions to `775`.
 
 ---
 
@@ -61,6 +61,10 @@ This is a step-by-step guide for deploying the IncomeKaro application to a live 
   - In your browser, visit `https://www.yourdomain.com/test.php`.
   - This will create the initial Super Admin user (`test@test.com` / `1234`).
 
+- [ ] **Seed Services Hierarchy:**
+  - In your browser, visit `https://www.yourdomain.com/seed_services.php`.
+  - This will create the default Loan hierarchy (Loan -> Govt/Private -> MUDRA/Personal etc.).
+
 ---
 
 ### 4. Post-Deployment
@@ -72,6 +76,7 @@ This is a step-by-step guide for deploying the IncomeKaro application to a live 
 - [ ] **IMPORTANT: Secure Your Application:**
   - **Delete the following files from your server for security:**
     - `public/seed_roles.php`
+    - `public/seed_services.php`
     - `public/test.php`
     - `deployment_checklist.md` (Optional, but good practice)
     - `db.sql` (Optional, but good practice)

@@ -40,9 +40,23 @@
                         <textarea class="form-control" id="description" name="description" rows="3"><?php echo isset($service) ? $service['description'] : ''; ?></textarea>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="url" class="form-label fw-bold">URL</label>
-                        <input type="url" class="form-control" id="url" name="url" value="<?php echo isset($service) ? $service['url'] : ''; ?>" placeholder="https://example.com/service-details">
+                    <!-- Hidden Advanced Fields (Parent & Form Type) -->
+                    <!-- These are hidden to keep the UI clean. Use Seeders or DB access to manage hierarchy. -->
+                    <input type="hidden" name="parent_id" value="<?php echo isset($service) ? $service['parent_id'] : ''; ?>">
+                    <input type="hidden" name="form_type" value="<?php echo isset($service) ? $service['form_type'] : 'NONE'; ?>">
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="service_type" class="form-label fw-bold">Service Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="service_type" name="service_type" onchange="toggleUrlField()" required>
+                                <option value="INTERNAL_FORM" <?php echo (isset($service) && $service['service_type'] == 'INTERNAL_FORM') ? 'selected' : ''; ?>>Internal Form</option>
+                                <option value="EXTERNAL_REDIRECT" <?php echo (isset($service) && $service['service_type'] == 'EXTERNAL_REDIRECT') ? 'selected' : ''; ?>>External Redirect</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="url_field_container" style="<?php echo (isset($service) && $service['service_type'] == 'EXTERNAL_REDIRECT') ? '' : 'display: none;'; ?>">
+                            <label for="url" class="form-label fw-bold">URL</label>
+                            <input type="url" class="form-control" id="url" name="url" value="<?php echo isset($service) ? $service['url'] : ''; ?>" placeholder="https://example.com/service-details">
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -69,5 +83,19 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleUrlField() {
+    const type = document.getElementById('service_type').value;
+    const container = document.getElementById('url_field_container');
+    if (type === 'EXTERNAL_REDIRECT') {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+    }
+}
+// Run on page load as well
+document.addEventListener('DOMContentLoaded', toggleUrlField);
+</script>
 
 <?php view('layouts/footer'); ?>

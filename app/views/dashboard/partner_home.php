@@ -130,8 +130,24 @@
     <?php if (!empty($partner['subscription']['services'])): ?>
         <div class="row g-4">
             <?php foreach ($partner['subscription']['services'] as $svc): ?>
+                <?php
+                    $link = '#';
+                    $target = '';
+                    if ($svc['service_type'] === 'EXTERNAL_REDIRECT' && !empty($svc['url'])) {
+                        $link = $svc['url'];
+                        $target = '_blank';
+                    } elseif ($svc['service_type'] === 'INTERNAL_FORM') {
+                        if ($svc['form_type'] === 'NONE') {
+                            // It's a parent category (like "Loan"), go to selection page
+                            $link = url('application/select/' . $svc['id']);
+                        } else {
+                            // It's a final service (like "MUDRA Loan"), go to form
+                            $link = url('application/create/' . $svc['id']);
+                        }
+                    }
+                ?>
                 <div class="col-md-3 col-sm-6">
-                    <a href="<?php echo $svc['url'] ?: '#'; ?>" target="_blank" class="text-decoration-none">
+                    <a href="<?php echo $link; ?>" target="<?php echo $target; ?>" class="text-decoration-none">
                         <div class="card h-100 shadow-sm border-0 service-card">
                             <div class="card-body text-center p-4">
                                 <img src="<?php echo asset($svc['image_url'] ?: 'images/default-avatar.png'); ?>" alt="<?php echo $svc['name']; ?>" class="mb-3" style="height: 80px; object-fit: contain;">

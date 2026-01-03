@@ -1,6 +1,6 @@
 <?php
 require_once APP_PATH . '/models/subscription.php';
-require_once APP_PATH . '/models/service.php'; // To get services
+require_once APP_PATH . '/models/service.php';
 
 function subscription_index() {
     require_role('SUPER_ADMIN');
@@ -10,7 +10,8 @@ function subscription_index() {
 
 function subscription_create() {
     require_role('SUPER_ADMIN');
-    $services = get_all_services(); // Fetch all master services
+    // Fetch only top-level services to be included in plans
+    $services = get_top_level_services();
     view('forms/subscription_form', ['services' => $services]);
 }
 
@@ -18,17 +19,17 @@ function subscription_store() {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
         $data = [
-            'id' => uniqid('plan-'),
+            'id' => 'plan-' . uniqid(),
             'name' => trim($_POST['name']),
             'price' => trim($_POST['price']),
             'gst_rate' => trim($_POST['gst_rate']),
             'description' => trim($_POST['description']),
             'footer_description' => trim($_POST['footer_description']),
             'status' => trim($_POST['status']),
-            'services' => isset($_POST['services']) ? $_POST['services'] : []
+            'services' => $_POST['services'] ?? []
         ];
 
         if (create_subscription_plan($data)) {
@@ -47,7 +48,8 @@ function subscription_edit($id) {
     if (!$plan) {
         redirect('subscription/index');
     }
-    $services = get_all_services();
+    // Fetch only top-level services to be included in plans
+    $services = get_top_level_services();
     view('forms/subscription_form', ['plan' => $plan, 'services' => $services]);
 }
 
@@ -55,7 +57,7 @@ function subscription_update($id) {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
         $data = [
             'id' => $id,
@@ -65,7 +67,7 @@ function subscription_update($id) {
             'description' => trim($_POST['description']),
             'footer_description' => trim($_POST['footer_description']),
             'status' => trim($_POST['status']),
-            'services' => isset($_POST['services']) ? $_POST['services'] : []
+            'services' => $_POST['services'] ?? []
         ];
 
         if (update_subscription_plan($data)) {
@@ -80,6 +82,7 @@ function subscription_update($id) {
 
 function subscription_delete($id) {
     require_role('SUPER_ADMIN');
+
     if (delete_subscription_plan($id)) {
         flash('sub_success', 'Subscription Plan Deleted');
     } else {

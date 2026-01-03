@@ -3,13 +3,16 @@ require_once APP_PATH . '/models/service.php';
 
 function service_index() {
     require_role('SUPER_ADMIN');
-    $services = get_all_services();
+    // Only show top-level services in the main list to keep it clean
+    $services = get_top_level_services();
     view('dashboard/services_list', ['services' => $services]);
 }
 
 function service_create() {
     require_role('SUPER_ADMIN');
-    view('forms/service_form');
+    // Fetch only top-level services to be used as parents
+    $parent_services = get_top_level_services();
+    view('forms/service_form', ['all_services' => $parent_services]);
 }
 
 function service_store() {
@@ -37,6 +40,9 @@ function service_store() {
             'description' => trim($_POST['description']),
             'url' => trim($_POST['url']),
             'category' => trim($_POST['category']),
+            'service_type' => trim($_POST['service_type']),
+            'parent_id' => !empty($_POST['parent_id']) ? $_POST['parent_id'] : null,
+            'form_type' => trim($_POST['form_type']),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'image_url' => $image_url
         ];
@@ -57,7 +63,9 @@ function service_edit($id) {
     if (!$service) {
         redirect('service/index');
     }
-    view('forms/service_form', ['service' => $service]);
+    // Fetch only top-level services to be used as parents
+    $parent_services = get_top_level_services();
+    view('forms/service_form', ['service' => $service, 'all_services' => $parent_services]);
 }
 
 function service_update($id) {
@@ -85,6 +93,9 @@ function service_update($id) {
             'description' => trim($_POST['description']),
             'url' => trim($_POST['url']),
             'category' => trim($_POST['category']),
+            'service_type' => trim($_POST['service_type']),
+            'parent_id' => !empty($_POST['parent_id']) ? $_POST['parent_id'] : null,
+            'form_type' => trim($_POST['form_type']),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'image_url' => $image_url
         ];

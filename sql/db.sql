@@ -49,6 +49,8 @@ CREATE TABLE partners (
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           created_by CHAR(36),
                           rm_id CHAR(36),
+                          kyc_status ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+                          agreement_accepted_at TIMESTAMP NULL DEFAULT NULL,
                           FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id),
                           FOREIGN KEY (created_by) REFERENCES users(id),
                           FOREIGN KEY (rm_id) REFERENCES users(id)
@@ -87,6 +89,19 @@ CREATE TABLE partner_identity (
                                   FOREIGN KEY (partner_id) REFERENCES partners(id)
 );
 
+CREATE TABLE partner_documents (
+        id CHAR(36) PRIMARY KEY,
+        partner_id CHAR(36) NOT NULL,
+        document_type VARCHAR(100) NOT NULL, -- e.g., 'AADHAAR_FRONT', 'PAN_CARD'
+        file_url TEXT NOT NULL,
+        status ENUM('UPLOADED', 'VERIFIED', 'REJECTED') DEFAULT 'UPLOADED',
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        verified_by CHAR(36), -- User ID of RM/Admin
+        verified_at TIMESTAMP NULL,
+        FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
+        FOREIGN KEY (verified_by) REFERENCES users(id)
+);
+
 -- ===============================
 -- 3️⃣ Roles & Users
 -- ===============================
@@ -106,6 +121,7 @@ CREATE TABLE users (
                        email VARCHAR(255) UNIQUE,
                        phone VARCHAR(20),
                        password_hash TEXT,
+                       profile_image TEXT NULL,
                        status ENUM('active','inactive') DEFAULT 'active',
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id),
@@ -139,7 +155,11 @@ CREATE TABLE services (
                           image_url TEXT,
                           description TEXT,
                           url TEXT,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          service_type ENUM('EXTERNAL_REDIRECT', 'INTERNAL_FORM') NOT NULL DEFAULT 'INTERNAL_FORM',
+                          parent_id CHAR(36) NULL DEFAULT NULL,
+                          form_type ENUM('NONE', 'GOVT_LOAN', 'PRIVATE_LOAN') NOT NULL DEFAULT 'NONE',
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          FOREIGN KEY (parent_id) REFERENCES services(id) ON DELETE SET NULL
 );
 
 CREATE TABLE white_label_services (
@@ -317,23 +337,3 @@ CREATE TABLE subscription_plan_services (
     FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 );
-
-
-ALTER TABLE users ADD COLUMN profile_image TEXT NULL;
-
-ALTER TABLE partners ADD COLUMN kyc_status ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING';
-
-CREATE TABLE partner_documents (
-                                   id CHAR(36) PRIMARY KEY,
-                                   partner_id CHAR(36) NOT NULL,
-                                   document_type VARCHAR(100) NOT NULL, -- e.g., 'AADHAAR_FRONT', 'PAN_CARD'
-                                   file_url TEXT NOT NULL,
-                                   status ENUM('UPLOADED', 'VERIFIED', 'REJECTED') DEFAULT 'UPLOADED',
-                                   uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                   verified_by CHAR(36), -- User ID of RM/Admin
-                                   verified_at TIMESTAMP NULL,
-                                   FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
-                                   FOREIGN KEY (verified_by) REFERENCES users(id)
-);
-
-ALTER TABLE partners ADD COLUMN agreement_accepted_at TIMESTAMP NULL DEFAULT NULL;
