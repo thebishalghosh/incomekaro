@@ -16,14 +16,12 @@ function application_index() {
         $user = find_user_by_id($_SESSION['user_id']);
         if (!empty($user['partner_id'])) {
             $applications = get_partner_applications($user['partner_id']);
-            // We might want a different view for partners later, but for now reuse or create new
             view('dashboard/partner_applications_list', ['applications' => $applications]);
         } else {
             redirect('dashboard/index');
         }
     } else {
-        // RM or other roles
-        $applications = []; // Implement RM logic later
+        $applications = [];
         view('dashboard/applications_list', ['applications' => $applications]);
     }
 }
@@ -37,21 +35,18 @@ function application_view($id) {
         redirect('application/index');
     }
 
-    // Authorization Check
     if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
         $user = find_user_by_id($_SESSION['user_id']);
         if ($application['partner_id'] !== $user['partner_id']) {
             die('Access Denied');
         }
-    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
-        // Add RM check here later
     }
 
     view('dashboard/application_view', ['application' => $application]);
 }
 
 function application_update_status($id) {
-    require_role('SUPER_ADMIN'); // Or RM
+    require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status = $_POST['status'];
@@ -82,6 +77,7 @@ function application_select($parent_id) {
     ]);
 }
 
+// This function decides whether to show a list or a form based on the service type
 function application_create($service_id) {
     require_login();
     require_agreement();
@@ -92,12 +88,49 @@ function application_create($service_id) {
         die('Service not found.');
     }
 
+    // If it's a TAX form, show the list of existing applications first
+    if ($service['form_type'] === 'TAX_FORM') {
+        redirect('application/list_service/' . $service_id);
+        return;
+    }
+
+    // For Loans, go directly to the form (as per previous logic)
+    application_show_form($service);
+}
+
+// New function to show the list of applications for a specific service
+function application_list_service($service_id) {
+    require_login();
+    $user = find_user_by_id($_SESSION['user_id']);
+    $service = get_service_by_id($service_id);
+
+    // Fetch applications only for this specific service and partner
+    $applications = get_partner_applications_by_service($user['partner_id'], $service_id);
+
+    view('application/service_list', [
+        'service' => $service,
+        'applications' => $applications
+    ]);
+}
+
+// New function to explicitly show the form (used by the "Add New" button)
+function application_new($service_id) {
+    require_login();
+    $service = get_service_by_id($service_id);
+    application_show_form($service);
+}
+
+// Helper to load the correct view
+function application_show_form($service) {
     switch ($service['form_type']) {
         case 'GOVT_LOAN':
             view('application/form_govt', ['service' => $service]);
             break;
         case 'PRIVATE_LOAN':
             view('application/form_private', ['service' => $service]);
+            break;
+        case 'TAX_FORM':
+            view('application/form_tax', ['service' => $service]);
             break;
         default:
             flash('app_error', 'This service does not have an application form.', 'alert alert-warning');
@@ -110,11 +143,9 @@ function application_store() {
     require_login();
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // 1. Get User & Partner Info
         $user = find_user_by_id($_SESSION['user_id']);
         $partner = get_partner_by_id($user['partner_id']);
 
-        // 2. Handle File Uploads
         $documents = [];
         $upload_dir = APP_ROOT . '/public/uploads/applications/';
         if (!is_dir($upload_dir)) {
@@ -138,23 +169,20 @@ function application_store() {
             }
         }
 
-        // 3. Prepare Data
         $data = [
             'id' => 'app-' . uniqid(),
             'white_label_id' => $partner['white_label_id'],
             'partner_id' => $partner['id'],
             'service_id' => $_POST['service_id'],
             'created_by' => $_SESSION['user_id'],
-            'customer' => $_POST['customer'], // Array [first_name, last_name, email, phone]
-            'meta' => $_POST['meta'],         // Array of all other fields
+            'customer' => $_POST['customer'],
+            'meta' => $_POST['meta'],
             'documents' => $documents
         ];
 
-        // 4. Save to DB
         if (create_full_application($data)) {
-            // Optional: Send Email Notification to Admin/Partner
-            // send_application_email($data);
-
+            // Redirect back to the service list if it was a Tax form, otherwise success page
+            // For now, let's stick to the success page for consistency
             redirect('application/success');
         } else {
             flash('app_error', 'Failed to submit application. Please try again.', 'alert alert-danger');

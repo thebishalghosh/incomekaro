@@ -19,8 +19,10 @@
                             <label for="loan_mode" class="form-label fw-bold">Loan Mode</label>
                             <select class="form-select" id="loan_mode" name="meta[loan_mode]">
                                 <option selected>Select Loan Mode</option>
-                                <option value="Personal">Personal</option>
-                                <option value="Business">Business</option>
+                                <option value="New">New</option>
+                                <option value="BT">BT</option>
+                                <option value="Top Up">Top Up</option>
+                                <option value="Card to Card">Card to Card</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -36,6 +38,9 @@
                                 <option value="36">36 Months</option>
                                 <option value="48">48 Months</option>
                                 <option value="60">60 Months</option>
+                                <option value="72">72 Months</option>
+                                <option value="84">84 Months</option>
+                                <option value="96">96 Months</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -90,6 +95,7 @@
                                 <option selected>Select Employment Type</option>
                                 <option value="Salaried">Salaried</option>
                                 <option value="Self-Employed">Self-Employed</option>
+                                <option value="Business">Business</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -100,11 +106,14 @@
                             <label for="company_type" class="form-label fw-bold">Company Type</label>
                             <select class="form-select" id="company_type" name="meta[company_type]">
                                 <option selected>Select Company Type</option>
-                                <option value="Public Ltd">Public Ltd</option>
-                                <option value="Private Ltd">Private Ltd</option>
-                                <option value="LLP">LLP</option>
+                                <option value="Private">Private</option>
+                                <option value="Public">Public</option>
+                                <option value="Government">Government</option>
+                                <option value="NGO">NGO</option>
+                                <option value="PSU">PSU</option>
                                 <option value="Partnership">Partnership</option>
                                 <option value="Proprietorship">Proprietorship</option>
+                                <option value="LLP">LLP</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -149,44 +158,28 @@
                 <fieldset class="p-4 rounded-3" style="background-color: var(--accent-color);">
                     <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (All Optional)</legend>
                     <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Aadhar Card Front</label>
-                            <input type="file" class="form-control" name="docs[aadhaar_front]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">Aadhar Card Front</label><input type="file" class="form-control" name="docs[aadhaar_front]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Aadhar Card Back</label>
-                            <input type="file" class="form-control" name="docs[aadhaar_back]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">Aadhar Card Back</label><input type="file" class="form-control" name="docs[aadhaar_back]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Pan Card</label>
-                            <input type="file" class="form-control" name="docs[pan_card]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">Pan Card</label><input type="file" class="form-control" name="docs[pan_card]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Passport Photo</label>
-                            <input type="file" class="form-control" name="docs[passport_photo]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">Passport Photo</label><input type="file" class="form-control" name="docs[passport_photo]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">1 Month Salary Slip</label>
-                            <input type="file" class="form-control" name="docs[salary_slip_1m]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">1 Month Salary Slip</label><input type="file" class="form-control" name="docs[salary_slip_1m]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">2 Month Salary Slip</label>
-                            <input type="file" class="form-control" name="docs[salary_slip_2m]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">2 Month Salary Slip</label><input type="file" class="form-control" name="docs[salary_slip_2m]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">3 Month Salary Slip</label>
-                            <input type="file" class="form-control" name="docs[salary_slip_3m]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">3 Month Salary Slip</label><input type="file" class="form-control" name="docs[salary_slip_3m]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Bank Statement</label>
-                            <input type="file" class="form-control" name="docs[bank_statement]" onchange="previewDocument(this)">
+                        <div class="col-md-3"><label class="form-label">Bank Statement</label><input type="file" class="form-control" name="docs[bank_statement]" onchange="previewDocument(this)">
                             <div class="mt-2 preview-container"></div>
                         </div>
                     </div>

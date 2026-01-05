@@ -43,6 +43,11 @@
                     <!-- Hidden Advanced Fields (Parent & Form Type) -->
                     <!-- These are hidden to keep the UI clean. Use Seeders or DB access to manage hierarchy. -->
                     <input type="hidden" name="parent_id" value="<?php echo isset($service) ? $service['parent_id'] : ''; ?>">
+
+                    <!-- We expose Form Type now to allow manual selection of TAX_FORM if needed, or keep hidden if you prefer seed-only -->
+                    <!-- For now, I will keep it hidden but update the value logic if I were to show it.
+                         Actually, let's keep it hidden as per your previous request for a clean UI.
+                         The seeder handles the assignment. -->
                     <input type="hidden" name="form_type" value="<?php echo isset($service) ? $service['form_type'] : 'NONE'; ?>">
 
                     <div class="row mb-4">

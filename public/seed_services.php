@@ -45,7 +45,13 @@ $services_structure = [
             ]
         ]
     ],
-    // You can add other top-level services like 'Tax' here in the future
+    [
+        'name' => 'Tax Services',
+        'category' => 'TAX',
+        'service_type' => 'INTERNAL_FORM',
+        'form_type' => 'TAX_FORM', // This service opens the tax form directly
+        'image_url' => 'images/services/tax.png'
+    ]
 ];
 
 function seed_services($db, $services, $parent_id = null) {

@@ -71,6 +71,20 @@ function get_partner_applications($partner_id) {
     return $stmt->fetchAll();
 }
 
+function get_partner_applications_by_service($partner_id, $service_id) {
+    $db = get_db_connection();
+    $sql = "SELECT sa.*, s.name as service_name
+            FROM service_applications sa
+            JOIN services s ON sa.service_id = s.id
+            WHERE sa.partner_id = :partner_id AND sa.service_id = :service_id
+            ORDER BY sa.created_at DESC";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->bindValue(':service_id', $service_id);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
 function get_all_applications_for_admin() {
     $db = get_db_connection();
     $sql = "SELECT sa.*, s.name as service_name, p.name as partner_name, pp.full_name as partner_full_name
