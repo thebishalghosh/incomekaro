@@ -36,6 +36,18 @@ function require_login() {
     if (!isLoggedIn()) {
         redirect(''); // Redirect to Home
     }
+
+    // Check if user is active
+    require_once APP_PATH . '/models/user.php';
+    $user = find_user_by_id($_SESSION['user_id']);
+
+    if ($user && $user['status'] === 'inactive') {
+        // Allow access to the revoked page and logout
+        $current_url = $_GET['url'] ?? '';
+        if ($current_url !== 'auth/access_revoked' && $current_url !== 'auth/logout') {
+            redirect('auth/access_revoked');
+        }
+    }
 }
 
 function require_role($role_code) {

@@ -7,7 +7,7 @@ view('layouts/partner_header', ['title' => $title]);
 <div class="container-fluid">
     <div class="text-center mb-5 pt-4">
         <h1 class="fw-bold display-5 text-dark"><?php echo $is_edit ? 'Edit Application' : 'New Application'; ?>: <span class="text-primary"><?php echo $service['name']; ?></span></h1>
-        <p class="lead text-muted">Please fill out the client's details for tax services.</p>
+        <p class="lead text-muted">Please fill out the client's details for a new credit card.</p>
     </div>
 
     <div class="card shadow-lg border-0 rounded-3">
@@ -34,10 +34,6 @@ view('layouts/partner_header', ['title' => $title]);
                             <input type="text" class="form-control" id="first_name" name="customer[first_name]" value="<?php echo $first_name; ?>" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="middle_name" class="form-label fw-bold">Middle Name</label>
-                            <input type="text" class="form-control" id="middle_name" name="meta[middle_name]" value="<?php echo $is_edit ? ($application['meta']['middle_name'] ?? '') : ''; ?>">
-                        </div>
-                        <div class="col-md-4">
                             <label for="last_name" class="form-label fw-bold">Last Name</label>
                             <input type="text" class="form-control" id="last_name" name="customer[last_name]" value="<?php echo $last_name; ?>" required>
                         </div>
@@ -50,78 +46,50 @@ view('layouts/partner_header', ['title' => $title]);
                             <input type="tel" class="form-control" id="phone" name="customer[phone]" value="<?php echo $is_edit ? $application['customer_phone'] : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="pan" class="form-label fw-bold">PAN</label>
-                            <input type="text" class="form-control" id="pan" name="meta[pan_number]" value="<?php echo $is_edit ? ($application['meta']['pan_number'] ?? '') : ''; ?>" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="aadhaar" class="form-label fw-bold">Aadhar</label>
-                            <input type="text" class="form-control" id="aadhaar" name="meta[aadhaar_number]" value="<?php echo $is_edit ? ($application['meta']['aadhaar_number'] ?? '') : ''; ?>">
+                            <label for="gender" class="form-label fw-bold">Gender</label>
+                            <select class="form-select" id="gender" name="meta[gender]">
+                                <option selected>Select Gender</option>
+                                <?php
+                                    $opts = ['Male', 'Female', 'Other'];
+                                    foreach($opts as $opt) {
+                                        $selected = ($is_edit && ($application['meta']['gender'] ?? '') == $opt) ? 'selected' : '';
+                                        echo "<option value='$opt' $selected>$opt</option>";
+                                    }
+                                ?>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label for="dob" class="form-label fw-bold">Date of Birth</label>
                             <input type="date" class="form-control" id="dob" name="meta[dob]" value="<?php echo $is_edit ? ($application['meta']['dob'] ?? '') : ''; ?>">
                         </div>
-                    </div>
-                </fieldset>
-
-                <!-- Residence Address -->
-                <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Residence Address</legend>
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="residence_address" class="form-label fw-bold">Residence Address</label>
-                            <textarea class="form-control" id="residence_address" name="meta[residence_address]" rows="2"><?php echo $is_edit ? ($application['meta']['residence_address'] ?? '') : ''; ?></textarea>
+                        <div class="col-md-4">
+                            <label for="qualification" class="form-label fw-bold">Qualification</label>
+                            <input type="text" class="form-control" id="qualification" name="meta[qualification]" value="<?php echo $is_edit ? ($application['meta']['qualification'] ?? '') : ''; ?>">
                         </div>
                         <div class="col-md-4">
-                            <label for="residence_city" class="form-label fw-bold">Residence City</label>
-                            <input type="text" class="form-control" id="residence_city" name="meta[residence_city]" value="<?php echo $is_edit ? ($application['meta']['residence_city'] ?? '') : ''; ?>">
+                            <label for="permanent_pincode" class="form-label fw-bold">Permanent Pincode</label>
+                            <input type="text" class="form-control" id="permanent_pincode" name="meta[permanent_pincode]" value="<?php echo $is_edit ? ($application['meta']['permanent_pincode'] ?? '') : ''; ?>">
                         </div>
                         <div class="col-md-4">
-                            <label for="residence_pincode" class="form-label fw-bold">Residence Pincode</label>
-                            <input type="text" class="form-control" id="residence_pincode" name="meta[residence_pincode]" value="<?php echo $is_edit ? ($application['meta']['residence_pincode'] ?? '') : ''; ?>">
+                            <label for="current_pincode" class="form-label fw-bold">Current Pincode</label>
+                            <input type="text" class="form-control" id="current_pincode" name="meta[current_pincode]" value="<?php echo $is_edit ? ($application['meta']['current_pincode'] ?? '') : ''; ?>">
                         </div>
                         <div class="col-md-4">
-                            <label for="residence_state" class="form-label fw-bold">Residence State</label>
-                            <input type="text" class="form-control" id="residence_state" name="meta[residence_state]" value="<?php echo $is_edit ? ($application['meta']['residence_state'] ?? '') : ''; ?>">
-                        </div>
-                    </div>
-                </fieldset>
-
-                <!-- Office Address -->
-                <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Office Address</legend>
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="office_address" class="form-label fw-bold">Office Address</label>
-                            <textarea class="form-control" id="office_address" name="meta[office_address]" rows="2"><?php echo $is_edit ? ($application['meta']['office_address'] ?? '') : ''; ?></textarea>
+                            <label for="mother_name" class="form-label fw-bold">Mother's Name</label>
+                            <input type="text" class="form-control" id="mother_name" name="meta[mother_name]" value="<?php echo $is_edit ? ($application['meta']['mother_name'] ?? '') : ''; ?>">
                         </div>
                         <div class="col-md-4">
-                            <label for="office_city" class="form-label fw-bold">Office City</label>
-                            <input type="text" class="form-control" id="office_city" name="meta[office_city]" value="<?php echo $is_edit ? ($application['meta']['office_city'] ?? '') : ''; ?>">
+                            <label for="pan" class="form-label fw-bold">PAN</label>
+                            <input type="text" class="form-control" id="pan" name="meta[pan_number]" value="<?php echo $is_edit ? ($application['meta']['pan_number'] ?? '') : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="office_pincode" class="form-label fw-bold">Office Pincode</label>
-                            <input type="text" class="form-control" id="office_pincode" name="meta[office_pincode]" value="<?php echo $is_edit ? ($application['meta']['office_pincode'] ?? '') : ''; ?>">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="office_state" class="form-label fw-bold">Office State</label>
-                            <input type="text" class="form-control" id="office_state" name="meta[office_state]" value="<?php echo $is_edit ? ($application['meta']['office_state'] ?? '') : ''; ?>">
-                        </div>
-                    </div>
-                </fieldset>
-
-                <!-- Select Service -->
-                <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Select Service</legend>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="tax_service" class="form-label fw-bold">Select Service</label>
-                            <select class="form-select" id="tax_service" name="meta[tax_service]">
-                                <option selected>Select Service</option>
+                            <label for="has_credit_card" class="form-label fw-bold">Have a Credit Card</label>
+                            <select class="form-select" id="has_credit_card" name="meta[has_credit_card]">
+                                <option selected>Select Option</option>
                                 <?php
-                                    $opts = ['ITR Filing', 'GST Registration', 'GST Filing', 'TDS Filing', 'Company Registration', 'Other'];
+                                    $opts = ['Yes', 'No'];
                                     foreach($opts as $opt) {
-                                        $selected = ($is_edit && ($application['meta']['tax_service'] ?? '') == $opt) ? 'selected' : '';
+                                        $selected = ($is_edit && ($application['meta']['has_credit_card'] ?? '') == $opt) ? 'selected' : '';
                                         echo "<option value='$opt' $selected>$opt</option>";
                                     }
                                 ?>
@@ -130,16 +98,60 @@ view('layouts/partner_header', ['title' => $title]);
                     </div>
                 </fieldset>
 
+                <!-- Employment Details -->
+                <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
+                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Employment Details</legend>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="company_name" class="form-label fw-bold">Company Name</label>
+                            <input type="text" class="form-control" id="company_name" name="meta[company_name]" value="<?php echo $is_edit ? ($application['meta']['company_name'] ?? '') : ''; ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="designation" class="form-label fw-bold">Designation</label>
+                            <input type="text" class="form-control" id="designation" name="meta[designation]" value="<?php echo $is_edit ? ($application['meta']['designation'] ?? '') : ''; ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="income" class="form-label fw-bold">Income</label>
+                            <input type="number" class="form-control" id="income" name="meta[income]" value="<?php echo $is_edit ? ($application['meta']['income'] ?? '') : ''; ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="employment_type" class="form-label fw-bold">Employment Type</label>
+                            <select class="form-select" id="employment_type" name="meta[employment_type]">
+                                <option selected>Select Employment Type</option>
+                                <?php
+                                    $opts = ['Salaried', 'Self-Employed', 'Business'];
+                                    foreach($opts as $opt) {
+                                        $selected = ($is_edit && ($application['meta']['employment_type'] ?? '') == $opt) ? 'selected' : '';
+                                        echo "<option value='$opt' $selected>$opt</option>";
+                                    }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="profession" class="form-label fw-bold">Profession</label>
+                            <input type="text" class="form-control" id="profession" name="meta[profession]" value="<?php echo $is_edit ? ($application['meta']['profession'] ?? '') : ''; ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="office_pincode" class="form-label fw-bold">Office Pincode</label>
+                            <input type="text" class="form-control" id="office_pincode" name="meta[office_pincode]" value="<?php echo $is_edit ? ($application['meta']['office_pincode'] ?? '') : ''; ?>">
+                        </div>
+                    </div>
+                </fieldset>
+
                 <!-- Document Upload -->
                 <fieldset class="p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (Optional)</legend>
+                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (All Optional)</legend>
                     <div class="row g-3">
                         <?php
                             $docs = [
                                 'aadhaar_front' => 'Aadhar Card Front',
                                 'aadhaar_back' => 'Aadhar Card Back',
                                 'pan_card' => 'Pan Card',
-                                'passport_photo' => 'Passport Photo'
+                                'passport_photo' => 'Passport Photo',
+                                'bank_statement_1y' => '1 Year Bank Statement',
+                                'salary_slip_1m' => '1 Month Salary Slip',
+                                'salary_slip_2m' => '2 Month Salary Slip',
+                                'salary_slip_3m' => '3 Month Salary Slip'
                             ];
                             foreach ($docs as $key => $label):
                         ?>

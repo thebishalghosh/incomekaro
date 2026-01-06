@@ -18,6 +18,7 @@
         </a>
 
         <div class="d-flex align-items-center">
+            <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary me-2">My Applications</a>
             <button class="btn btn-outline-secondary me-2">Policy</button>
             <button class="btn btn-outline-secondary me-3">Invoice</button>
 

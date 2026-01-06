@@ -5,9 +5,12 @@ function create_full_application($data) {
     try {
         $db->beginTransaction();
 
+        // Use the provided status or default to FRESH
+        $status = isset($data['status']) ? $data['status'] : 'FRESH';
+
         // 1. Insert into service_applications
         $sql = "INSERT INTO service_applications (id, white_label_id, partner_id, service_id, created_by, customer_name, customer_email, customer_phone, status)
-                VALUES (:id, :white_label_id, :partner_id, :service_id, :created_by, :customer_name, :customer_email, :customer_phone, 'submitted')";
+                VALUES (:id, :white_label_id, :partner_id, :service_id, :created_by, :customer_name, :customer_email, :customer_phone, :status)";
 
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':id', $data['id']);
@@ -18,6 +21,7 @@ function create_full_application($data) {
         $stmt->bindValue(':customer_name', $data['customer']['first_name'] . ' ' . $data['customer']['last_name']);
         $stmt->bindValue(':customer_email', $data['customer']['email']);
         $stmt->bindValue(':customer_phone', $data['customer']['phone']);
+        $stmt->bindValue(':status', $status);
         $stmt->execute();
 
         // 2. Insert Meta Data
@@ -35,6 +39,66 @@ function create_full_application($data) {
         }
 
         // 3. Insert Documents
+        if (!empty($data['documents'])) {
+            $sql = "INSERT INTO documents (id, application_id, document_type, file_url, uploaded_by) VALUES (:id, :application_id, :document_type, :file_url, :uploaded_by)";
+            $stmt = $db->prepare($sql);
+
+            foreach ($data['documents'] as $doc) {
+                $stmt->bindValue(':id', uniqid('doc-'));
+                $stmt->bindValue(':application_id', $data['id']);
+                $stmt->bindValue(':document_type', $doc['type']);
+                $stmt->bindValue(':file_url', $doc['url']);
+                $stmt->bindValue(':uploaded_by', $data['created_by']);
+                $stmt->execute();
+            }
+        }
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log($e->getMessage());
+        return false;
+    }
+}
+
+function update_full_application($data) {
+    $db = get_db_connection();
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Update service_applications
+        $sql = "UPDATE service_applications SET
+                customer_name = :customer_name,
+                customer_email = :customer_email,
+                customer_phone = :customer_phone
+                WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->bindValue(':customer_name', $data['customer']['first_name'] . ' ' . $data['customer']['last_name']);
+        $stmt->bindValue(':customer_email', $data['customer']['email']);
+        $stmt->bindValue(':customer_phone', $data['customer']['phone']);
+        $stmt->execute();
+
+        // 2. Update Meta Data (Delete all and re-insert strategy)
+        $db->exec("DELETE FROM service_application_meta WHERE application_id = '" . $data['id'] . "'");
+
+        if (!empty($data['meta'])) {
+            $sql = "INSERT INTO service_application_meta (id, application_id, field_key, field_value) VALUES (:id, :application_id, :field_key, :field_value)";
+            $stmt = $db->prepare($sql);
+
+            foreach ($data['meta'] as $key => $value) {
+                $stmt->bindValue(':id', uniqid('meta-'));
+                $stmt->bindValue(':application_id', $data['id']);
+                $stmt->bindValue(':field_key', $key);
+                $stmt->bindValue(':field_value', $value);
+                $stmt->execute();
+            }
+        }
+
+        // 3. Insert NEW Documents (We do not delete old ones here to preserve history, unless explicitly requested)
         if (!empty($data['documents'])) {
             $sql = "INSERT INTO documents (id, application_id, document_type, file_url, uploaded_by) VALUES (:id, :application_id, :document_type, :file_url, :uploaded_by)";
             $stmt = $db->prepare($sql);
@@ -101,7 +165,7 @@ function get_application_by_id($id) {
     $db = get_db_connection();
 
     // 1. Get Main Application Data
-    $sql = "SELECT sa.*, s.name as service_name, p.name as partner_name, pp.full_name as partner_full_name, pp.mobile as partner_phone
+    $sql = "SELECT sa.*, s.name as service_name, s.form_type, p.name as partner_name, pp.full_name as partner_full_name, pp.mobile as partner_phone
             FROM service_applications sa
             JOIN services s ON sa.service_id = s.id
             JOIN partners p ON sa.partner_id = p.id
@@ -129,6 +193,8 @@ function get_application_by_id($id) {
     $stmt->execute();
     $application['documents'] = $stmt->fetchAll();
 
+    $application['comments'] = get_application_comments($id);
+
     return $application;
 }
 
@@ -139,4 +205,29 @@ function update_application_status($id, $status) {
     $stmt->bindValue(':status', $status);
     $stmt->bindValue(':id', $id);
     return $stmt->execute();
+}
+
+function add_application_comment($application_id, $user_id, $comment) {
+    $db = get_db_connection();
+    $sql = "INSERT INTO comments (id, application_id, user_id, comment) VALUES (:id, :application_id, :user_id, :comment)";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':id', uniqid('cmt-'));
+    $stmt->bindValue(':application_id', $application_id);
+    $stmt->bindValue(':user_id', $user_id);
+    $stmt->bindValue(':comment', $comment);
+    return $stmt->execute();
+}
+
+function get_application_comments($application_id) {
+    $db = get_db_connection();
+    $sql = "SELECT c.*, u.first_name, u.last_name, u.profile_image, r.name as role_name
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            JOIN roles r ON u.role_id = r.id
+            WHERE c.application_id = :application_id
+            ORDER BY c.created_at DESC"; // Changed to DESC to show newest first
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':application_id', $application_id);
+    $stmt->execute();
+    return $stmt->fetchAll();
 }

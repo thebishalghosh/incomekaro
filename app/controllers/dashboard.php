@@ -31,18 +31,17 @@ function dashboard_white_label() {
 
 function dashboard_partner() {
     require_login();
-    require_agreement(); // Enforce agreement acceptance
-    require_kyc_verification(); // Enforce KYC verification
+    require_agreement();
+    require_kyc_verification();
 
-    // Get the logged-in user's partner_id
     $user = find_user_by_id($_SESSION['user_id']);
 
     if (!$user || empty($user['partner_id'])) {
         die('Error: User is not linked to a partner account.');
     }
 
-    // Fetch full partner details
     $partner = get_partner_by_id($user['partner_id']);
+    $stats = get_partner_stats($user['partner_id']);
 
-    view('dashboard/partner_home', ['partner' => $partner]);
+    view('dashboard/partner_home', ['partner' => $partner, 'stats' => $stats]);
 }

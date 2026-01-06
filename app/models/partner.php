@@ -129,6 +129,55 @@ function get_partner_by_id($id) {
     return $partner;
 }
 
+function get_partner_stats($partner_id) {
+    $db = get_db_connection();
+    $stats = [];
+
+    // 1. Applications by Status (for chart)
+    $sql = "SELECT status, COUNT(*) as count FROM service_applications WHERE partner_id = :partner_id GROUP BY status";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->execute();
+    $stats['by_status'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    // 2. Applications by Service Category (for stat cards)
+    $sql = "SELECT s.category, COUNT(*) as count
+            FROM service_applications sa
+            JOIN services s ON sa.service_id = s.id
+            WHERE sa.partner_id = :partner_id
+            GROUP BY s.category";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->execute();
+    $stats['by_category'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    // 3. Applications by Root Service Name (for chart)
+    $sql = "SELECT COALESCE(p2.name, p1.name, s.name) as root_name, COUNT(sa.id) as count
+            FROM service_applications sa
+            JOIN services s ON sa.service_id = s.id
+            LEFT JOIN services p1 ON s.parent_id = p1.id
+            LEFT JOIN services p2 ON p1.parent_id = p2.id
+            WHERE sa.partner_id = :partner_id
+            GROUP BY root_name";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':partner_id', $partner_id);
+    $stmt->execute();
+    $stats['by_root_service'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    // 4. Summary Counts
+    $stats['total_applications'] = array_sum($stats['by_status']);
+    $stats['total_approved'] = $stats['by_status']['APPROVED'] ?? 0;
+    $stats['total_rejected'] = $stats['by_status']['REJECT'] ?? 0;
+
+    $pending_statuses = ['FRESH', 'DOCUMENTS_UPLOAD', 'HOLD', 'LOGIN', 'DOCUMENTS_PENDING', 'BANKAR_PENDENCY'];
+    $stats['total_pending'] = 0;
+    foreach ($pending_statuses as $status) {
+        $stats['total_pending'] += $stats['by_status'][$status] ?? 0;
+    }
+
+    return $stats;
+}
+
 function accept_agreement($partner_id) {
     $db = get_db_connection();
     $sql = "UPDATE partners SET agreement_accepted_at = CURRENT_TIMESTAMP WHERE id = :partner_id";
@@ -167,6 +216,34 @@ function update_kyc_status($partner_id, $status) {
     $stmt->bindValue(':status', $status);
     $stmt->bindValue(':id', $partner_id);
     return $stmt->execute();
+}
+
+function update_partner_status($partner_id, $status) {
+    $db = get_db_connection();
+
+    try {
+        $db->beginTransaction();
+
+        // Update Partner Status
+        $sql = "UPDATE partners SET status = :status WHERE id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':id', $partner_id);
+        $stmt->execute();
+
+        // Update Linked User Status
+        $sql = "UPDATE users SET status = :status WHERE partner_id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':id', $partner_id);
+        $stmt->execute();
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        return false;
+    }
 }
 
 function assign_rm_to_partner($partner_id, $rm_id) {

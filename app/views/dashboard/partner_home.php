@@ -128,7 +128,7 @@
     <!-- My Services Section -->
     <h4 class="fw-bold text-dark mb-3">My Services</h4>
     <?php if (!empty($partner['subscription']['services'])): ?>
-        <div class="row g-4">
+        <div class="row g-4 mb-5">
             <?php foreach ($partner['subscription']['services'] as $svc): ?>
                 <?php
                     $link = '#';
@@ -138,10 +138,8 @@
                         $target = '_blank';
                     } elseif ($svc['service_type'] === 'INTERNAL_FORM') {
                         if ($svc['form_type'] === 'NONE') {
-                            // It's a parent category (like "Loan"), go to selection page
                             $link = url('application/select/' . $svc['id']);
                         } else {
-                            // It's a final service (like "MUDRA Loan"), go to form
                             $link = url('application/create/' . $svc['id']);
                         }
                     }
@@ -160,10 +158,81 @@
             <?php endforeach; ?>
         </div>
     <?php else: ?>
-        <div class="alert alert-light border text-center py-4">
+        <div class="alert alert-light border text-center py-4 mb-5">
             <p class="text-muted mb-0">No services are currently active for your plan.</p>
         </div>
     <?php endif; ?>
+
+    <!-- Performance Overview -->
+    <h4 class="fw-bold text-dark mb-3">Performance Overview</h4>
+
+    <!-- Stat Cards by Category -->
+    <div class="row g-4 mb-4 justify-content-center">
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #6A5ACD;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['LOAN'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Loans</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #20B2AA;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['TAX'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Taxation</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #FF7F50;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['CREDIT'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Credit Cards</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #4682B4;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['INSURANCE'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Insurance</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white bg-dark h-100">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['total_applications'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Applications</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 ps-4">
+                    <h5 class="fw-bold mb-0 text-primary">Application Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="statusChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 ps-4">
+                    <h5 class="fw-bold mb-0 text-primary">Applications by Service</h5>
+                </div>
+                <div class="card-body">
+                    <div id="serviceChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -176,5 +245,69 @@
     box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
 }
 </style>
+
+<!-- Google Charts -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawCharts);
+
+    function drawCharts() {
+        // 1. Status Chart
+        var statusData = google.visualization.arrayToDataTable([
+            ['Status', 'Count'],
+            <?php
+                if (!empty($stats['by_status'])) {
+                    foreach ($stats['by_status'] as $status => $count) {
+                        echo "['" . str_replace('_', ' ', $status) . "', " . $count . "],";
+                    }
+                } else {
+                    echo "['No Data', 1]"; // Placeholder
+                }
+            ?>
+        ]);
+
+        var statusOptions = {
+            pieHole: 0.4,
+            colors: ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'],
+            chartArea: {width: '90%', height: '80%'},
+            legend: {position: 'bottom'},
+            pieSliceText: 'value'
+        };
+
+        var statusChart = new google.visualization.PieChart(document.getElementById('statusChart'));
+        statusChart.draw(statusData, statusOptions);
+
+        // 2. Service Chart
+        var serviceData = google.visualization.arrayToDataTable([
+            ['Service', 'Applications', { role: 'style' }],
+            <?php
+                if (!empty($stats['by_root_service'])) {
+                    $colors = ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'];
+                    $i = 0;
+                    foreach ($stats['by_root_service'] as $name => $count) {
+                        $color = $colors[$i % count($colors)];
+                        echo "['" . $name . "', " . $count . ", '$color'],";
+                        $i++;
+                    }
+                } else {
+                    echo "['No Data', 0, '#ccc']";
+                }
+            ?>
+        ]);
+
+        var serviceOptions = {
+            legend: { position: "none" },
+            chartArea: {width: '80%', height: '70%'},
+            vAxis: { minValue: 0, format: '0' }
+        };
+
+        var serviceChart = new google.visualization.ColumnChart(document.getElementById('serviceChart'));
+        serviceChart.draw(serviceData, serviceOptions);
+    }
+
+    // Make charts responsive
+    window.addEventListener('resize', drawCharts);
+</script>
 
 <?php view('layouts/partner_footer'); ?>

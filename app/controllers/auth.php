@@ -61,6 +61,11 @@ function auth_logout() {
     auth_logout_session();
 }
 
+function auth_access_revoked() {
+    // Just load the view
+    view('auth/access_revoked');
+}
+
 // Temporary function to seed a Super Admin
 function auth_seed() {
     $db = get_db_connection();

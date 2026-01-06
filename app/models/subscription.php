@@ -6,6 +6,13 @@ function get_all_subscription_plans() {
     return $stmt->fetchAll();
 }
 
+function get_active_subscription_plans() {
+    $db = get_db_connection();
+    $sql = "SELECT * FROM subscription_plans WHERE status = 'active' ORDER BY price ASC";
+    $stmt = $db->query($sql);
+    return $stmt->fetchAll();
+}
+
 function get_subscription_plan_by_id($id) {
     $db = get_db_connection();
     $sql = "SELECT * FROM subscription_plans WHERE id = :id";

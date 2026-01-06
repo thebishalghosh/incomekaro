@@ -7,7 +7,7 @@ view('layouts/partner_header', ['title' => $title]);
 <div class="container-fluid">
     <div class="text-center mb-5 pt-4">
         <h1 class="fw-bold display-5 text-dark"><?php echo $is_edit ? 'Edit Application' : 'New Application'; ?>: <span class="text-primary"><?php echo $service['name']; ?></span></h1>
-        <p class="lead text-muted">Please fill out the client's details for tax services.</p>
+        <p class="lead text-muted">Please fill out the client's details for insurance.</p>
     </div>
 
     <div class="card shadow-lg border-0 rounded-3">
@@ -46,27 +46,23 @@ view('layouts/partner_header', ['title' => $title]);
                             <input type="email" class="form-control" id="email" name="customer[email]" value="<?php echo $is_edit ? $application['customer_email'] : ''; ?>">
                         </div>
                         <div class="col-md-4">
-                            <label for="phone" class="form-label fw-bold">Phone</label>
+                            <label for="phone" class="form-label fw-bold">Phone Number</label>
                             <input type="tel" class="form-control" id="phone" name="customer[phone]" value="<?php echo $is_edit ? $application['customer_phone'] : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="pan" class="form-label fw-bold">PAN</label>
+                            <label for="pan" class="form-label fw-bold">PAN Number</label>
                             <input type="text" class="form-control" id="pan" name="meta[pan_number]" value="<?php echo $is_edit ? ($application['meta']['pan_number'] ?? '') : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="aadhaar" class="form-label fw-bold">Aadhar</label>
+                            <label for="aadhaar" class="form-label fw-bold">Aadhar Number</label>
                             <input type="text" class="form-control" id="aadhaar" name="meta[aadhaar_number]" value="<?php echo $is_edit ? ($application['meta']['aadhaar_number'] ?? '') : ''; ?>">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="dob" class="form-label fw-bold">Date of Birth</label>
-                            <input type="date" class="form-control" id="dob" name="meta[dob]" value="<?php echo $is_edit ? ($application['meta']['dob'] ?? '') : ''; ?>">
                         </div>
                     </div>
                 </fieldset>
 
-                <!-- Residence Address -->
+                <!-- Address Information -->
                 <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Residence Address</legend>
+                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Address Information</legend>
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label for="residence_address" class="form-label fw-bold">Residence Address</label>
@@ -87,59 +83,41 @@ view('layouts/partner_header', ['title' => $title]);
                     </div>
                 </fieldset>
 
-                <!-- Office Address -->
+                <!-- Insurance Information -->
                 <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Office Address</legend>
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="office_address" class="form-label fw-bold">Office Address</label>
-                            <textarea class="form-control" id="office_address" name="meta[office_address]" rows="2"><?php echo $is_edit ? ($application['meta']['office_address'] ?? '') : ''; ?></textarea>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="office_city" class="form-label fw-bold">Office City</label>
-                            <input type="text" class="form-control" id="office_city" name="meta[office_city]" value="<?php echo $is_edit ? ($application['meta']['office_city'] ?? '') : ''; ?>">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="office_pincode" class="form-label fw-bold">Office Pincode</label>
-                            <input type="text" class="form-control" id="office_pincode" name="meta[office_pincode]" value="<?php echo $is_edit ? ($application['meta']['office_pincode'] ?? '') : ''; ?>">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="office_state" class="form-label fw-bold">Office State</label>
-                            <input type="text" class="form-control" id="office_state" name="meta[office_state]" value="<?php echo $is_edit ? ($application['meta']['office_state'] ?? '') : ''; ?>">
-                        </div>
-                    </div>
-                </fieldset>
-
-                <!-- Select Service -->
-                <fieldset class="mb-4 p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Select Service</legend>
+                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Insurance Information</legend>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="tax_service" class="form-label fw-bold">Select Service</label>
-                            <select class="form-select" id="tax_service" name="meta[tax_service]">
-                                <option selected>Select Service</option>
+                            <label for="insurance_type" class="form-label fw-bold">Insurance Type</label>
+                            <select class="form-select" id="insurance_type" name="meta[insurance_type]">
+                                <option selected>Select Insurance Type</option>
                                 <?php
-                                    $opts = ['ITR Filing', 'GST Registration', 'GST Filing', 'TDS Filing', 'Company Registration', 'Other'];
+                                    $opts = ['Life Insurance', 'Health Insurance', 'Vehicle Insurance'];
                                     foreach($opts as $opt) {
-                                        $selected = ($is_edit && ($application['meta']['tax_service'] ?? '') == $opt) ? 'selected' : '';
+                                        $selected = ($is_edit && ($application['meta']['insurance_type'] ?? '') == $opt) ? 'selected' : '';
                                         echo "<option value='$opt' $selected>$opt</option>";
                                     }
                                 ?>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vehicle_number" class="form-label fw-bold">Bike/Car Number</label>
+                            <input type="text" class="form-control" id="vehicle_number" name="meta[vehicle_number]" placeholder="If applicable" value="<?php echo $is_edit ? ($application['meta']['vehicle_number'] ?? '') : ''; ?>">
                         </div>
                     </div>
                 </fieldset>
 
                 <!-- Document Upload -->
                 <fieldset class="p-4 rounded-3" style="background-color: var(--accent-color);">
-                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (Optional)</legend>
+                    <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (All Optional)</legend>
                     <div class="row g-3">
                         <?php
                             $docs = [
                                 'aadhaar_front' => 'Aadhar Card Front',
                                 'aadhaar_back' => 'Aadhar Card Back',
                                 'pan_card' => 'Pan Card',
-                                'passport_photo' => 'Passport Photo'
+                                'passport_photo' => 'Passport Photo',
+                                'rc' => 'RC'
                             ];
                             foreach ($docs as $key => $label):
                         ?>

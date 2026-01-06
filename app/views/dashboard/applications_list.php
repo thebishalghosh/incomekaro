@@ -45,15 +45,19 @@
                                 <td>
                                     <?php
                                         $status_class = 'bg-secondary';
-                                        if ($app['status'] == 'approved') $status_class = 'bg-success';
-                                        elseif ($app['status'] == 'rejected') $status_class = 'bg-danger';
-                                        elseif ($app['status'] == 'under_verification') $status_class = 'bg-warning text-dark';
-                                        elseif ($app['status'] == 'submitted') $status_class = 'bg-primary';
+                                        if ($app['status'] == 'APPROVED' || $app['status'] == 'COMPLETED') $status_class = 'bg-success';
+                                        elseif ($app['status'] == 'REJECT') $status_class = 'bg-danger';
+                                        elseif ($app['status'] == 'HOLD' || $app['status'] == 'DOCUMENTS_PENDING' || $app['status'] == 'BANKAR_PENDENCY') $status_class = 'bg-warning text-dark';
+                                        elseif ($app['status'] == 'LOGIN' || $app['status'] == 'DOCUMENTS_UPLOAD') $status_class = 'bg-info text-dark';
+                                        elseif ($app['status'] == 'FRESH') $status_class = 'bg-primary';
                                     ?>
                                     <span class="badge <?php echo $status_class; ?> text-uppercase"><?php echo str_replace('_', ' ', $app['status']); ?></span>
                                 </td>
                                 <td class="pe-4 text-end">
-                                    <a href="<?php echo url('application/view/' . $app['id']); ?>" class="btn btn-sm btn-outline-primary">View</a>
+                                    <div class="btn-group">
+                                        <a href="<?php echo url('application/view/' . $app['id']); ?>" class="btn btn-sm btn-outline-primary" title="View Details"><i class="fas fa-eye"></i></a>
+                                        <a href="<?php echo url('application/edit/' . $app['id']); ?>" class="btn btn-sm btn-outline-secondary" title="Edit Application"><i class="fas fa-edit"></i></a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

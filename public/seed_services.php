@@ -49,8 +49,22 @@ $services_structure = [
         'name' => 'Tax Services',
         'category' => 'TAX',
         'service_type' => 'INTERNAL_FORM',
-        'form_type' => 'TAX_FORM', // This service opens the tax form directly
+        'form_type' => 'TAX_FORM',
         'image_url' => 'images/services/tax.png'
+    ],
+    [
+        'name' => 'Insurance',
+        'category' => 'INSURANCE',
+        'service_type' => 'INTERNAL_FORM',
+        'form_type' => 'INSURANCE_FORM',
+        'image_url' => 'images/services/insurance.png'
+    ],
+    [
+        'name' => 'Credit Card',
+        'category' => 'CREDIT',
+        'service_type' => 'INTERNAL_FORM',
+        'form_type' => 'CREDIT_CARD_FORM',
+        'image_url' => 'images/services/credit_card.png'
     ]
 ];
 

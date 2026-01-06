@@ -247,9 +247,9 @@
                             <h5 class="fw-bold text-primary mt-4 mb-4">Included Services</h5>
                             <?php if (!empty($partner['subscription']['services'])): ?>
                                 <ul class="list-group">
-                                    <?php foreach($partner['subscription']['services'] as $service_name): ?>
+                                    <?php foreach($partner['subscription']['services'] as $service): ?>
                                         <li class="list-group-item border-0 d-flex align-items-center">
-                                            <i class="fas fa-check-circle text-success me-2"></i> <?php echo $service_name; ?>
+                                            <i class="fas fa-check-circle text-success me-2"></i> <?php echo $service['name']; ?>
                                         </li>
                                     <?php endforeach; ?>
                                 </ul>
