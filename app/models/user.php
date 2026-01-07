@@ -166,7 +166,27 @@ function update_full_user($data) {
 
 function delete_user($id) {
     $db = get_db_connection();
-    $db->exec("DELETE FROM user_bank_details WHERE user_id = '$id'");
-    $db->exec("DELETE FROM users WHERE id = '$id'");
-    return true;
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Unassign this user from any partners (if they are an RM)
+        $sql = "UPDATE partners SET rm_id = NULL WHERE rm_id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':id', $id);
+        $stmt->execute();
+
+        // 2. Delete bank details
+        $db->exec("DELETE FROM user_bank_details WHERE user_id = '$id'");
+
+        // 3. Delete user
+        $db->exec("DELETE FROM users WHERE id = '$id'");
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log($e->getMessage());
+        return false;
+    }
 }

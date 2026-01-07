@@ -17,6 +17,8 @@ function auth_login_session($user) {
         redirect('dashboard/super_admin');
     } elseif ($role['code'] === 'WHITE_LABEL') {
         redirect('dashboard/white_label');
+    } elseif ($role['code'] === 'RM') {
+        redirect('rm/index');
     } else {
         redirect('dashboard/index');
     }
@@ -59,6 +61,7 @@ function require_role($role_code) {
         if (isset($_SESSION['role_code'])) {
              if ($_SESSION['role_code'] === 'SUPER_ADMIN') redirect('dashboard/super_admin');
              elseif ($_SESSION['role_code'] === 'WHITE_LABEL') redirect('dashboard/white_label');
+             elseif ($_SESSION['role_code'] === 'RM') redirect('rm/index');
              else redirect('dashboard/index');
         }
 

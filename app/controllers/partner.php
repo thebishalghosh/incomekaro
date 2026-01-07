@@ -112,11 +112,22 @@ function partner_store() {
 }
 
 function partner_edit($id) {
-    require_role('SUPER_ADMIN');
+    require_login();
+
     $partner = get_partner_by_id($id);
     if (!$partner) {
-        redirect('partner/index');
+        redirect('dashboard/index');
     }
+
+    // Access Control
+    if ($_SESSION['role_code'] === 'RM') {
+        if ($partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
+
     $white_labels = get_all_white_labels();
     $plans = get_active_subscription_plans();
     $rms = get_users_by_role('RM');
@@ -124,7 +135,17 @@ function partner_edit($id) {
 }
 
 function partner_update($id) {
-    require_role('SUPER_ADMIN');
+    require_login();
+
+    // Access Control Check before processing
+    if ($_SESSION['role_code'] === 'RM') {
+        $partner = get_partner_by_id($id);
+        if (!$partner || $partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
@@ -195,13 +216,19 @@ function partner_update($id) {
         ];
 
         if (update_full_partner($data)) {
-            // Update RM
-            if (isset($_POST['rm_id'])) {
+            // Update RM (Only Super Admin can reassign RM)
+            if (isset($_POST['rm_id']) && $_SESSION['role_code'] === 'SUPER_ADMIN') {
                 assign_rm_to_partner($id, $_POST['rm_id']);
             }
 
             flash('ptr_success', 'Partner Updated Successfully');
-            redirect('partner/index');
+
+            // Redirect based on role
+            if ($_SESSION['role_code'] === 'RM') {
+                redirect('rm/partners');
+            } else {
+                redirect('partner/index');
+            }
         } else {
             flash('ptr_error', 'Failed to update partner', 'alert alert-danger');
             redirect('partner/edit/' . $id);
@@ -234,17 +261,45 @@ function partner_delete($id) {
 }
 
 function partner_profile($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Allow any logged in user to potentially access, but check role below
+
     $partner = get_partner_by_id($id);
     if (!$partner) {
-        redirect('partner/index');
+        flash('ptr_error', 'Partner not found.', 'alert alert-danger');
+        redirect('dashboard/index');
     }
+
+    // Role-based Access Control
+    if ($_SESSION['role_code'] === 'RM') {
+        // Check if this partner is assigned to this RM
+        if ($partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied: You are not assigned to this partner.');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        // Other roles (like White Label) logic can go here
+        die('Access Denied');
+    }
+
     $rms = get_users_by_role('RM');
     view('dashboard/partner_profile', ['partner' => $partner, 'rms' => $rms]);
 }
 
 function partner_verify_kyc($id) {
-    require_role('SUPER_ADMIN');
+    require_login();
+
+    // Allow Super Admin OR RM to verify KYC
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'RM') {
+        die('Access Denied');
+    }
+
+    // If RM, verify assignment
+    if ($_SESSION['role_code'] === 'RM') {
+        $partner = get_partner_by_id($id);
+        if ($partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied');
+        }
+    }
+
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status = $_POST['status'];
         if (update_kyc_status($id, $status)) {

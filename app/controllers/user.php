@@ -1,5 +1,6 @@
 <?php
 require_once APP_PATH . '/models/user.php';
+require_once APP_PATH . '/core/mailer.php'; // Include Mailer
 
 function user_index() {
     require_role('SUPER_ADMIN');
@@ -9,7 +10,11 @@ function user_index() {
 
 function user_create() {
     require_role('SUPER_ADMIN');
-    $roles = get_all_roles();
+    $all_roles = get_all_roles();
+    // Filter out PARTNER_ADMIN role
+    $roles = array_filter($all_roles, function($role) {
+        return $role['code'] !== 'PARTNER_ADMIN';
+    });
     view('forms/user_form', ['roles' => $roles]);
 }
 
@@ -17,12 +22,14 @@ function user_store() {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
         $profile_image = '';
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/users/';
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
             $file_name = time() . '_' . basename($_FILES['profile_image']['name']);
             $target_file = $upload_dir . $file_name;
             if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
@@ -30,44 +37,40 @@ function user_store() {
             }
         }
 
-        $password_plain = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 8);
-        $password_hash = password_hash($password_plain, PASSWORD_DEFAULT);
+        $raw_password = $_POST['password']; // Keep raw password for email
 
         $data = [
             'id' => uniqid('u-'),
-            'role_id' => trim($_POST['role_id']),
+            'role_id' => $_POST['role_id'],
             'first_name' => trim($_POST['first_name']),
             'last_name' => trim($_POST['last_name']),
             'email' => trim($_POST['email']),
             'phone' => trim($_POST['phone']),
-            'password_hash' => $password_hash,
+            'password_hash' => password_hash($raw_password, PASSWORD_DEFAULT),
             'profile_image' => $profile_image,
             'bank_details' => [
                 'account_holder_name' => trim($_POST['account_holder_name']),
                 'bank_name' => trim($_POST['bank_name']),
                 'account_number' => trim($_POST['account_number']),
                 'ifsc_code' => trim($_POST['ifsc_code']),
-                'branch' => trim($_POST['bank_name']) // Branch is same as bank name in form
+                'branch' => trim($_POST['branch'])
             ]
         ];
 
+        // Check if email exists
+        if (find_user_by_email($data['email'])) {
+            flash('usr_error', 'Email already exists', 'alert alert-danger');
+            redirect('user/create');
+        }
+
         if (create_full_user($data)) {
-            $email_body = "<p>Hello <b>" . $data['first_name'] . "</b>,</p>";
-            $email_body .= "<p>An account has been created for you on <b>" . SITE_NAME . "</b>.</p>";
-            $email_body .= "<div class='info-box'>";
-            $email_body .= "<h3 style='margin-top:0;'>Login Details</h3>";
-            $email_body .= "<p><b>URL:</b> <a href='" . URL_ROOT . "'>" . URL_ROOT . "</a></p>";
-            $email_body .= "<p><b>Email:</b> " . $data['email'] . "</p>";
-            $email_body .= "<p><b>Password:</b> " . $password_plain . "</p>";
-            $email_body .= "</div>";
-            $email_body .= "<p>Please change your password after logging in.</p>";
+            // Send Welcome Email
+            send_welcome_email($data, $raw_password);
 
-            send_email($data['email'], 'Your Account on ' . SITE_NAME, $email_body);
-
-            flash('user_success', 'User Created and Email Sent.');
+            flash('usr_success', 'User Created and Email Sent');
             redirect('user/index');
         } else {
-            flash('user_error', 'Failed to create user.', 'alert alert-danger');
+            flash('usr_error', 'Failed to create user', 'alert alert-danger');
             redirect('user/create');
         }
     }
@@ -76,9 +79,14 @@ function user_store() {
 function user_edit($id) {
     require_role('SUPER_ADMIN');
     $user = find_user_by_id($id);
-    if (!$user) redirect('user/index');
-
-    $roles = get_all_roles();
+    if (!$user) {
+        redirect('user/index');
+    }
+    $all_roles = get_all_roles();
+    // Filter out PARTNER_ADMIN role
+    $roles = array_filter($all_roles, function($role) {
+        return $role['code'] !== 'PARTNER_ADMIN';
+    });
     view('forms/user_form', ['user' => $user, 'roles' => $roles]);
 }
 
@@ -86,12 +94,14 @@ function user_update($id) {
     require_role('SUPER_ADMIN');
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
         $profile_image = null;
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/users/';
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
             $file_name = time() . '_' . basename($_FILES['profile_image']['name']);
             $target_file = $upload_dir . $file_name;
             if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
@@ -101,27 +111,27 @@ function user_update($id) {
 
         $data = [
             'id' => $id,
-            'role_id' => trim($_POST['role_id']),
+            'role_id' => $_POST['role_id'],
             'first_name' => trim($_POST['first_name']),
             'last_name' => trim($_POST['last_name']),
             'email' => trim($_POST['email']),
             'phone' => trim($_POST['phone']),
-            'status' => trim($_POST['status']),
+            'status' => isset($_POST['is_active']) ? 'active' : 'inactive',
             'profile_image' => $profile_image,
             'bank_details' => [
                 'account_holder_name' => trim($_POST['account_holder_name']),
                 'bank_name' => trim($_POST['bank_name']),
                 'account_number' => trim($_POST['account_number']),
                 'ifsc_code' => trim($_POST['ifsc_code']),
-                'branch' => trim($_POST['bank_name'])
+                'branch' => trim($_POST['branch'])
             ]
         ];
 
         if (update_full_user($data)) {
-            flash('user_success', 'User Updated Successfully.');
+            flash('usr_success', 'User Updated');
             redirect('user/index');
         } else {
-            flash('user_error', 'Failed to update user.', 'alert alert-danger');
+            flash('usr_error', 'Failed to update user', 'alert alert-danger');
             redirect('user/edit/' . $id);
         }
     }
@@ -130,16 +140,19 @@ function user_update($id) {
 function user_delete($id) {
     require_role('SUPER_ADMIN');
 
+    // First, get the user to delete image
     $user = find_user_by_id($id);
     if ($user && !empty($user['profile_image'])) {
         $file_path = APP_ROOT . '/public/' . $user['profile_image'];
-        if (file_exists($file_path)) unlink($file_path);
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
     }
 
     if (delete_user($id)) {
-        flash('user_success', 'User Deleted');
+        flash('usr_success', 'User Deleted');
     } else {
-        flash('user_error', 'Could not delete user.', 'alert alert-danger');
+        flash('usr_error', 'Could not delete user.', 'alert alert-danger');
     }
     redirect('user/index');
 }

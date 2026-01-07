@@ -163,54 +163,8 @@
         </div>
     <?php endif; ?>
 
-    <!-- Performance Overview -->
+    <!-- Performance Overview (Charts) -->
     <h4 class="fw-bold text-dark mb-3">Performance Overview</h4>
-
-    <!-- Stat Cards by Category -->
-    <div class="row g-4 mb-4 justify-content-center">
-        <div class="col-lg-2 col-md-4">
-            <div class="card text-white h-100" style="background-color: #6A5ACD;">
-                <div class="card-body text-center">
-                    <h1 class="fw-bold"><?php echo $stats['by_category']['LOAN'] ?? 0; ?></h1>
-                    <p class="mb-0 small">Total Loans</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <div class="card text-white h-100" style="background-color: #20B2AA;">
-                <div class="card-body text-center">
-                    <h1 class="fw-bold"><?php echo $stats['by_category']['TAX'] ?? 0; ?></h1>
-                    <p class="mb-0 small">Total Taxation</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <div class="card text-white h-100" style="background-color: #FF7F50;">
-                <div class="card-body text-center">
-                    <h1 class="fw-bold"><?php echo $stats['by_category']['CREDIT'] ?? 0; ?></h1>
-                    <p class="mb-0 small">Total Credit Cards</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <div class="card text-white h-100" style="background-color: #4682B4;">
-                <div class="card-body text-center">
-                    <h1 class="fw-bold"><?php echo $stats['by_category']['INSURANCE'] ?? 0; ?></h1>
-                    <p class="mb-0 small">Total Insurance</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <div class="card text-white bg-dark h-100">
-                <div class="card-body text-center">
-                    <h1 class="fw-bold"><?php echo $stats['total_applications'] ?? 0; ?></h1>
-                    <p class="mb-0 small">Total Applications</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts -->
     <div class="row g-4">
         <div class="col-md-6">
             <div class="card border-0 shadow-sm h-100">
@@ -282,12 +236,12 @@
         var serviceData = google.visualization.arrayToDataTable([
             ['Service', 'Applications', { role: 'style' }],
             <?php
-                if (!empty($stats['by_root_service'])) {
+                if (!empty($stats['by_category'])) {
                     $colors = ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'];
                     $i = 0;
-                    foreach ($stats['by_root_service'] as $name => $count) {
+                    foreach ($stats['by_category'] as $cat => $count) {
                         $color = $colors[$i % count($colors)];
-                        echo "['" . $name . "', " . $count . ", '$color'],";
+                        echo "['" . $cat . "', " . $count . ", '$color'],";
                         $i++;
                     }
                 } else {

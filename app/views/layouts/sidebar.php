@@ -59,6 +59,31 @@
                 </a>
             </li>
 
+        <!-- RM MENU -->
+        <?php elseif (isset($_SESSION['role_code']) && $_SESSION['role_code'] == 'RM'): ?>
+            <li>
+                <a href="<?php echo url('rm/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'rm/index') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">My Business</li>
+            <li>
+                <a href="<?php echo url('rm/partners'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'rm/partners') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-handshake"></i> My Partners
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('rm/applications'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'rm/applications') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-file-alt"></i> Applications
+                </a>
+            </li>
+            <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">Reports</li>
+            <li>
+                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'report') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-chart-line"></i> Performance
+                </a>
+            </li>
+
         <!-- WHITE LABEL MENU -->
         <?php elseif (isset($_SESSION['role_code']) && $_SESSION['role_code'] == 'WHITE_LABEL'): ?>
             <li>
