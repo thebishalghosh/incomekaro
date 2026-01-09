@@ -1,7 +1,7 @@
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <a href="<?php echo url('dashboard/super_admin'); ?>" class="sidebar-brand">
-            <img src="<?php echo asset('images/logo.png'); ?>" alt="<?php echo SITE_NAME; ?>" style="max-height: 40px;">
+            <img src="<?php echo get_logo_url(); ?>" alt="<?php echo get_site_name(); ?>" style="max-height: 40px;">
         </a>
     </div>
     <ul class="sidebar-menu">

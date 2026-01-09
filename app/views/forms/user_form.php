@@ -83,29 +83,34 @@
                     <hr class="my-5">
                     <h5 class="fw-bold text-primary mb-4">Bank Details (Optional)</h5>
 
+                    <?php
+                        // Helper to safely get bank details
+                        $bank = isset($user['bank_details']) && is_array($user['bank_details']) ? $user['bank_details'] : [];
+                    ?>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Account Holder Name</label>
-                            <input type="text" class="form-control" name="account_holder_name" value="<?php echo isset($user['bank_details']) ? $user['bank_details']['account_holder_name'] : ''; ?>">
+                            <input type="text" class="form-control" name="account_holder_name" value="<?php echo $bank['account_holder_name'] ?? ''; ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Bank Name</label>
-                            <input type="text" class="form-control" name="bank_name" value="<?php echo isset($user['bank_details']) ? $user['bank_details']['bank_name'] : ''; ?>">
+                            <input type="text" class="form-control" name="bank_name" value="<?php echo $bank['bank_name'] ?? ''; ?>">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Account Number</label>
-                            <input type="text" class="form-control" name="account_number" value="<?php echo isset($user['bank_details']) ? $user['bank_details']['account_number'] : ''; ?>">
+                            <input type="text" class="form-control" name="account_number" value="<?php echo $bank['account_number'] ?? ''; ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">IFSC Code</label>
-                            <input type="text" class="form-control" name="ifsc_code" value="<?php echo isset($user['bank_details']) ? $user['bank_details']['ifsc_code'] : ''; ?>">
+                            <input type="text" class="form-control" name="ifsc_code" value="<?php echo $bank['ifsc_code'] ?? ''; ?>">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label">Branch</label>
-                        <input type="text" class="form-control" name="branch" value="<?php echo isset($user['bank_details']) ? $user['bank_details']['branch'] : ''; ?>">
+                        <input type="text" class="form-control" name="branch" value="<?php echo $bank['branch'] ?? ''; ?>">
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">

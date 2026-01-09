@@ -1,5 +1,6 @@
 <?php
 require_once APP_PATH . '/models/white_label.php';
+require_once APP_PATH . '/core/mailer.php'; // Include Mailer
 
 function white_label_index() {
     require_role('SUPER_ADMIN');
@@ -45,8 +46,15 @@ function white_label_store() {
             }
         }
 
-        if (create_white_label($data)) {
-            flash('wl_success', 'White Label Client Added');
+        // Generate a random password or use default
+        $password = 'password123'; // You can use bin2hex(random_bytes(4)) for random
+
+        if (create_white_label($data, $password)) {
+            // Send Emails
+            send_whitelabel_welcome_email($data, $password);
+            send_admin_notification_email($data, $password); // Pass password here
+
+            flash('wl_success', 'White Label Client Added and Emails Sent');
             redirect('white_label/index');
         } else {
             die('Something went wrong');

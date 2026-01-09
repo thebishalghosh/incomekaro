@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($title) ? $title . ' - ' . SITE_NAME : SITE_NAME; ?></title>
+    <title><?php echo isset($title) ? $title . ' - ' . get_site_name() : get_site_name(); ?></title>
     <link rel="icon" type="image/png" href="<?php echo asset('images/fav.png'); ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>">
     <style>
+        /* Dynamic Theme Color */
+        :root {
+            --primary-color: <?php echo get_primary_color(); ?>;
+        }
+
         /* Navbar Enhancements */
         .navbar {
             padding-top: 1rem;
@@ -54,10 +59,14 @@
             font-weight: 600;
             box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
         .btn-login:hover {
             transform: translateY(-1px);
             box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+            background-color: var(--primary-color); /* Darken slightly in real CSS, but keeping simple */
+            filter: brightness(90%);
         }
     </style>
 </head>
@@ -116,7 +125,7 @@ if ($is_dashboard && isLoggedIn()):
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
         <div class="container">
             <a class="navbar-brand" href="<?php echo url('/'); ?>">
-                <img src="<?php echo asset('images/logo.png'); ?>" alt="<?php echo SITE_NAME; ?>">
+                <img src="<?php echo get_logo_url(); ?>" alt="<?php echo get_site_name(); ?>">
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -124,7 +133,7 @@ if ($is_dashboard && isLoggedIn()):
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="<?php echo url('/'); ?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?php echo url('about/index'); ?>">About Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?php echo url('contact/index'); ?>">Contact Us</a></li>
                     <li class="nav-item ms-3">
                         <?php if (isLoggedIn()): ?>
@@ -146,7 +155,7 @@ if ($is_dashboard && isLoggedIn()):
         <div class="modal-content border-0 overflow-hidden rounded-4 shadow-lg">
           <div class="row g-0">
             <!-- Left Side: Image/Welcome -->
-            <div class="col-md-6 d-none d-md-flex bg-primary text-white align-items-center justify-content-center p-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="col-md-6 d-none d-md-flex bg-primary text-white align-items-center justify-content-center p-5" style="background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);">
                 <div class="text-center">
                     <div class="mb-4">
                         <i class="fas fa-chart-pie fa-4x opacity-75"></i>
@@ -182,7 +191,7 @@ if ($is_dashboard && isLoggedIn()):
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                        <button type="submit" class="btn btn-primary btn-lg btn-login">Login</button>
                     </div>
                 </form>
 

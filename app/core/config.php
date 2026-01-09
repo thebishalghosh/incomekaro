@@ -30,7 +30,9 @@ define('DB_NAME', getenv('DB_NAME') ?: 'incomekaro');
 // URL Root
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-define('URL_ROOT', getenv('APP_URL') ?: ($protocol . "://" . $host));
+
+// Dynamic URL_ROOT based on current host to support White Label domains
+define('URL_ROOT', $protocol . "://" . $host);
 
 // Site Name
 define('SITE_NAME', 'IncomeKaro');
