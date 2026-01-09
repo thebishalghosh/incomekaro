@@ -54,6 +54,11 @@
                 </a>
             </li>
             <li>
+                <a href="<?php echo url('instant_panel/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'instant_panel') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-external-link-alt"></i> Instant Panels
+                </a>
+            </li>
+            <li>
                 <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'report') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-chart-bar"></i> Global Reports
                 </a>

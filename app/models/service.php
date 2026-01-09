@@ -36,8 +36,9 @@ function get_child_services($parent_id) {
 
 function create_service($data) {
     $db = get_db_connection();
-    $sql = "INSERT INTO services (id, name, description, url, image_url, category, is_active, service_type, parent_id, form_type)
-            VALUES (:id, :name, :description, :url, :image_url, :category, :is_active, :service_type, :parent_id, :form_type)";
+    // Added panel_type
+    $sql = "INSERT INTO services (id, name, description, url, image_url, category, is_active, service_type, parent_id, form_type, panel_type)
+            VALUES (:id, :name, :description, :url, :image_url, :category, :is_active, :service_type, :parent_id, :form_type, :panel_type)";
 
     $stmt = $db->prepare($sql);
     $stmt->bindValue(':id', $data['id']);
@@ -50,12 +51,14 @@ function create_service($data) {
     $stmt->bindValue(':service_type', $data['service_type']);
     $stmt->bindValue(':parent_id', $data['parent_id'] ?: null);
     $stmt->bindValue(':form_type', $data['form_type']);
+    $stmt->bindValue(':panel_type', $data['panel_type'] ?? null); // Added binding
 
     return $stmt->execute();
 }
 
 function update_service($data) {
     $db = get_db_connection();
+    // Added panel_type
     $sql = "UPDATE services SET
             name = :name,
             description = :description,
@@ -64,7 +67,8 @@ function update_service($data) {
             is_active = :is_active,
             service_type = :service_type,
             parent_id = :parent_id,
-            form_type = :form_type" .
+            form_type = :form_type,
+            panel_type = :panel_type" .
             ($data['image_url'] ? ", image_url = :image_url" : "") .
             " WHERE id = :id";
 
@@ -78,6 +82,7 @@ function update_service($data) {
     $stmt->bindValue(':service_type', $data['service_type']);
     $stmt->bindValue(':parent_id', $data['parent_id'] ?: null);
     $stmt->bindValue(':form_type', $data['form_type']);
+    $stmt->bindValue(':panel_type', $data['panel_type'] ?? null); // Added binding
     if ($data['image_url']) {
         $stmt->bindValue(':image_url', $data['image_url']);
     }

@@ -65,6 +65,14 @@ $services_structure = [
         'service_type' => 'INTERNAL_FORM',
         'form_type' => 'CREDIT_CARD_FORM',
         'image_url' => 'images/services/credit_card.png'
+    ],
+    // Empty Instant Panel Container
+    [
+        'name' => 'Instant Panel',
+        'category' => 'INSTANT_PANEL',
+        'service_type' => 'INTERNAL_FORM',
+        'form_type' => 'NONE',
+        'image_url' => 'images/services/instant_panel.png'
     ]
 ];
 
@@ -81,8 +89,8 @@ function seed_services($db, $services, $parent_id = null) {
             $service_id = $existing_service['id'];
         } else {
             // Insert service
-            $sql = "INSERT INTO services (id, name, category, service_type, form_type, parent_id, image_url, is_active)
-                    VALUES (:id, :name, :category, :service_type, :form_type, :parent_id, :image_url, 1)";
+            $sql = "INSERT INTO services (id, name, category, service_type, form_type, parent_id, image_url, panel_type, url, is_active)
+                    VALUES (:id, :name, :category, :service_type, :form_type, :parent_id, :image_url, :panel_type, :url, 1)";
 
             $stmt = $db->prepare($sql);
 
@@ -94,7 +102,9 @@ function seed_services($db, $services, $parent_id = null) {
                 'service_type' => $service_data['service_type'] ?? 'INTERNAL_FORM',
                 'form_type' => $service_data['form_type'] ?? 'NONE',
                 'parent_id' => $parent_id,
-                'image_url' => $service_data['image_url'] ?? null
+                'image_url' => $service_data['image_url'] ?? null,
+                'panel_type' => $service_data['panel_type'] ?? null,
+                'url' => $service_data['url'] ?? null
             ];
 
             if ($stmt->execute($params)) {

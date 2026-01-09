@@ -10,25 +10,24 @@ function subscription_index() {
 
 function subscription_create() {
     require_role('SUPER_ADMIN');
-    // Fetch only top-level services to be included in plans
+    // Fetch all top-level services (including Instant Panel)
     $services = get_top_level_services();
     view('forms/subscription_form', ['services' => $services]);
 }
 
 function subscription_store() {
     require_role('SUPER_ADMIN');
-
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
         $data = [
-            'id' => 'plan-' . uniqid(),
+            'id' => uniqid('plan-'),
             'name' => trim($_POST['name']),
             'price' => trim($_POST['price']),
             'gst_rate' => trim($_POST['gst_rate']),
             'description' => trim($_POST['description']),
             'footer_description' => trim($_POST['footer_description']),
-            'status' => trim($_POST['status']),
+            'status' => $_POST['status'],
             'services' => $_POST['services'] ?? []
         ];
 
@@ -48,14 +47,15 @@ function subscription_edit($id) {
     if (!$plan) {
         redirect('subscription/index');
     }
-    // Fetch only top-level services to be included in plans
+
+    // Fetch all top-level services (including Instant Panel)
     $services = get_top_level_services();
+
     view('forms/subscription_form', ['plan' => $plan, 'services' => $services]);
 }
 
 function subscription_update($id) {
     require_role('SUPER_ADMIN');
-
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
@@ -66,7 +66,7 @@ function subscription_update($id) {
             'gst_rate' => trim($_POST['gst_rate']),
             'description' => trim($_POST['description']),
             'footer_description' => trim($_POST['footer_description']),
-            'status' => trim($_POST['status']),
+            'status' => $_POST['status'],
             'services' => $_POST['services'] ?? []
         ];
 
@@ -82,11 +82,10 @@ function subscription_update($id) {
 
 function subscription_delete($id) {
     require_role('SUPER_ADMIN');
-
     if (delete_subscription_plan($id)) {
         flash('sub_success', 'Subscription Plan Deleted');
     } else {
-        flash('sub_error', 'Could not delete plan.', 'alert alert-danger');
+        flash('sub_error', 'Could not delete plan. It may have associated partners.', 'alert alert-danger');
     }
     redirect('subscription/index');
 }

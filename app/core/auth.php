@@ -1,6 +1,10 @@
 <?php
 // Auth Helper Functions
 
+// Ensure User and Partner models are available for auth checks
+require_once APP_PATH . '/models/user.php';
+require_once APP_PATH . '/models/partner.php';
+
 function auth_login_session($user) {
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_email'] = $user['email'];
@@ -8,7 +12,6 @@ function auth_login_session($user) {
     $_SESSION['role_id'] = $user['role_id'];
 
     // Fetch role code for easier checking
-    require_once APP_PATH . '/models/user.php';
     $role = get_user_role($user['role_id']);
     $_SESSION['role_code'] = $role['code'];
 
@@ -40,7 +43,6 @@ function require_login() {
     }
 
     // Check if user is active
-    require_once APP_PATH . '/models/user.php';
     $user = find_user_by_id($_SESSION['user_id']);
 
     if ($user && $user['status'] === 'inactive') {

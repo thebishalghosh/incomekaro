@@ -103,7 +103,7 @@ function application_update($id) {
                     $file_name = time() . '_' . uniqid() . '.' . $file_ext;
                     $target_file = $upload_dir . $file_name;
 
-                    if (move_uploaded_file($_FILES['docs']['tmp_name'][$key], $target_file)) {
+                    if (move_uploaded_file($_FILES['docs']['tmp_name'], $target_file)) {
                         $documents[] = [
                             'type' => strtoupper($key),
                             'url' => 'uploads/applications/' . $file_name
@@ -180,6 +180,20 @@ function application_select($parent_id) {
     require_kyc_verification();
 
     $parent_service = get_service_by_id($parent_id);
+
+    // Special handling for Instant Panel
+    if ($parent_service['category'] === 'INSTANT_PANEL') {
+        $db = get_db_connection();
+        $sql = "SELECT DISTINCT panel_type FROM services WHERE parent_id = :parent_id AND panel_type IS NOT NULL";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':parent_id', $parent_id);
+        $stmt->execute();
+        $panel_types = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        view('application/select_panel_type', ['parent_service' => $parent_service, 'panel_types' => $panel_types]);
+        return;
+    }
+
     $child_services = get_child_services($parent_id);
 
     if (empty($child_services)) {
@@ -278,7 +292,7 @@ function application_store() {
                     $file_name = time() . '_' . uniqid() . '.' . $file_ext;
                     $target_file = $upload_dir . $file_name;
 
-                    if (move_uploaded_file($_FILES['docs']['tmp_name'][$key], $target_file)) {
+                    if (move_uploaded_file($_FILES['docs']['tmp_name'], $target_file)) {
                         $documents[] = [
                             'type' => strtoupper($key),
                             'url' => 'uploads/applications/' . $file_name

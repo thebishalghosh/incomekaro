@@ -129,7 +129,13 @@
     <h4 class="fw-bold text-dark mb-3">My Services</h4>
     <?php if (!empty($partner['subscription']['services'])): ?>
         <div class="row g-4 mb-5">
-            <?php foreach ($partner['subscription']['services'] as $svc): ?>
+            <?php
+                // Filter for parent services only
+                $parent_services = array_filter($partner['subscription']['services'], function($svc) {
+                    return empty($svc['parent_id']); // Changed from is_null to empty to handle 0 or empty string
+                });
+            ?>
+            <?php foreach ($parent_services as $svc): ?>
                 <?php
                     $link = '#';
                     $target = '';
@@ -137,18 +143,29 @@
                         $link = $svc['url'];
                         $target = '_blank';
                     } elseif ($svc['service_type'] === 'INTERNAL_FORM') {
-                        if ($svc['form_type'] === 'NONE') {
-                            $link = url('application/select/' . $svc['id']);
-                        } else {
-                            $link = url('application/create/' . $svc['id']);
-                        }
+                        // If it's a parent, it should go to the select page
+                        $link = url('application/select/' . $svc['id']);
                     }
                 ?>
                 <div class="col-md-3 col-sm-6">
                     <a href="<?php echo $link; ?>" target="<?php echo $target; ?>" class="text-decoration-none">
                         <div class="card h-100 shadow-sm border-0 service-card">
                             <div class="card-body text-center p-4">
-                                <img src="<?php echo asset($svc['image_url'] ?: 'images/default-avatar.png'); ?>" alt="<?php echo $svc['name']; ?>" class="mb-3" style="height: 80px; object-fit: contain;">
+                                <?php if (!empty($svc['image_url'])): ?>
+                                    <img src="<?php echo asset($svc['image_url']); ?>"
+                                         alt="<?php echo $svc['name']; ?>"
+                                         class="mb-3"
+                                         style="height: 80px; object-fit: contain;"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=Icon'; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="icon-box bg-light text-primary rounded-circle mx-auto mb-3 align-items-center justify-content-center" style="width: 80px; height: 80px; display: none;">
+                                        <i class="fas fa-box-open fa-2x"></i>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="icon-box bg-light text-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                        <i class="fas fa-box-open fa-2x"></i>
+                                    </div>
+                                <?php endif; ?>
+
                                 <h6 class="card-title fw-bold text-dark mb-0"><?php echo $svc['name']; ?></h6>
                                 <p class="small text-muted mt-2 mb-0"><?php echo $svc['category']; ?></p>
                             </div>
@@ -163,8 +180,54 @@
         </div>
     <?php endif; ?>
 
-    <!-- Performance Overview (Charts) -->
+    <!-- Performance Overview -->
     <h4 class="fw-bold text-dark mb-3">Performance Overview</h4>
+
+    <!-- Stat Cards by Category -->
+    <div class="row g-4 mb-4 justify-content-center">
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #6A5ACD;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['LOAN'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Loans</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #20B2AA;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['TAX'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Taxation</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #FF7F50;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['CREDIT'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Credit Cards</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white h-100" style="background-color: #4682B4;">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['by_category']['INSURANCE'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Insurance</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <div class="card text-white bg-dark h-100">
+                <div class="card-body text-center">
+                    <h1 class="fw-bold"><?php echo $stats['total_applications'] ?? 0; ?></h1>
+                    <p class="mb-0 small">Total Applications</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
     <div class="row g-4">
         <div class="col-md-6">
             <div class="card border-0 shadow-sm h-100">
@@ -236,12 +299,12 @@
         var serviceData = google.visualization.arrayToDataTable([
             ['Service', 'Applications', { role: 'style' }],
             <?php
-                if (!empty($stats['by_category'])) {
+                if (!empty($stats['by_root_service'])) {
                     $colors = ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'];
                     $i = 0;
-                    foreach ($stats['by_category'] as $cat => $count) {
+                    foreach ($stats['by_root_service'] as $name => $count) {
                         $color = $colors[$i % count($colors)];
-                        echo "['" . $cat . "', " . $count . ", '$color'],";
+                        echo "['" . $name . "', " . $count . ", '$color'],";
                         $i++;
                     }
                 } else {

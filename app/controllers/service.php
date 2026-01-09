@@ -3,15 +3,26 @@ require_once APP_PATH . '/models/service.php';
 
 function service_index() {
     require_role('SUPER_ADMIN');
-    // Only show top-level services in the main list to keep it clean
-    $services = get_top_level_services();
+
+    // Fetch all top-level services (including Instant Panel parent)
+    $db = get_db_connection();
+    $sql = "SELECT * FROM services WHERE parent_id IS NULL ORDER BY name";
+    $stmt = $db->query($sql);
+    $services = $stmt->fetchAll();
+
     view('dashboard/services_list', ['services' => $services]);
 }
 
 function service_create() {
     require_role('SUPER_ADMIN');
     // Fetch only top-level services to be used as parents
-    $parent_services = get_top_level_services();
+    // We exclude Instant Panel here because we don't want regular services to be children of it
+    // (Instant Panel children are managed via their own module)
+    $db = get_db_connection();
+    $sql = "SELECT * FROM services WHERE parent_id IS NULL AND category != 'INSTANT_PANEL' ORDER BY name";
+    $stmt = $db->query($sql);
+    $parent_services = $stmt->fetchAll();
+
     view('forms/service_form', ['all_services' => $parent_services]);
 }
 
@@ -63,8 +74,12 @@ function service_edit($id) {
     if (!$service) {
         redirect('service/index');
     }
-    // Fetch only top-level services to be used as parents
-    $parent_services = get_top_level_services();
+
+    $db = get_db_connection();
+    $sql = "SELECT * FROM services WHERE parent_id IS NULL AND category != 'INSTANT_PANEL' ORDER BY name";
+    $stmt = $db->query($sql);
+    $parent_services = $stmt->fetchAll();
+
     view('forms/service_form', ['service' => $service, 'all_services' => $parent_services]);
 }
 
