@@ -10,6 +10,32 @@
     </div>
 </div>
 
+<!-- Subscription Status Alert -->
+<?php if (!empty($subscription)): ?>
+    <div class="alert alert-light border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+        <div class="icon-box bg-primary-subtle text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+            <i class="fas fa-crown"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold mb-0 text-dark">Active Plan: <?php echo $subscription['plan_name']; ?></h6>
+            <small class="text-muted">Valid until <?php echo date('d M, Y', strtotime($subscription['end_date'])); ?></small>
+        </div>
+        <?php if ($subscription['due_amount'] > 0): ?>
+            <div class="text-end">
+                <span class="badge bg-danger">Due: ₹<?php echo number_format($subscription['due_amount'], 2); ?></span>
+            </div>
+        <?php else: ?>
+            <div class="text-end">
+                <span class="badge bg-success">Active</span>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php else: ?>
+    <div class="alert alert-warning border-0 shadow-sm mb-4">
+        <i class="fas fa-exclamation-triangle me-2"></i> No active subscription found. Please contact support.
+    </div>
+<?php endif; ?>
+
 <!-- Stats Row -->
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">

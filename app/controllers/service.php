@@ -1,14 +1,29 @@
 <?php
 require_once APP_PATH . '/models/service.php';
+require_once APP_PATH . '/models/white_label.php';
+require_once APP_PATH . '/models/user.php';
 
 function service_index() {
-    require_role('SUPER_ADMIN');
+    require_login();
 
     // Fetch all top-level services (including Instant Panel parent)
     $db = get_db_connection();
     $sql = "SELECT * FROM services WHERE parent_id IS NULL ORDER BY name";
     $stmt = $db->query($sql);
     $services = $stmt->fetchAll();
+
+    // Filter for White Label Admin
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $allowed_ids = get_white_label_allowed_services($user['white_label_id']);
+
+        $services = array_filter($services, function($svc) use ($allowed_ids) {
+            return in_array($svc['id'], $allowed_ids);
+        });
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        // Other roles shouldn't access this page usually, but just in case
+        die('Access Denied');
+    }
 
     view('dashboard/services_list', ['services' => $services]);
 }

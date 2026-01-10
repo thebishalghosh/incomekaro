@@ -165,10 +165,11 @@ function delete_white_label($id) {
         // 1. Delete Contact Inquiries
         $db->exec("DELETE FROM contact_inquiries WHERE white_label_id = '$id'");
 
-        // 2. Delete White Label Settings & Domains
+        // 2. Delete White Label Settings & Domains & Subscriptions
         $db->exec("DELETE FROM white_label_settings WHERE white_label_id = '$id'");
         $db->exec("DELETE FROM white_label_domains WHERE white_label_id = '$id'");
         $db->exec("DELETE FROM white_label_services WHERE white_label_id = '$id'");
+        $db->exec("DELETE FROM white_label_subscriptions WHERE white_label_id = '$id'");
 
         // 3. Delete Applications & Related Data
         // First get all application IDs to delete child records
@@ -258,4 +259,71 @@ function get_white_label_stats($white_label_id) {
     $stats['recent_applications'] = $stmt->fetchAll();
 
     return $stats;
+}
+
+// --- Subscription Helpers ---
+
+function get_white_label_subscription($white_label_id) {
+    $db = get_db_connection();
+    $sql = "SELECT wls.*, sp.name as plan_name, sp.price as plan_price
+            FROM white_label_subscriptions wls
+            JOIN subscription_plans sp ON wls.plan_id = sp.id
+            WHERE wls.white_label_id = :id AND wls.status = 'active'
+            ORDER BY wls.created_at DESC LIMIT 1";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['id' => $white_label_id]);
+    return $stmt->fetch();
+}
+
+function assign_white_label_subscription($data) {
+    $db = get_db_connection();
+
+    try {
+        $db->beginTransaction();
+
+        // Deactivate existing active subscriptions
+        $update = $db->prepare("UPDATE white_label_subscriptions SET status = 'expired' WHERE white_label_id = :id AND status = 'active'");
+        $update->execute(['id' => $data['white_label_id']]);
+
+        // Create new subscription
+        $sql = "INSERT INTO white_label_subscriptions (id, white_label_id, plan_id, start_date, end_date, amount, due_amount, payment_status, status)
+                VALUES (:id, :white_label_id, :plan_id, :start_date, :end_date, :amount, :due_amount, :payment_status, 'active')";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':id', uniqid('wls-'));
+        $stmt->bindValue(':white_label_id', $data['white_label_id']);
+        $stmt->bindValue(':plan_id', $data['plan_id']);
+        $stmt->bindValue(':start_date', $data['start_date']);
+        $stmt->bindValue(':end_date', $data['end_date']);
+        $stmt->bindValue(':amount', $data['amount']);
+        $stmt->bindValue(':due_amount', $data['due_amount'] ?? 0.00); // Added
+        $stmt->bindValue(':payment_status', $data['payment_status']);
+        $stmt->execute();
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log($e->getMessage());
+        return false;
+    }
+}
+
+function get_white_label_allowed_services($white_label_id) {
+    $db = get_db_connection();
+
+    // 1. Get Active Subscription
+    $sub = get_white_label_subscription($white_label_id);
+
+    if (!$sub) {
+        return []; // No active subscription = No services
+    }
+
+    // 2. Get Services linked to the Plan
+    $sql = "SELECT service_id FROM subscription_plan_services WHERE plan_id = :plan_id";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['plan_id' => $sub['plan_id']]);
+    $allowed_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    return $allowed_ids;
 }

@@ -154,7 +154,7 @@ if ($is_dashboard && isLoggedIn()):
                     <li class="nav-item"><a class="nav-link" href="<?php echo url('/'); ?>">Home</a></li>
 
                     <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
-                        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<?php echo url('about/index'); ?>">About</a></li>
                         <li class="nav-item"><a class="nav-link" href="<?php echo url('contact/index'); ?>">Contact Us</a></li>
                     <?php endif; ?>
 

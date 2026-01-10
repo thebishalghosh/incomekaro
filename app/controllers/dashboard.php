@@ -34,8 +34,9 @@ function dashboard_white_label() {
     }
 
     $stats = get_white_label_stats($user['white_label_id']);
+    $subscription = get_white_label_subscription($user['white_label_id']); // Fetch active sub
 
-    view('dashboard/white_label', ['stats' => $stats]);
+    view('dashboard/white_label', ['stats' => $stats, 'subscription' => $subscription]);
 }
 
 function dashboard_partner() {

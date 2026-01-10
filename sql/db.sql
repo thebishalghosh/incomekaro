@@ -362,3 +362,29 @@ CREATE TABLE contact_inquiries (
                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                    FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id) ON DELETE SET NULL
 );
+
+
+
+
+-- 1. Add 'type' column to subscription_plans
+ALTER TABLE subscription_plans
+    ADD COLUMN type ENUM('PARTNER', 'WHITE_LABEL') NOT NULL DEFAULT 'PARTNER' AFTER name;
+
+-- 2. Create white_label_subscriptions table
+CREATE TABLE white_label_subscriptions (
+                                           id CHAR(36) PRIMARY KEY,
+                                           white_label_id CHAR(36) NOT NULL,
+                                           plan_id CHAR(36) NOT NULL,
+                                           start_date DATE NOT NULL,
+                                           end_date DATE NOT NULL,
+                                           amount DECIMAL(15,2) DEFAULT 0.00,
+                                           payment_status ENUM('Paid', 'Pending', 'Due') DEFAULT 'Pending',
+                                           status ENUM('active', 'expired', 'cancelled') DEFAULT 'active',
+                                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                           FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id) ON DELETE CASCADE,
+                                           FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE
+);
+
+ALTER TABLE subscription_plans ADD COLUMN white_label_id CHAR(36) NULL AFTER id;
+ALTER TABLE subscription_plans ADD CONSTRAINT fk_sp_wl FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id) ON DELETE CASCADE;
+ALTER TABLE white_label_subscriptions ADD COLUMN due_amount DECIMAL(15,2) DEFAULT 0.00 AFTER amount;

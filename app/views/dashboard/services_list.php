@@ -6,10 +6,14 @@
         <p class="text-muted">Manage the core services offered by the platform.</p>
     </div>
     <div class="col-md-6 text-end">
-        <a href="<?php echo url('service/create'); ?>" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Service
-        </a>
-        <a href="<?php echo url('dashboard/super_admin'); ?>" class="btn btn-secondary">Back to Dashboard</a>
+        <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+            <a href="<?php echo url('service/create'); ?>" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Service
+            </a>
+            <a href="<?php echo url('dashboard/super_admin'); ?>" class="btn btn-secondary">Back to Dashboard</a>
+        <?php else: ?>
+            <a href="<?php echo url('dashboard/white_label'); ?>" class="btn btn-secondary">Back to Dashboard</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -27,7 +31,9 @@
                         <th>Category</th>
                         <th>Type</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                            <th>Actions</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,25 +71,28 @@
                                         <span class="badge bg-danger">Inactive</span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
-                                    <a href="<?php echo url('service/edit/' . $svc['id']); ?>" class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i></a>
 
-                                    <?php
-                                        // Protect Instant Panel AND Internal Forms from deletion
-                                        $is_protected = ($svc['category'] === 'INSTANT_PANEL' || $svc['service_type'] === 'INTERNAL_FORM');
-                                    ?>
+                                <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                                    <td>
+                                        <a href="<?php echo url('service/edit/' . $svc['id']); ?>" class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i></a>
 
-                                    <?php if (!$is_protected): ?>
-                                        <a href="<?php echo url('service/delete/' . $svc['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');"><i class="fas fa-trash"></i></a>
-                                    <?php else: ?>
-                                        <button class="btn btn-sm btn-secondary" disabled title="Cannot delete core system service"><i class="fas fa-trash"></i></button>
-                                    <?php endif; ?>
-                                </td>
+                                        <?php
+                                            // Protect Instant Panel AND Internal Forms from deletion
+                                            $is_protected = ($svc['category'] === 'INSTANT_PANEL' || $svc['service_type'] === 'INTERNAL_FORM');
+                                        ?>
+
+                                        <?php if (!$is_protected): ?>
+                                            <a href="<?php echo url('service/delete/' . $svc['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');"><i class="fas fa-trash"></i></a>
+                                        <?php else: ?>
+                                            <button class="btn btn-sm btn-secondary" disabled title="Cannot delete core system service"><i class="fas fa-trash"></i></button>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center py-4">No services found.</td>
+                            <td colspan="<?php echo ($_SESSION['role_code'] === 'SUPER_ADMIN') ? '6' : '5'; ?>" class="text-center py-4">No services found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

@@ -1,11 +1,11 @@
 <?php
 require_once APP_PATH . '/models/white_label.php';
-require_once APP_PATH . '/core/mailer.php'; // Include Mailer
+require_once APP_PATH . '/models/subscription.php'; // Need to fetch plans
 
 function white_label_index() {
     require_role('SUPER_ADMIN');
-    $white_labels = get_all_white_labels();
-    view('dashboard/white_labels_list', ['white_labels' => $white_labels]);
+    $clients = get_all_white_labels();
+    view('dashboard/white_labels_list', ['clients' => $clients]);
 }
 
 function white_label_create() {
@@ -15,92 +15,71 @@ function white_label_create() {
 
 function white_label_store() {
     require_role('SUPER_ADMIN');
-
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // Sanitize
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
-
+        // Sanitize and Validate
         $data = [
             'id' => uniqid('wl-'),
             'company_name' => trim($_POST['company_name']),
             'primary_domain' => trim($_POST['primary_domain']),
-            'primary_color' => trim($_POST['primary_color']),
-            'secondary_color' => trim($_POST['secondary_color']),
+            'logo_url' => '', // Handle upload
+            'primary_color' => $_POST['primary_color'],
+            'secondary_color' => $_POST['secondary_color'],
             'support_email' => trim($_POST['support_email']),
-            'status' => trim($_POST['status']),
-            'logo_url' => ''
+            'status' => $_POST['status']
         ];
 
-        // Handle File Upload
+        // Handle Logo Upload
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/logos/';
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
-
             $file_name = time() . '_' . basename($_FILES['logo']['name']);
-            $target_file = $upload_dir . $file_name;
-
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], $target_file)) {
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $file_name)) {
                 $data['logo_url'] = 'uploads/logos/' . $file_name;
             }
         }
 
-        // Generate a random password or use default
-        $password = 'password123'; // You can use bin2hex(random_bytes(4)) for random
-
-        if (create_white_label($data, $password)) {
-            // Send Emails
-            send_whitelabel_welcome_email($data, $password);
-            send_admin_notification_email($data, $password); // Pass password here
-
-            flash('wl_success', 'White Label Client Added and Emails Sent');
+        if (create_white_label($data)) {
+            flash('wl_success', 'White Label Client Created Successfully');
             redirect('white_label/index');
         } else {
-            die('Something went wrong');
+            flash('wl_error', 'Failed to create client', 'alert alert-danger');
+            redirect('white_label/create');
         }
     }
 }
 
 function white_label_edit($id) {
     require_role('SUPER_ADMIN');
-    $wl = get_white_label_by_id($id);
-    if (!$wl) {
+    $client = get_white_label_by_id($id);
+    if (!$client) {
         redirect('white_label/index');
     }
-    view('forms/white_label_form', ['wl' => $wl]);
+    view('forms/white_label_form', ['client' => $client]);
 }
 
 function white_label_update($id) {
     require_role('SUPER_ADMIN');
-
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
-
-        $wl = get_white_label_by_id($id);
+        $client = get_white_label_by_id($id);
 
         $data = [
             'id' => $id,
             'company_name' => trim($_POST['company_name']),
             'primary_domain' => trim($_POST['primary_domain']),
-            'primary_color' => trim($_POST['primary_color']),
-            'secondary_color' => trim($_POST['secondary_color']),
+            'logo_url' => $client['logo_url'], // Keep old logo by default
+            'primary_color' => $_POST['primary_color'],
+            'secondary_color' => $_POST['secondary_color'],
             'support_email' => trim($_POST['support_email']),
-            'status' => trim($_POST['status']),
-            'logo_url' => $wl['logo_url'] // Keep old logo by default
+            'status' => $_POST['status']
         ];
 
-        // Handle File Upload
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/logos/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
             $file_name = time() . '_' . basename($_FILES['logo']['name']);
-            $target_file = $upload_dir . $file_name;
-
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], $target_file)) {
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $file_name)) {
                 $data['logo_url'] = 'uploads/logos/' . $file_name;
             }
         }
@@ -109,7 +88,8 @@ function white_label_update($id) {
             flash('wl_success', 'White Label Client Updated');
             redirect('white_label/index');
         } else {
-            die('Something went wrong');
+            flash('wl_error', 'Failed to update client', 'alert alert-danger');
+            redirect('white_label/edit/' . $id);
         }
     }
 }
@@ -119,7 +99,51 @@ function white_label_delete($id) {
     if (delete_white_label($id)) {
         flash('wl_success', 'White Label Client Deleted');
     } else {
-        flash('wl_error', 'Could not delete client. It may have related data.', 'alert alert-danger');
+        flash('wl_error', 'Failed to delete client', 'alert alert-danger');
     }
     redirect('white_label/index');
+}
+
+// --- Subscription Management ---
+
+function white_label_subscription($id) {
+    require_role('SUPER_ADMIN');
+
+    $client = get_white_label_by_id($id);
+    if (!$client) {
+        redirect('white_label/index');
+    }
+
+    $active_sub = get_white_label_subscription($id);
+    $plans = get_all_subscription_plans('WHITE_LABEL');
+
+    view('white_label/subscription', [
+        'client' => $client,
+        'active_sub' => $active_sub,
+        'plans' => $plans
+    ]);
+}
+
+function white_label_subscription_store($id) {
+    require_role('SUPER_ADMIN');
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $data = [
+            'white_label_id' => $id,
+            'plan_id' => $_POST['plan_id'],
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'amount' => $_POST['amount'],
+            'due_amount' => $_POST['due_amount'], // Added
+            'payment_status' => $_POST['payment_status']
+        ];
+
+        if (assign_white_label_subscription($data)) {
+            flash('wl_success', 'Subscription Assigned Successfully');
+        } else {
+            flash('wl_error', 'Failed to assign subscription', 'alert alert-danger');
+        }
+
+        redirect('white_label/index');
+    }
 }

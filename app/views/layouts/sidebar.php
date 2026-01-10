@@ -119,8 +119,13 @@
             </li>
             <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">Configuration</li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'service') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('service/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'service') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-cogs"></i> Service Settings
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('subscription/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'subscription') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-tags"></i> Subscription Plans
                 </a>
             </li>
             <li>
