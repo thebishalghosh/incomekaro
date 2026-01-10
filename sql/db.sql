@@ -350,3 +350,15 @@ ALTER TABLE roles MODIFY COLUMN code ENUM('SUPER_ADMIN','RM','SALES_EXEC','PARTN
 
 ALTER TABLE services MODIFY COLUMN category ENUM('LOAN','CREDIT','TAX','INSURANCE','OTHER','INSTANT_PANEL') NOT NULL DEFAULT 'OTHER';
 ALTER TABLE services ADD COLUMN panel_type VARCHAR(100) NULL;
+
+CREATE TABLE contact_inquiries (
+                                   id CHAR(36) PRIMARY KEY,
+                                   white_label_id CHAR(36) NULL,
+                                   name VARCHAR(255) NOT NULL,
+                                   email VARCHAR(255) NOT NULL,
+                                   subject VARCHAR(255),
+                                   message TEXT,
+                                   status ENUM('new', 'read', 'replied') DEFAULT 'new',
+                                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id) ON DELETE SET NULL
+);

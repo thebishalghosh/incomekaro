@@ -26,7 +26,16 @@ function dashboard_super_admin() {
 
 function dashboard_white_label() {
     require_login();
-    view('dashboard/white_label');
+
+    // Ensure user is linked to a white label
+    $user = find_user_by_id($_SESSION['user_id']);
+    if (empty($user['white_label_id'])) {
+        die('Error: User is not linked to a White Label account.');
+    }
+
+    $stats = get_white_label_stats($user['white_label_id']);
+
+    view('dashboard/white_label', ['stats' => $stats]);
 }
 
 function dashboard_partner() {

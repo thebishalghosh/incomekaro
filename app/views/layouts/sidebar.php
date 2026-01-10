@@ -37,6 +37,11 @@
                 </a>
             </li>
             <li>
+                <a href="<?php echo url('inquiry/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'inquiry') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-envelope-open-text"></i> Inquiries
+                </a>
+            </li>
+            <li>
                 <a href="<?php echo url('withdrawal/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'withdrawal') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-wallet"></i> Withdrawals
                 </a>
@@ -107,6 +112,11 @@
                     <i class="fas fa-file-alt"></i> Applications
                 </a>
             </li>
+            <li>
+                <a href="<?php echo url('inquiry/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'inquiry') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-envelope-open-text"></i> Inquiries
+                </a>
+            </li>
             <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">Configuration</li>
             <li>
                 <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'service') !== false) ? 'active' : ''; ?>">
@@ -114,7 +124,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'settings') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('settings/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'settings') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-paint-brush"></i> Branding & Domain
                 </a>
             </li>

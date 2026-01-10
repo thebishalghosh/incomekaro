@@ -2,6 +2,12 @@
 // White Label Logic
 
 $host = $_SERVER['HTTP_HOST'];
+
+// Strip port if present (e.g. localhost:8000 -> localhost)
+if (strpos($host, ':') !== false) {
+    $host = explode(':', $host)[0];
+}
+
 $default_host = 'incomekaro.test'; // Hardcoded main domain for safety, or fetch from env
 
 // Global variable to store White Label Config
@@ -56,4 +62,10 @@ function get_logo_url() {
 function get_primary_color() {
     global $WL_CONFIG;
     return $WL_CONFIG ? $WL_CONFIG['primary_color'] : '#667eea'; // Default purple
+}
+
+// Helper function to get Secondary Color
+function get_secondary_color() {
+    global $WL_CONFIG;
+    return $WL_CONFIG ? $WL_CONFIG['secondary_color'] : '#764ba2'; // Default dark purple
 }

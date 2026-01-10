@@ -98,12 +98,53 @@ function update_white_label($data) {
         $stmt->bindValue(':status', $data['status']);
         $stmt->execute();
 
-        // 2. Update Linked User Email
+        // 2. Update Linked User Email AND Name
         // Find the user linked to this white label
-        $sql = "UPDATE users SET email = :email WHERE white_label_id = :id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL')";
+        $sql = "UPDATE users SET email = :email, first_name = :first_name WHERE white_label_id = :id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL')";
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':email', $data['support_email']);
+        $stmt->bindValue(':first_name', $data['company_name']);
         $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log($e->getMessage());
+        return false;
+    }
+}
+
+function update_white_label_settings($id, $company_name, $logo_url, $primary_color, $secondary_color, $landing_page_data) {
+    $db = get_db_connection();
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Update Client Settings
+        $sql = "UPDATE white_label_clients SET
+                company_name = :company_name,
+                logo_url = :logo_url,
+                primary_color = :primary_color,
+                secondary_color = :secondary_color,
+                landing_page_data = :landing_page_data
+                WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':company_name', $company_name);
+        $stmt->bindValue(':logo_url', $logo_url);
+        $stmt->bindValue(':primary_color', $primary_color);
+        $stmt->bindValue(':secondary_color', $secondary_color);
+        $stmt->bindValue(':landing_page_data', $landing_page_data);
+        $stmt->execute();
+
+        // 2. Sync User Name (Optional but good for consistency)
+        $sql = "UPDATE users SET first_name = :first_name WHERE white_label_id = :id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL')";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':first_name', $company_name);
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
 
         $db->commit();
@@ -121,10 +162,57 @@ function delete_white_label($id) {
     try {
         $db->beginTransaction();
 
-        // Delete linked users first
-        $db->exec("DELETE FROM users WHERE white_label_id = '$id'");
+        // 1. Delete Contact Inquiries
+        $db->exec("DELETE FROM contact_inquiries WHERE white_label_id = '$id'");
 
-        // Delete client
+        // 2. Delete White Label Settings & Domains
+        $db->exec("DELETE FROM white_label_settings WHERE white_label_id = '$id'");
+        $db->exec("DELETE FROM white_label_domains WHERE white_label_id = '$id'");
+        $db->exec("DELETE FROM white_label_services WHERE white_label_id = '$id'");
+
+        // 3. Delete Applications & Related Data
+        // First get all application IDs to delete child records
+        $stmt = $db->query("SELECT id FROM service_applications WHERE white_label_id = '$id'");
+        $app_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($app_ids)) {
+            $ids_str = "'" . implode("','", $app_ids) . "'";
+            $db->exec("DELETE FROM documents WHERE application_id IN ($ids_str)");
+            $db->exec("DELETE FROM comments WHERE application_id IN ($ids_str)");
+            $db->exec("DELETE FROM verification_logs WHERE application_id IN ($ids_str)");
+            $db->exec("DELETE FROM service_application_meta WHERE application_id IN ($ids_str)");
+            $db->exec("DELETE FROM service_applications WHERE white_label_id = '$id'");
+        }
+
+        // 4. Delete Partners & Related Data
+        // First get all partner IDs
+        $stmt = $db->query("SELECT id FROM partners WHERE white_label_id = '$id'");
+        $partner_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($partner_ids)) {
+            $ids_str = "'" . implode("','", $partner_ids) . "'";
+            $db->exec("DELETE FROM partner_profiles WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partner_addresses WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partner_identity WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partner_documents WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partner_services WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partner_subscriptions WHERE partner_id IN ($ids_str)");
+            $db->exec("DELETE FROM partners WHERE white_label_id = '$id'");
+        }
+
+        // 5. Delete Users (Admins, RMs, Partners)
+        // Note: We need to delete user_bank_details first
+        $stmt = $db->query("SELECT id FROM users WHERE white_label_id = '$id'");
+        $user_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($user_ids)) {
+            $ids_str = "'" . implode("','", $user_ids) . "'";
+            $db->exec("DELETE FROM user_bank_details WHERE user_id IN ($ids_str)");
+            $db->exec("DELETE FROM withdrawals WHERE user_id IN ($ids_str)");
+            $db->exec("DELETE FROM users WHERE white_label_id = '$id'");
+        }
+
+        // 6. Delete Client Record
         $sql = "DELETE FROM white_label_clients WHERE id = :id";
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':id', $id);
@@ -134,6 +222,40 @@ function delete_white_label($id) {
         return true;
     } catch (Exception $e) {
         $db->rollBack();
+        error_log("Delete WL Error: " . $e->getMessage());
         return false;
     }
+}
+
+function get_white_label_stats($white_label_id) {
+    $db = get_db_connection();
+    $stats = [];
+
+    // 1. Total Partners
+    $stmt = $db->prepare("SELECT COUNT(*) FROM partners WHERE white_label_id = :id");
+    $stmt->execute(['id' => $white_label_id]);
+    $stats['total_partners'] = $stmt->fetchColumn();
+
+    // 2. Total Applications
+    $stmt = $db->prepare("SELECT COUNT(*) FROM service_applications WHERE white_label_id = :id");
+    $stmt->execute(['id' => $white_label_id]);
+    $stats['total_applications'] = $stmt->fetchColumn();
+
+    // 3. Pending Applications (Action Required)
+    $stmt = $db->prepare("SELECT COUNT(*) FROM service_applications WHERE white_label_id = :id AND status IN ('submitted', 'under_verification')");
+    $stmt->execute(['id' => $white_label_id]);
+    $stats['pending_applications'] = $stmt->fetchColumn();
+
+    // 4. Recent Applications
+    $sql = "SELECT sa.*, s.name as service_name, p.name as partner_name
+            FROM service_applications sa
+            JOIN services s ON sa.service_id = s.id
+            JOIN partners p ON sa.partner_id = p.id
+            WHERE sa.white_label_id = :id
+            ORDER BY sa.created_at DESC LIMIT 5";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['id' => $white_label_id]);
+    $stats['recent_applications'] = $stmt->fetchAll();
+
+    return $stats;
 }

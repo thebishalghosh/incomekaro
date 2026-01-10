@@ -12,6 +12,12 @@
         /* Dynamic Theme Color */
         :root {
             --primary-color: <?php echo get_primary_color(); ?>;
+            --secondary-color: <?php echo get_secondary_color(); ?>;
+        }
+
+        /* Sidebar Gradient Override */
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
         }
 
         /* Navbar Enhancements */
@@ -76,8 +82,8 @@
 // Determine if we are in Dashboard mode
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
-// Added 'instant_panel' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel'];
+// Added 'inquiry' to the list of dashboard routes
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
@@ -105,7 +111,20 @@ if ($is_dashboard && isLoggedIn()):
                     </div>
                     <div class="d-none d-md-block">
                         <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
-                        <div class="small text-muted" style="font-size: 0.75rem;"><?php echo $_SESSION['role_code'] ?? 'Role'; ?></div>
+                        <div class="small text-muted" style="font-size: 0.75rem;">
+                            <?php
+                                $role_display = $_SESSION['role_code'] ?? 'Role';
+                                if ($role_display === 'WHITE_LABEL') {
+                                    echo 'Administrator';
+                                } elseif ($role_display === 'SUPER_ADMIN') {
+                                    echo 'Super Admin';
+                                } elseif ($role_display === 'PARTNER_ADMIN') {
+                                    echo 'Partner';
+                                } else {
+                                    echo ucfirst(strtolower(str_replace('_', ' ', $role_display)));
+                                }
+                            ?>
+                        </div>
                     </div>
                     <i class="fas fa-chevron-down ms-2 text-muted small"></i>
                 </div>
@@ -133,8 +152,12 @@ if ($is_dashboard && isLoggedIn()):
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="<?php echo url('/'); ?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?php echo url('contact/index'); ?>">Contact Us</a></li>
+
+                    <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<?php echo url('contact/index'); ?>">Contact Us</a></li>
+                    <?php endif; ?>
+
                     <li class="nav-item ms-3">
                         <?php if (isLoggedIn()): ?>
                             <a href="<?php echo url('dashboard/super_admin'); ?>" class="btn btn-primary btn-login">Dashboard</a>

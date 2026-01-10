@@ -1,8 +1,8 @@
 <?php
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
-// Added 'instant_panel' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel'];
+// Added 'inquiry' to the list of dashboard routes
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
@@ -19,6 +19,34 @@ if ($is_dashboard && isLoggedIn()):
 <?php else: ?>
     </div> <!-- End Main Content Wrapper -->
 
+    <?php
+        // Dynamic Footer Data
+        global $WL_CONFIG;
+
+        // Ensure functions exist before calling (safety check)
+        $site_name = function_exists('get_site_name') ? get_site_name() : 'IncomeKaro';
+        $logo_url = function_exists('get_logo_url') ? get_logo_url() : 'images/logo.png';
+
+        // If get_logo_url returned a relative path (unlikely but possible if changed), wrap in asset
+        if (strpos($logo_url, 'http') === false) {
+            $logo_url = asset($logo_url);
+        }
+
+        // Default Contact Info
+        $contact_email = 'support@incomekaro.in';
+        $contact_phone = '+91 786-4951-543';
+        $contact_address = 'Astra Tower, New Town, Kolkata, 700181';
+
+        // Override if White Label
+        if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL && $WL_CONFIG) {
+            $contact_email = $WL_CONFIG['support_email'];
+            // Check if landing data has phone/address overrides
+            $landing = !empty($WL_CONFIG['landing_page_data']) ? json_decode($WL_CONFIG['landing_page_data'], true) : [];
+            if (!empty($landing['contact_phone'])) $contact_phone = $landing['contact_phone'];
+            if (!empty($landing['contact_address'])) $contact_address = $landing['contact_address'];
+        }
+    ?>
+
     <!-- Footer -->
     <footer class="text-white pt-5 pb-3 mt-auto" style="background-color: #0f172a;" id="contact">
         <div class="container">
@@ -26,10 +54,11 @@ if ($is_dashboard && isLoggedIn()):
                 <!-- Brand & About -->
                 <div class="col-lg-4 col-md-6">
                     <div class="mb-4">
-                        <img src="<?php echo asset('images/logo.png'); ?>" alt="<?php echo SITE_NAME; ?>" style="max-height: 45px; filter: brightness(0) invert(1);">
+                        <!-- Removed filter to debug, ensure logo is visible -->
+                        <img src="<?php echo $logo_url; ?>" alt="<?php echo $site_name; ?>" style="max-height: 45px;">
                     </div>
                     <p class="text-white-50 small mb-4" style="line-height: 1.8;">
-                        IncomeKaro is India's leading financial distribution network. We empower partners to earn by distributing financial products like Loans, Credit Cards, and Insurance.
+                        <?php echo $site_name; ?> is India's leading financial distribution network. We empower partners to earn by distributing financial products like Loans, Credit Cards, and Insurance.
                     </p>
                     <div class="d-flex gap-3">
                         <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
@@ -44,9 +73,16 @@ if ($is_dashboard && isLoggedIn()):
                     <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Quick Links</h6>
                     <ul class="list-unstyled footer-links">
                         <li><a href="<?php echo url('/'); ?>">Home</a></li>
-                        <li><a href="<?php echo url('about/index'); ?>">About Us</a></li>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('about/index'); ?>">About Us</a></li>
+                        <?php endif; ?>
+
                         <li><a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Partner Login</a></li>
-                        <li><a href="<?php echo url('contact/index'); ?>">Contact Support</a></li>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('contact/index'); ?>">Contact Support</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
@@ -61,14 +97,13 @@ if ($is_dashboard && isLoggedIn()):
                     </ul>
                 </div>
 
-                <!-- Contact Info (Replaces Newsletter) -->
+                <!-- Contact Info -->
                 <div class="col-lg-4 col-md-6">
                     <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Get in Touch</h6>
                     <div class="text-white-50 small">
-                        <p class="mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i> Astra Tower, New Town, Kolkata, 700181</p>
-                        <p class="mb-3"><i class="fas fa-envelope me-2 text-primary"></i> support@incomekaro.in</p>
-                        <p class="mb-3"><i class="fas fa-phone-alt me-2 text-primary"></i> +91 786-4951-543</p>
-                        <p class="mb-0"><i class="fas fa-phone-alt me-2 text-primary"></i> +91 877-7834-218</p>
+                        <p class="mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i> <?php echo $contact_address; ?></p>
+                        <p class="mb-3"><i class="fas fa-envelope me-2 text-primary"></i> <?php echo $contact_email; ?></p>
+                        <p class="mb-3"><i class="fas fa-phone-alt me-2 text-primary"></i> <?php echo $contact_phone; ?></p>
                     </div>
                 </div>
             </div>
@@ -79,8 +114,7 @@ if ($is_dashboard && isLoggedIn()):
             <div class="row align-items-center">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
                     <p class="small text-white-50 mb-0">
-                        &copy; <?php echo date('Y'); ?> <strong class="text-white"><?php echo SITE_NAME; ?></strong>. All Rights Reserved.
-                        <br><span class="opacity-50" style="font-size: 0.75rem;">CIN: U62013WB2025PTC276552</span>
+                        &copy; <?php echo date('Y'); ?> <strong class="text-white"><?php echo $site_name; ?></strong>. All Rights Reserved.
                     </p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
