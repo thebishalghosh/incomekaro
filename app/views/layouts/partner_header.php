@@ -18,7 +18,12 @@
         </a>
 
         <div class="d-flex align-items-center">
-            <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary me-2">My Applications</a>
+            <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary me-2">
+                <i class="fas fa-file-alt me-1"></i> My Applications
+            </a>
+            <a href="<?php echo url('withdrawal/index'); ?>" class="btn btn-outline-success me-2">
+                <i class="fas fa-wallet me-1"></i> Withdrawals
+            </a>
             <button class="btn btn-outline-secondary me-2">Policy</button>
             <button class="btn btn-outline-secondary me-3">Invoice</button>
 

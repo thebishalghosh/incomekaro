@@ -61,7 +61,7 @@
             <div class="icon-box">
                 <i class="fas fa-wallet"></i>
             </div>
-            <h3>₹0.00</h3>
+            <h3>₹<?php echo number_format($user['wallet_balance'] ?? 0, 2); ?></h3>
             <p>Wallet Balance</p>
         </div>
     </div>

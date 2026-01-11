@@ -36,9 +36,20 @@
         </div>
     </div>
 
-    <!-- Additional Info Row -->
+    <!-- Additional Info Row (Updated to 4 columns to include Wallet) -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
+            <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm h-100">
+                <div class="icon-box bg-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fas fa-wallet fa-lg"></i>
+                </div>
+                <div>
+                    <p class="text-muted mb-1 small text-uppercase fw-bold">Wallet Balance</p>
+                    <h6 class="fw-bold mb-0 text-success">₹<?php echo number_format($user['wallet_balance'] ?? 0, 2); ?></h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
             <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm h-100">
                 <div class="icon-box bg-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                     <i class="fas fa-tags fa-lg"></i>
@@ -49,29 +60,25 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm h-100">
-                <div class="icon-box bg-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <div class="icon-box bg-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                     <i class="fas fa-user-tie fa-lg"></i>
                 </div>
                 <div>
-                    <p class="text-muted mb-1 small text-uppercase fw-bold">Relationship Manager</p>
-                    <h6 class="fw-bold mb-0 text-dark"><?php echo $partner['rm_first'] ? $partner['rm_first'] . ' ' . $partner['rm_last'] : 'Not Assigned'; ?></h6>
-                    <?php if ($partner['rm_phone']): ?>
-                        <p class="small text-muted mb-0"><i class="fas fa-phone-alt me-1"></i> <?php echo $partner['rm_phone']; ?></p>
-                    <?php endif; ?>
+                    <p class="text-muted mb-1 small text-uppercase fw-bold">RM</p>
+                    <h6 class="fw-bold mb-0 text-dark"><?php echo $partner['rm_first'] ? $partner['rm_first'] : 'Not Assigned'; ?></h6>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm h-100">
                 <div class="icon-box bg-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                     <i class="fas fa-calendar-alt fa-lg"></i>
                 </div>
                 <div>
-                    <p class="text-muted mb-1 small text-uppercase fw-bold">Joining Date</p>
+                    <p class="text-muted mb-1 small text-uppercase fw-bold">Joined</p>
                     <h6 class="fw-bold mb-0 text-dark"><?php echo date('d M Y', strtotime($partner['created_at'])); ?></h6>
-                    <p class="small text-muted mb-0"><?php echo $partner['address_permanent']['state'] ?? ''; ?></p>
                 </div>
             </div>
         </div>

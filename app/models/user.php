@@ -1,33 +1,22 @@
 <?php
 function get_all_users() {
     $db = get_db_connection();
-    $sql = "SELECT
-                u.*,
-                r.name as role_name,
-                COALESCE(u.profile_image, pp.profile_image) as final_profile_image
+    $sql = "SELECT u.*, r.name as role_name, wl.company_name as wl_name, p.name as partner_name,
+            ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
+            (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM users u
             JOIN roles r ON u.role_id = r.id
-            LEFT JOIN partner_profiles pp ON u.partner_id = pp.partner_id
+            LEFT JOIN white_label_clients wl ON u.white_label_id = wl.id
+            LEFT JOIN partners p ON u.partner_id = p.id
+            LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
             ORDER BY u.created_at DESC";
     $stmt = $db->query($sql);
     return $stmt->fetchAll();
 }
 
-function get_users_by_role($role_code) {
-    $db = get_db_connection();
-    $sql = "SELECT u.* FROM users u
-            JOIN roles r ON u.role_id = r.id
-            WHERE r.code = :role_code AND u.status = 'active'
-            ORDER BY u.first_name";
-    $stmt = $db->prepare($sql);
-    $stmt->execute(['role_code' => $role_code]);
-    return $stmt->fetchAll();
-}
-
 function find_user_by_email($email) {
     $db = get_db_connection();
-    $sql = "SELECT * FROM users WHERE email = :email";
-    $stmt = $db->prepare($sql);
+    $stmt = $db->prepare("SELECT * FROM users WHERE email = :email");
     $stmt->bindValue(':email', $email);
     $stmt->execute();
     return $stmt->fetch();
@@ -35,18 +24,22 @@ function find_user_by_email($email) {
 
 function find_user_by_id($id) {
     $db = get_db_connection();
-    $sql = "SELECT * FROM users WHERE id = :id";
-    $stmt = $db->prepare($sql);
+
+    // Fetch User
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
     $stmt->bindValue(':id', $id);
     $stmt->execute();
     $user = $stmt->fetch();
 
     if ($user) {
-        $sql = "SELECT * FROM user_bank_details WHERE user_id = :user_id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':user_id', $id);
+        // Fetch Bank Details
+        $stmt = $db->prepare("SELECT * FROM user_bank_details WHERE user_id = :id");
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
-        $user['bank_details'] = $stmt->fetch();
+        $bank = $stmt->fetch();
+
+        // Attach to user array
+        $user['bank_details'] = $bank ? $bank : [];
     }
 
     return $user;
@@ -54,8 +47,7 @@ function find_user_by_id($id) {
 
 function get_user_role($role_id) {
     $db = get_db_connection();
-    $sql = "SELECT * FROM roles WHERE id = :id";
-    $stmt = $db->prepare($sql);
+    $stmt = $db->prepare("SELECT * FROM roles WHERE id = :id");
     $stmt->bindValue(':id', $role_id);
     $stmt->execute();
     return $stmt->fetch();
@@ -63,130 +55,168 @@ function get_user_role($role_id) {
 
 function get_all_roles() {
     $db = get_db_connection();
-    $sql = "SELECT * FROM roles";
-    return $db->query($sql)->fetchAll();
+    $stmt = $db->query("SELECT * FROM roles ORDER BY name");
+    return $stmt->fetchAll();
 }
 
-function create_full_user($data) {
+function create_user($data) {
     $db = get_db_connection();
+
     try {
         $db->beginTransaction();
 
-        // 1. Create User
-        $sql = "INSERT INTO users (id, role_id, first_name, last_name, email, phone, password_hash, profile_image, status)
-                VALUES (:id, :role_id, :first_name, :last_name, :email, :phone, :password_hash, :profile_image, 'active')";
+        // 1. Insert User
+        $sql = "INSERT INTO users (id, white_label_id, partner_id, role_id, first_name, last_name, email, phone, password_hash, status)
+                VALUES (:id, :white_label_id, :partner_id, :role_id, :first_name, :last_name, :email, :phone, :password_hash, :status)";
+
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':id', $data['id']);
+        $stmt->bindValue(':white_label_id', $data['white_label_id'] ?? null);
+        $stmt->bindValue(':partner_id', $data['partner_id'] ?? null);
         $stmt->bindValue(':role_id', $data['role_id']);
         $stmt->bindValue(':first_name', $data['first_name']);
         $stmt->bindValue(':last_name', $data['last_name']);
         $stmt->bindValue(':email', $data['email']);
         $stmt->bindValue(':phone', $data['phone']);
         $stmt->bindValue(':password_hash', $data['password_hash']);
-        $stmt->bindValue(':profile_image', $data['profile_image']);
+        $stmt->bindValue(':status', $data['status']);
         $stmt->execute();
 
-        // 2. Create Bank Details
-        if (!empty($data['bank_details']['account_holder_name'])) {
+        // 2. Insert Bank Details (if provided)
+        if (!empty($data['bank_details'])) {
             $sql = "INSERT INTO user_bank_details (id, user_id, account_holder_name, bank_name, account_number, ifsc_code, branch)
-                    VALUES (:id, :user_id, :account_holder_name, :bank_name, :account_number, :ifsc_code, :branch)";
+                    VALUES (:id, :user_id, :holder, :bank, :acc_num, :ifsc, :branch)";
             $stmt = $db->prepare($sql);
-            $stmt->bindValue(':id', uniqid('ub-'));
-            $stmt->bindValue(':user_id', $data['id']);
-            $stmt->bindValue(':account_holder_name', $data['bank_details']['account_holder_name']);
-            $stmt->bindValue(':bank_name', $data['bank_details']['bank_name']);
-            $stmt->bindValue(':account_number', $data['bank_details']['account_number']);
-            $stmt->bindValue(':ifsc_code', $data['bank_details']['ifsc_code']);
-            $stmt->bindValue(':branch', $data['bank_details']['branch'] ?? null);
-            $stmt->execute();
+            $stmt->execute([
+                'id' => uniqid('bnk-'),
+                'user_id' => $data['id'],
+                'holder' => $data['bank_details']['account_holder_name'],
+                'bank' => $data['bank_details']['bank_name'],
+                'acc_num' => $data['bank_details']['account_number'],
+                'ifsc' => $data['bank_details']['ifsc_code'],
+                'branch' => $data['bank_details']['branch']
+            ]);
         }
 
         $db->commit();
         return true;
     } catch (Exception $e) {
         $db->rollBack();
-        error_log($e->getMessage());
         return false;
     }
 }
 
-function update_full_user($data) {
+function update_user($data) {
     $db = get_db_connection();
+
     try {
         $db->beginTransaction();
 
         // 1. Update User
         $sql = "UPDATE users SET
-                role_id = :role_id, first_name = :first_name, last_name = :last_name,
-                email = :email, phone = :phone, status = :status" .
-                ($data['profile_image'] ? ", profile_image = :profile_image" : "") .
-                " WHERE id = :id";
+                first_name = :first_name,
+                last_name = :last_name,
+                email = :email,
+                phone = :phone,
+                status = :status,
+                role_id = :role_id
+                WHERE id = :id";
+
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':id', $data['id']);
-        $stmt->bindValue(':role_id', $data['role_id']);
         $stmt->bindValue(':first_name', $data['first_name']);
         $stmt->bindValue(':last_name', $data['last_name']);
         $stmt->bindValue(':email', $data['email']);
         $stmt->bindValue(':phone', $data['phone']);
         $stmt->bindValue(':status', $data['status']);
-        if ($data['profile_image']) {
-            $stmt->bindValue(':profile_image', $data['profile_image']);
-        }
+        $stmt->bindValue(':role_id', $data['role_id']);
         $stmt->execute();
 
-        // 2. Update/Insert Bank Details
-        if (!empty($data['bank_details']['account_holder_name'])) {
-            $check_bank = $db->query("SELECT id FROM user_bank_details WHERE user_id = '" . $data['id'] . "'")->fetch();
-            if ($check_bank) {
-                $sql = "UPDATE user_bank_details SET account_holder_name = :account_holder_name, bank_name = :bank_name,
-                        account_number = :account_number, ifsc_code = :ifsc_code, branch = :branch WHERE user_id = :user_id";
+        // 2. Update Bank Details
+        if (!empty($data['bank_details'])) {
+            // Check if exists
+            $check = $db->prepare("SELECT id FROM user_bank_details WHERE user_id = :id");
+            $check->execute(['id' => $data['id']]);
+
+            if ($check->fetch()) {
+                // Update
+                $sql = "UPDATE user_bank_details SET
+                        account_holder_name = :holder,
+                        bank_name = :bank,
+                        account_number = :acc_num,
+                        ifsc_code = :ifsc,
+                        branch = :branch
+                        WHERE user_id = :user_id";
             } else {
+                // Insert
                 $sql = "INSERT INTO user_bank_details (id, user_id, account_holder_name, bank_name, account_number, ifsc_code, branch)
-                        VALUES (:id, :user_id, :account_holder_name, :bank_name, :account_number, :ifsc_code, :branch)";
+                        VALUES (:id, :user_id, :holder, :bank, :acc_num, :ifsc, :branch)";
             }
+
             $stmt = $db->prepare($sql);
-            if (!$check_bank) $stmt->bindValue(':id', uniqid('ub-'));
-            $stmt->bindValue(':user_id', $data['id']);
-            $stmt->bindValue(':account_holder_name', $data['bank_details']['account_holder_name']);
-            $stmt->bindValue(':bank_name', $data['bank_details']['bank_name']);
-            $stmt->bindValue(':account_number', $data['bank_details']['account_number']);
-            $stmt->bindValue(':ifsc_code', $data['bank_details']['ifsc_code']);
-            $stmt->bindValue(':branch', $data['bank_details']['branch'] ?? null);
-            $stmt->execute();
+            $params = [
+                'user_id' => $data['id'],
+                'holder' => $data['bank_details']['account_holder_name'],
+                'bank' => $data['bank_details']['bank_name'],
+                'acc_num' => $data['bank_details']['account_number'],
+                'ifsc' => $data['bank_details']['ifsc_code'],
+                'branch' => $data['bank_details']['branch']
+            ];
+
+            if (!$check->rowCount()) { // If inserting, add ID
+                $params['id'] = uniqid('bnk-');
+            }
+
+            $stmt->execute($params);
         }
 
         $db->commit();
         return true;
     } catch (Exception $e) {
         $db->rollBack();
-        error_log($e->getMessage());
         return false;
     }
 }
 
 function delete_user($id) {
     $db = get_db_connection();
+    $stmt = $db->prepare("DELETE FROM users WHERE id = :id");
+    $stmt->bindValue(':id', $id);
+    return $stmt->execute();
+}
 
-    try {
-        $db->beginTransaction();
+// --- Wallet Functions ---
 
-        // 1. Unassign this user from any partners (if they are an RM)
-        $sql = "UPDATE partners SET rm_id = NULL WHERE rm_id = :id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
+function update_wallet_balance($user_id, $amount, $type, $description, $reference_id = null) {
+    $db = get_db_connection();
 
-        // 2. Delete bank details
-        $db->exec("DELETE FROM user_bank_details WHERE user_id = '$id'");
+    // Removed internal transaction handling to allow nested calls
 
-        // 3. Delete user
-        $db->exec("DELETE FROM users WHERE id = '$id'");
+    // 1. Update User Balance
+    $operator = ($type === 'credit') ? '+' : '-';
+    $sql = "UPDATE users SET wallet_balance = wallet_balance $operator :amount WHERE id = :id";
+    $stmt = $db->prepare($sql);
+    $result1 = $stmt->execute(['amount' => $amount, 'id' => $user_id]);
 
-        $db->commit();
-        return true;
-    } catch (Exception $e) {
-        $db->rollBack();
-        error_log($e->getMessage());
-        return false;
-    }
+    // 2. Log Transaction
+    $sql = "INSERT INTO wallet_transactions (id, user_id, type, amount, description, reference_id)
+            VALUES (:id, :user_id, :type, :amount, :description, :reference_id)";
+    $stmt = $db->prepare($sql);
+    $result2 = $stmt->execute([
+        'id' => uniqid('txn-'),
+        'user_id' => $user_id,
+        'type' => $type,
+        'amount' => $amount,
+        'description' => $description,
+        'reference_id' => $reference_id
+    ]);
+
+    return $result1 && $result2;
+}
+
+function get_wallet_transactions($user_id) {
+    $db = get_db_connection();
+    $stmt = $db->prepare("SELECT * FROM wallet_transactions WHERE user_id = :id ORDER BY created_at DESC");
+    $stmt->execute(['id' => $user_id]);
+    return $stmt->fetchAll();
 }

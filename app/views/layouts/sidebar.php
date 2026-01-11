@@ -103,18 +103,23 @@
             </li>
             <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">Business</li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'partner') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('partner/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'partner') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-handshake"></i> My Partners
                 </a>
             </li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'application') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('application/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'application') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-file-alt"></i> Applications
                 </a>
             </li>
             <li>
                 <a href="<?php echo url('inquiry/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'inquiry') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-envelope-open-text"></i> Inquiries
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('withdrawal/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'withdrawal') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-wallet"></i> Withdrawals
                 </a>
             </li>
             <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">Configuration</li>
@@ -131,6 +136,30 @@
             <li>
                 <a href="<?php echo url('settings/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'settings') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-paint-brush"></i> Branding & Domain
+                </a>
+            </li>
+
+        <!-- PARTNER MENU -->
+        <?php elseif (isset($_SESSION['role_code']) && $_SESSION['role_code'] == 'PARTNER_ADMIN'): ?>
+            <li>
+                <a href="<?php echo url('dashboard/partner'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'dashboard') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">My Business</li>
+            <li>
+                <a href="<?php echo url('application/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'application') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-file-alt"></i> My Applications
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('withdrawal/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'withdrawal') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-wallet"></i> Withdrawals
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('instant_panel/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'instant_panel') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-external-link-alt"></i> Instant Panels
                 </a>
             </li>
         <?php else: ?>

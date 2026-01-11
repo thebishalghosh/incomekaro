@@ -45,14 +45,43 @@
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <label for="role_id" class="form-label fw-bold">Role <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-lg" id="role_id" name="role_id" required>
-                                <option value="">Select Role</option>
-                                <?php foreach ($roles as $role): ?>
-                                    <option value="<?php echo $role['id']; ?>" <?php echo (isset($user) && $user['role_id'] == $role['id']) ? 'selected' : ''; ?>>
-                                        <?php echo $role['name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+
+                            <?php
+                                // Check if this is a White Label Admin
+                                $is_wl_admin = false;
+                                if (isset($user)) {
+                                    foreach ($roles as $role) {
+                                        if ($role['id'] == $user['role_id'] && $role['code'] == 'WHITE_LABEL') {
+                                            $is_wl_admin = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            ?>
+
+                            <?php if ($is_wl_admin): ?>
+                                <!-- Static Display for WL Admin -->
+                                <div class="form-control form-control-lg bg-light">
+                                    <i class="fas fa-building me-2 text-primary"></i> White Label Administrator
+                                </div>
+                                <input type="hidden" name="role_id" value="<?php echo $user['role_id']; ?>">
+                                <div class="form-text">Role cannot be changed for White Label Admins.</div>
+                            <?php else: ?>
+                                <!-- Dropdown for Regular Users -->
+                                <select class="form-select form-select-lg" id="role_id" name="role_id" required>
+                                    <option value="">Select Role</option>
+                                    <?php foreach ($roles as $role): ?>
+                                        <?php
+                                            // Hide WHITE_LABEL and PARTNER_ADMIN roles from manual creation
+                                            if ($role['code'] !== 'WHITE_LABEL' && $role['code'] !== 'PARTNER_ADMIN'):
+                                        ?>
+                                            <option value="<?php echo $role['id']; ?>" <?php echo (isset($user) && $user['role_id'] == $role['id']) ? 'selected' : ''; ?>>
+                                                <?php echo $role['name']; ?>
+                                            </option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="password" class="form-label fw-bold">Password <?php echo isset($user) ? '(Leave blank to keep current)' : '<span class="text-danger">*</span>'; ?></label>
@@ -81,7 +110,9 @@
                     <?php endif; ?>
 
                     <hr class="my-5">
-                    <h5 class="fw-bold text-primary mb-4">Bank Details (Optional)</h5>
+
+                    <!-- Added ID for anchor link -->
+                    <h5 class="fw-bold text-primary mb-4" id="bank">Bank Details (Optional)</h5>
 
                     <?php
                         // Helper to safely get bank details

@@ -388,3 +388,18 @@ CREATE TABLE white_label_subscriptions (
 ALTER TABLE subscription_plans ADD COLUMN white_label_id CHAR(36) NULL AFTER id;
 ALTER TABLE subscription_plans ADD CONSTRAINT fk_sp_wl FOREIGN KEY (white_label_id) REFERENCES white_label_clients(id) ON DELETE CASCADE;
 ALTER TABLE white_label_subscriptions ADD COLUMN due_amount DECIMAL(15,2) DEFAULT 0.00 AFTER amount;
+
+-- 1. Add Wallet Balance to Users
+ALTER TABLE users ADD COLUMN wallet_balance DECIMAL(15,2) DEFAULT 0.00 AFTER status;
+
+-- 2. Create Wallet Transactions Ledger
+CREATE TABLE wallet_transactions (
+                                     id CHAR(36) PRIMARY KEY,
+                                     user_id CHAR(36) NOT NULL,
+                                     type ENUM('credit', 'debit') NOT NULL,
+                                     amount DECIMAL(15,2) NOT NULL,
+                                     description TEXT,
+                                     reference_id VARCHAR(255), -- e.g., Application ID or Withdrawal ID
+                                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

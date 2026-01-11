@@ -36,7 +36,8 @@ function dashboard_white_label() {
     $stats = get_white_label_stats($user['white_label_id']);
     $subscription = get_white_label_subscription($user['white_label_id']); // Fetch active sub
 
-    view('dashboard/white_label', ['stats' => $stats, 'subscription' => $subscription]);
+    // Pass user to view for wallet balance
+    view('dashboard/white_label', ['stats' => $stats, 'subscription' => $subscription, 'user' => $user]);
 }
 
 function dashboard_partner() {
@@ -53,5 +54,6 @@ function dashboard_partner() {
     $partner = get_partner_by_id($user['partner_id']);
     $stats = get_partner_stats($user['partner_id']);
 
-    view('dashboard/partner_home', ['partner' => $partner, 'stats' => $stats]);
+    // Pass user to view to access wallet_balance
+    view('dashboard/partner_home', ['partner' => $partner, 'stats' => $stats, 'user' => $user]);
 }
