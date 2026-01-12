@@ -14,11 +14,16 @@ function partner_index() {
     } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
         $user = find_user_by_id($_SESSION['user_id']);
         $db = get_db_connection();
-        // Added JOIN to fetch white_label_name
-        $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name
+        // Added JOIN to fetch user_id and wallet_balance
+        $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
+                u.id as user_id, u.wallet_balance,
+                (SELECT COUNT(*) FROM user_bank_details WHERE user_id = u.id) as has_bank_details,
+                ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code
                 FROM partners p
                 LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
                 LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
+                LEFT JOIN users u ON u.partner_id = p.id
+                LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
                 WHERE p.white_label_id = :wl_id
                 ORDER BY p.created_at DESC";
         $stmt = $db->prepare($sql);
@@ -340,6 +345,31 @@ function partner_update($id) {
             flash('ptr_error', 'Failed to update partner', 'alert alert-danger');
             redirect('partner/edit/' . $id);
         }
+    }
+}
+
+function partner_update_status($id) {
+    require_login();
+
+    // Security Check
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $status = $_POST['status'];
+        if (update_partner_status($id, $status)) {
+            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
+        } else {
+            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
+        }
+        redirect('partner/index');
     }
 }
 

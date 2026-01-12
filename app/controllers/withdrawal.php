@@ -10,13 +10,29 @@ function withdrawal_index() {
     $user = null;
 
     if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
-        // Admin sees all
-        $sql = "SELECT w.*, u.first_name, u.last_name, u.email
+        // Admin sees all, fetch white_label_id and role_code to distinguish
+        $sql = "SELECT w.*, u.first_name, u.last_name, u.email, u.white_label_id, r.code as role_code
                 FROM withdrawals w
                 JOIN users u ON w.user_id = u.id
+                JOIN roles r ON u.role_id = r.id
                 ORDER BY w.created_at DESC";
         $stmt = $db->query($sql);
         $withdrawals = $stmt->fetchAll();
+
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        // White Label Admin sees withdrawals from their partners
+        $current_user = find_user_by_id($_SESSION['user_id']);
+        $wl_id = $current_user['white_label_id'];
+
+        $sql = "SELECT w.*, u.first_name, u.last_name, u.email
+                FROM withdrawals w
+                JOIN users u ON w.user_id = u.id
+                WHERE u.white_label_id = :wl_id
+                ORDER BY w.created_at DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['wl_id' => $wl_id]);
+        $withdrawals = $stmt->fetchAll();
+
     } else {
         // Partner sees own
         $user_id = $_SESSION['user_id'];
@@ -94,9 +110,38 @@ function withdrawal_store() {
 }
 
 function withdrawal_approve($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Changed from require_role('SUPER_ADMIN')
+
+    // Permission Check
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL') {
+        die('Access Denied');
+    }
 
     $db = get_db_connection();
+
+    // Fetch withdrawal details including user's WL ID
+    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
+    $stmt->execute(['id' => $id]);
+    $result = $stmt->fetch();
+    $target_wl_id = $result['white_label_id'];
+    $target_role = $result['role_code'];
+
+    // If White Label, ensure the withdrawal belongs to their partner
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $current_user = find_user_by_id($_SESSION['user_id']);
+        if ($target_wl_id !== $current_user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        // Super Admin cannot approve WL Partner withdrawals
+        // But CAN approve WL Admin (Client) withdrawals or Platform Partner withdrawals
+
+        if ($target_role === 'PARTNER_ADMIN' && !empty($target_wl_id)) {
+            flash('withdraw_error', 'Super Admin cannot approve White Label Partner withdrawals.', 'alert alert-danger');
+            redirect('withdrawal/index');
+        }
+    }
+
     $stmt = $db->prepare("UPDATE withdrawals SET status = 'approved' WHERE id = :id AND status = 'requested'");
 
     if ($stmt->execute(['id' => $id])) {
@@ -109,14 +154,33 @@ function withdrawal_approve($id) {
 }
 
 function withdrawal_reject($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Changed from require_role('SUPER_ADMIN')
+
+    // Permission Check
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL') {
+        die('Access Denied');
+    }
 
     $db = get_db_connection();
 
     // Fetch withdrawal to refund
-    $stmt = $db->prepare("SELECT * FROM withdrawals WHERE id = :id");
+    $stmt = $db->prepare("SELECT w.*, u.white_label_id, r.code as role_code FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
     $stmt->execute(['id' => $id]);
     $withdrawal = $stmt->fetch();
+
+    // If White Label, ensure permission
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $current_user = find_user_by_id($_SESSION['user_id']);
+        if ($withdrawal['white_label_id'] !== $current_user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        // Super Admin Restriction
+        if ($withdrawal['role_code'] === 'PARTNER_ADMIN' && !empty($withdrawal['white_label_id'])) {
+            flash('withdraw_error', 'Super Admin cannot reject White Label Partner withdrawals.', 'alert alert-danger');
+            redirect('withdrawal/index');
+        }
+    }
 
     if ($withdrawal && $withdrawal['status'] == 'requested') {
         try {
@@ -142,9 +206,36 @@ function withdrawal_reject($id) {
 }
 
 function withdrawal_mark_paid($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Changed from require_role('SUPER_ADMIN')
+
+    // Permission Check
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL') {
+        die('Access Denied');
+    }
 
     $db = get_db_connection();
+
+    // Fetch details
+    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
+    $stmt->execute(['id' => $id]);
+    $result = $stmt->fetch();
+    $target_wl_id = $result['white_label_id'];
+    $target_role = $result['role_code'];
+
+    // If White Label, ensure permission
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $current_user = find_user_by_id($_SESSION['user_id']);
+        if ($target_wl_id !== $current_user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        // Super Admin Restriction
+        if ($target_role === 'PARTNER_ADMIN' && !empty($target_wl_id)) {
+            flash('withdraw_error', 'Super Admin cannot manage White Label Partner withdrawals.', 'alert alert-danger');
+            redirect('withdrawal/index');
+        }
+    }
+
     $stmt = $db->prepare("UPDATE withdrawals SET status = 'paid' WHERE id = :id AND status = 'approved'");
 
     if ($stmt->execute(['id' => $id])) {

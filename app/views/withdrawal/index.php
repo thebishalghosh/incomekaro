@@ -12,7 +12,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
             <h2 class="fw-bold text-dark">Withdrawals</h2>
             <p class="text-muted mb-0">Track your payout requests and status.</p>
         </div>
-        <?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN'): ?>
+        <?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL'): ?>
             <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#requestModal">
                 <i class="fas fa-plus me-2"></i> Request Withdrawal
             </button>
@@ -29,13 +29,13 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4 py-3 text-uppercase small fw-bold text-muted">Date</th>
-                            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                 <th class="py-3 text-uppercase small fw-bold text-muted">User</th>
                             <?php endif; ?>
                             <th class="py-3 text-uppercase small fw-bold text-muted">Amount</th>
                             <th class="py-3 text-uppercase small fw-bold text-muted">Bank Details</th>
                             <th class="py-3 text-uppercase small fw-bold text-muted">Status</th>
-                            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                 <th class="text-end pe-4 py-3 text-uppercase small fw-bold text-muted">Actions</th>
                             <?php endif; ?>
                         </tr>
@@ -49,7 +49,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                                         <div class="small text-muted"><?php echo date('h:i A', strtotime($wd['created_at'])); ?></div>
                                     </td>
 
-                                    <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                                    <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-placeholder bg-light text-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">
@@ -58,6 +58,9 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                                                 <div>
                                                     <div class="fw-bold text-dark"><?php echo $wd['first_name'] . ' ' . $wd['last_name']; ?></div>
                                                     <div class="small text-muted"><?php echo $wd['email']; ?></div>
+                                                    <?php if (!empty($wd['white_label_id']) && $_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                                                        <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.65rem;">WL User</span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </td>
@@ -103,13 +106,33 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                                         </span>
                                     </td>
 
-                                    <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+                                    <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                         <td class="text-end pe-4">
-                                            <?php if ($wd['status'] == 'requested'): ?>
-                                                <a href="<?php echo url('withdrawal/approve/' . $wd['id']); ?>" class="btn btn-sm btn-success me-1 shadow-sm" onclick="return confirm('Approve this request?');" title="Approve"><i class="fas fa-check"></i></a>
-                                                <a href="<?php echo url('withdrawal/reject/' . $wd['id']); ?>" class="btn btn-sm btn-danger shadow-sm" onclick="return confirm('Reject and refund?');" title="Reject"><i class="fas fa-times"></i></a>
-                                            <?php elseif ($wd['status'] == 'approved'): ?>
-                                                <a href="<?php echo url('withdrawal/mark_paid/' . $wd['id']); ?>" class="btn btn-sm btn-primary shadow-sm" onclick="return confirm('Mark as Paid?');">Mark Paid</a>
+                                            <?php
+                                                // Logic to hide actions for Super Admin if it's a WL Partner
+                                                $show_actions = true;
+                                                if ($_SESSION['role_code'] === 'SUPER_ADMIN' && !empty($wd['white_label_id'])) {
+                                                    // Check if it's a Partner (not the WL Admin themselves)
+                                                    // We don't have role_code in $wd here unless we joined roles table.
+                                                    // I updated controller to join roles table, so $wd['role_code'] should be available?
+                                                    // Wait, I updated controller to fetch r.code as role_code.
+                                                    // Let's check if $wd['role_code'] is available.
+
+                                                    if (isset($wd['role_code']) && $wd['role_code'] === 'PARTNER_ADMIN') {
+                                                        $show_actions = false;
+                                                    }
+                                                }
+                                            ?>
+
+                                            <?php if ($show_actions): ?>
+                                                <?php if ($wd['status'] == 'requested'): ?>
+                                                    <a href="<?php echo url('withdrawal/approve/' . $wd['id']); ?>" class="btn btn-sm btn-success me-1 shadow-sm" onclick="return confirm('Approve this request?');" title="Approve"><i class="fas fa-check"></i></a>
+                                                    <a href="<?php echo url('withdrawal/reject/' . $wd['id']); ?>" class="btn btn-sm btn-danger shadow-sm" onclick="return confirm('Reject and refund?');" title="Reject"><i class="fas fa-times"></i></a>
+                                                <?php elseif ($wd['status'] == 'approved'): ?>
+                                                    <a href="<?php echo url('withdrawal/mark_paid/' . $wd['id']); ?>" class="btn btn-sm btn-primary shadow-sm" onclick="return confirm('Mark as Paid?');">Mark Paid</a>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted small fst-italic">Managed by WL</span>
                                             <?php endif; ?>
                                         </td>
                                     <?php endif; ?>
@@ -117,14 +140,14 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="<?php echo ($_SESSION['role_code'] === 'SUPER_ADMIN') ? '6' : '4'; ?>" class="text-center py-5">
+                                <td colspan="<?php echo ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL') ? '6' : '4'; ?>" class="text-center py-5">
                                     <div class="py-5">
                                         <div class="icon-box bg-light text-muted rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                                             <i class="fas fa-wallet fa-3x opacity-50"></i>
                                         </div>
                                         <h5 class="fw-bold text-dark">No Withdrawal History</h5>
-                                        <p class="text-muted mb-4">You haven't made any withdrawal requests yet.</p>
-                                        <?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN'): ?>
+                                        <p class="text-muted mb-4">No withdrawal requests found.</p>
+                                        <?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL'): ?>
                                             <button type="button" class="btn btn-primary px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#requestModal">
                                                 Request Now
                                             </button>
@@ -141,7 +164,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
 </div>
 
 <!-- Request Modal -->
-<?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && isset($user)): ?>
+<?php if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL' && isset($user)): ?>
 <div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">

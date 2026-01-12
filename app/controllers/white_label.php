@@ -56,7 +56,8 @@ function white_label_edit($id) {
     if (!$client) {
         redirect('white_label/index');
     }
-    view('forms/white_label_form', ['client' => $client]);
+    // Changed 'client' to 'wl' to match view expectation
+    view('forms/white_label_form', ['wl' => $client]);
 }
 
 function white_label_update($id) {
@@ -134,7 +135,7 @@ function white_label_subscription_store($id) {
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
             'amount' => $_POST['amount'],
-            'due_amount' => $_POST['due_amount'], // Added
+            'due_amount' => $_POST['due_amount'],
             'payment_status' => $_POST['payment_status']
         ];
 

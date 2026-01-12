@@ -2,101 +2,46 @@
 require_once APP_PATH . '/models/user.php';
 
 function auth_login() {
-    // Redirect to home page where the modal is
-    redirect('');
+    // If already logged in, redirect to dashboard
+    if (isset($_SESSION['user_id'])) {
+        redirect('dashboard/index');
+    }
+
+    // Instead of showing a standalone login page, redirect to home with a flag to open modal
+    // Or just redirect to home and let user click login
+    redirect('/?login=true');
 }
 
 function auth_login_post() {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // Sanitize inputs manually since FILTER_SANITIZE_STRING is deprecated
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-        $password = $_POST['password']; // Don't sanitize password, just trim
+        $password = $_POST['password'];
 
-        $data = [
-            'email' => trim($email),
-            'password' => trim($password),
-            'email_err' => '',
-            'password_err' => ''
-        ];
+        $user = find_user_by_email($email);
 
-        // Validate Email
-        if (empty($data['email'])) {
-            $data['email_err'] = 'Please enter email';
-        }
+        if ($user && password_verify($password, $user['password_hash'])) {
 
-        // Validate Password
-        if (empty($data['password'])) {
-            $data['password_err'] = 'Please enter password';
-        }
-
-        // Check for user/email
-        if (empty($data['email_err']) && empty($data['password_err'])) {
-            $user = find_user_by_email($data['email']);
-
-            if ($user) {
-                // User found, check password
-                if (password_verify($data['password'], $user['password_hash'])) {
-                    // Password correct, start session
-                    auth_login_session($user);
-                } else {
-                    $data['password_err'] = 'Password incorrect';
-                    flash('login_error', 'Password incorrect', 'alert alert-danger');
-                    redirect(''); // Redirect back to home to show error
-                }
-            } else {
-                $data['email_err'] = 'No user found';
-                flash('login_error', 'No user found with that email', 'alert alert-danger');
-                redirect('');
+            // Check Status
+            if ($user['status'] !== 'active') {
+                flash('login_error', 'Your account is inactive or suspended.', 'alert alert-danger');
+                redirect('/?login=true'); // Redirect to home with error
+                return;
             }
+
+            // Set Session
+            auth_login_session($user); // Use helper function
+
         } else {
-            flash('login_error', 'Please fill in all fields', 'alert alert-danger');
-            redirect('');
+            flash('login_error', 'Invalid email or password.', 'alert alert-danger');
+            redirect('/?login=true'); // Redirect to home with error
         }
-    } else {
-        redirect('');
     }
 }
 
 function auth_logout() {
-    auth_logout_session();
+    auth_logout_session(); // Use helper function
 }
 
-function auth_access_revoked() {
-    // Just load the view
-    view('auth/access_revoked');
-}
-
-// Temporary function to seed a Super Admin
-function auth_seed() {
-    $db = get_db_connection();
-
-    // 1. Create Roles if not exist
-    $db->exec("INSERT IGNORE INTO roles (id, code, name) VALUES (1, 'SUPER_ADMIN', 'Super Admin')");
-    $db->exec("INSERT IGNORE INTO roles (id, code, name) VALUES (2, 'RM', 'Relationship Manager')");
-
-    // 2. Create Super Admin User
-    // Password: password123
-    $password = password_hash('password123', PASSWORD_DEFAULT);
-    $id = 'admin-' . time(); // Simple ID for now
-
-    $data = [
-        'id' => $id,
-        'role_id' => 1,
-        'first_name' => 'Super',
-        'last_name' => 'Admin',
-        'email' => 'admin@incomekaro.in',
-        'password_hash' => $password
-    ];
-
-    // Check if admin exists
-    $existing = find_user_by_email($data['email']);
-    if (!$existing) {
-        if (create_user($data)) {
-            echo 'Super Admin created. Email: admin@incomekaro.in, Pass: password123';
-        } else {
-            echo 'Failed to create admin.';
-        }
-    } else {
-        echo 'Super Admin already exists.';
-    }
+function auth_suspended() {
+    view('errors/suspended');
 }

@@ -113,7 +113,35 @@ function user_delete($id) {
 // --- Wallet Management ---
 
 function user_wallet_update($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Allow logged in users (permission check below)
+
+    $target_user = find_user_by_id($id);
+    if (!$target_user) {
+        flash('user_error', 'User not found.', 'alert alert-danger');
+        redirect('dashboard/index');
+    }
+
+    // Permission Check
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        // Ensure the target user belongs to this White Label
+        $current_user = find_user_by_id($_SESSION['user_id']);
+
+        if ($target_user['white_label_id'] !== $current_user['white_label_id']) {
+            die('Access Denied: You can only manage wallets for your own partners.');
+        }
+    } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        // Super Admin Restriction: Cannot manage wallet of a White Label Partner
+        // But CAN manage wallet of White Label Admin (Client) or Platform Partner
+
+        // Check if target is a Partner belonging to a WL
+        $target_role = get_user_role($target_user['role_id']);
+
+        if ($target_role['code'] === 'PARTNER_ADMIN' && !empty($target_user['white_label_id'])) {
+            die('Access Denied: Super Admin cannot manage wallet of a White Label Partner. Please contact the White Label Admin.');
+        }
+    } else {
+        die('Access Denied');
+    }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $amount = filter_input(INPUT_POST, 'amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -122,7 +150,11 @@ function user_wallet_update($id) {
 
         if ($amount <= 0) {
             flash('user_error', 'Amount must be greater than 0.', 'alert alert-danger');
-            redirect('user/index');
+            if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+                redirect('partner/index');
+            } else {
+                redirect('user/index');
+            }
         }
 
         $db = get_db_connection();
@@ -141,6 +173,10 @@ function user_wallet_update($id) {
             flash('user_error', 'Error: ' . $e->getMessage(), 'alert alert-danger');
         }
 
-        redirect('user/index');
+        if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+            redirect('partner/index');
+        } else {
+            redirect('user/index');
+        }
     }
 }

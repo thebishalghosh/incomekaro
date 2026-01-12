@@ -1,7 +1,7 @@
 <?php view('layouts/header', ['title' => isset($plan) ? 'Edit Plan' : 'Create Plan']); ?>
 
 <div class="row justify-content-center">
-    <div class="col-lg-10">
+    <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold text-dark"><?php echo isset($plan) ? 'Edit Plan' : 'Create New Plan'; ?></h2>
             <a href="<?php echo url('subscription/index'); ?>" class="btn btn-outline-secondary">

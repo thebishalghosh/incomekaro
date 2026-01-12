@@ -1,9 +1,11 @@
 <?php
 function get_platform_partners() {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image
+    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image,
+            u.id as user_id, u.wallet_balance
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+            LEFT JOIN users u ON u.partner_id = p.id
             WHERE p.partner_type = 'PLATFORM'
             ORDER BY p.created_at DESC";
     $stmt = $db->query($sql);
@@ -12,10 +14,12 @@ function get_platform_partners() {
 
 function get_all_partners_for_admin() {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name
+    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
+            LEFT JOIN users u ON u.partner_id = p.id
             ORDER BY p.created_at DESC";
     $stmt = $db->query($sql);
     return $stmt->fetchAll();
@@ -23,10 +27,12 @@ function get_all_partners_for_admin() {
 
 function get_partners_by_rm($rm_id) {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name
+    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
+            LEFT JOIN users u ON u.partner_id = p.id
             WHERE p.rm_id = :rm_id
             ORDER BY p.created_at DESC";
     $stmt = $db->prepare($sql);
@@ -93,9 +99,16 @@ function get_partner_by_id($id) {
 
     // Fetch Plan Details & Services if subscription exists
     if ($partner['subscription']) {
-        $sql = "SELECT * FROM subscription_plans WHERE name = :name LIMIT 1";
+        // FIX: Filter plan by Partner's White Label ID to avoid name collisions
+        $sql = "SELECT * FROM subscription_plans
+                WHERE name = :name
+                AND (white_label_id = :wl_id OR white_label_id IS NULL)
+                ORDER BY white_label_id DESC -- Prefer specific WL plan over Global
+                LIMIT 1";
+
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':name', $partner['subscription']['plan_name']);
+        $stmt->bindValue(':wl_id', $partner['white_label_id']);
         $stmt->execute();
         $plan_details = $stmt->fetch();
 

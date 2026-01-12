@@ -4,6 +4,7 @@
 // Ensure User and Partner models are available for auth checks
 require_once APP_PATH . '/models/user.php';
 require_once APP_PATH . '/models/partner.php';
+require_once APP_PATH . '/models/white_label.php'; // Added for WL check
 
 function auth_login_session($user) {
     $_SESSION['user_id'] = $user['id'];
@@ -45,11 +46,22 @@ function require_login() {
     // Check if user is active
     $user = find_user_by_id($_SESSION['user_id']);
 
+    // 1. Check User Status
     if ($user && $user['status'] === 'inactive') {
-        // Allow access to the revoked page and logout
         $current_url = $_GET['url'] ?? '';
-        if ($current_url !== 'auth/access_revoked' && $current_url !== 'auth/logout') {
-            redirect('auth/access_revoked');
+        if ($current_url !== 'auth/suspended' && $current_url !== 'auth/logout') {
+            redirect('auth/suspended');
+        }
+    }
+
+    // 2. Check White Label Status (if applicable)
+    if ($user && !empty($user['white_label_id'])) {
+        $wl = get_white_label_by_id($user['white_label_id']);
+        if ($wl && $wl['status'] === 'inactive') {
+            $current_url = $_GET['url'] ?? '';
+            if ($current_url !== 'auth/suspended' && $current_url !== 'auth/logout') {
+                redirect('auth/suspended');
+            }
         }
     }
 }

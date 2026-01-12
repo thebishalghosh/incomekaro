@@ -232,4 +232,14 @@ if ($is_dashboard && isLoggedIn()):
         <div class="container mt-3">
             <?php flash('login_error'); ?>
         </div>
+
+        <!-- Auto-open Login Modal Script -->
+        <?php if (isset($_GET['login']) && $_GET['login'] == 'true'): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            });
+        </script>
+        <?php endif; ?>
 <?php endif; ?>

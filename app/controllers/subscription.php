@@ -129,6 +129,7 @@ function subscription_store() {
         $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING);
         $footer_description = filter_input(INPUT_POST, 'footer_description', FILTER_SANITIZE_STRING);
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+        $selected_services = $_POST['services'] ?? [];
 
         $white_label_id = null;
 
@@ -136,6 +137,10 @@ function subscription_store() {
             $user = find_user_by_id($_SESSION['user_id']);
             $white_label_id = $user['white_label_id'];
             $type = 'PARTNER'; // Force type
+
+            // Security: Validate selected services against allowed services
+            $allowed_ids = get_white_label_allowed_services($white_label_id);
+            $selected_services = array_intersect($selected_services, $allowed_ids);
         }
 
         $data = [
@@ -148,7 +153,7 @@ function subscription_store() {
             'description' => trim($description),
             'footer_description' => trim($footer_description),
             'status' => $status,
-            'services' => $_POST['services'] ?? []
+            'services' => $selected_services
         ];
 
         if (create_subscription_plan($data)) {
@@ -203,6 +208,7 @@ function subscription_update($id) {
         $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING);
         $footer_description = filter_input(INPUT_POST, 'footer_description', FILTER_SANITIZE_STRING);
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+        $selected_services = $_POST['services'] ?? [];
 
         if ($_SESSION['role_code'] === 'WHITE_LABEL') {
             $user = find_user_by_id($_SESSION['user_id']);
@@ -212,6 +218,10 @@ function subscription_update($id) {
                 die('Access Denied');
             }
             $type = 'PARTNER';
+
+            // Security: Validate selected services
+            $allowed_ids = get_white_label_allowed_services($user['white_label_id']);
+            $selected_services = array_intersect($selected_services, $allowed_ids);
         }
 
         $data = [
@@ -223,7 +233,7 @@ function subscription_update($id) {
             'description' => trim($description),
             'footer_description' => trim($footer_description),
             'status' => $status,
-            'services' => $_POST['services'] ?? []
+            'services' => $selected_services
         ];
 
         if (update_subscription_plan($data)) {

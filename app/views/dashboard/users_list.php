@@ -53,13 +53,44 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning text-dark me-1" data-bs-toggle="modal" data-bs-target="#walletModal<?php echo $user['id']; ?>" title="Manage Wallet">
-                                        <i class="fas fa-wallet"></i>
-                                    </button>
+                                    <?php
+                                        // Wallet Button Logic for Super Admin
+                                        $show_wallet = true;
+
+                                        // If user is a Partner belonging to a White Label, hide wallet
+                                        // We check if role is 'Partner Admin' (usually ID 3 or 4, but let's rely on name or code if available)
+                                        // The query returns role_name. Let's assume 'Partner Admin' is the name.
+                                        // Better: The query doesn't return role_code.
+                                        // However, we know WL Partners have a white_label_id AND are not the WL Admin themselves.
+                                        // WL Admin also has white_label_id.
+
+                                        // Logic:
+                                        // If user has white_label_id:
+                                        //    If role is 'White Label' -> Show (It's the client)
+                                        //    If role is 'Partner Admin' -> Hide (It's a sub-partner)
+
+                                        if (!empty($user['white_label_id'])) {
+                                            // We need to distinguish between WL Admin and WL Partner
+                                            // WL Admin role name is usually 'White Label'
+                                            // Partner role name is usually 'Partner Admin'
+
+                                            if (stripos($user['role_name'], 'Partner') !== false) {
+                                                $show_wallet = false;
+                                            }
+                                        }
+                                    ?>
+
+                                    <?php if ($show_wallet): ?>
+                                        <button class="btn btn-sm btn-warning text-dark me-1" data-bs-toggle="modal" data-bs-target="#walletModal<?php echo $user['id']; ?>" title="Manage Wallet">
+                                            <i class="fas fa-wallet"></i>
+                                        </button>
+                                    <?php endif; ?>
+
                                     <a href="<?php echo url('user/edit/' . $user['id']); ?>" class="btn btn-sm btn-info text-white me-1"><i class="fas fa-edit"></i></a>
                                     <a href="<?php echo url('user/delete/' . $user['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');"><i class="fas fa-trash"></i></a>
 
                                     <!-- Wallet Modal -->
+                                    <?php if ($show_wallet): ?>
                                     <div class="modal fade" id="walletModal<?php echo $user['id']; ?>" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-lg modal-dialog-centered">
                                             <div class="modal-content border-0 shadow-lg overflow-hidden">
@@ -157,6 +188,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
