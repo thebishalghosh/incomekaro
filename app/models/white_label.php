@@ -116,36 +116,41 @@ function update_white_label($data) {
     }
 }
 
-function update_white_label_settings($id, $company_name, $logo_url, $primary_color, $secondary_color, $landing_page_data) {
+function update_white_label_settings($id, $data) {
     $db = get_db_connection();
 
     try {
         $db->beginTransaction();
 
-        // 1. Update Client Settings
-        $sql = "UPDATE white_label_clients SET
-                company_name = :company_name,
-                logo_url = :logo_url,
-                primary_color = :primary_color,
-                secondary_color = :secondary_color,
-                landing_page_data = :landing_page_data
-                WHERE id = :id";
+        // Dynamic Update Query
+        $fields = [];
+        $params = [':id' => $id];
 
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':id', $id);
-        $stmt->bindValue(':company_name', $company_name);
-        $stmt->bindValue(':logo_url', $logo_url);
-        $stmt->bindValue(':primary_color', $primary_color);
-        $stmt->bindValue(':secondary_color', $secondary_color);
-        $stmt->bindValue(':landing_page_data', $landing_page_data);
-        $stmt->execute();
+        if (isset($data['company_name'])) { $fields[] = "company_name = :company_name"; $params[':company_name'] = $data['company_name']; }
+        if (isset($data['logo_url'])) { $fields[] = "logo_url = :logo_url"; $params[':logo_url'] = $data['logo_url']; }
+        if (isset($data['primary_color'])) { $fields[] = "primary_color = :primary_color"; $params[':primary_color'] = $data['primary_color']; }
+        if (isset($data['secondary_color'])) { $fields[] = "secondary_color = :secondary_color"; $params[':secondary_color'] = $data['secondary_color']; }
+        if (isset($data['landing_page_data'])) { $fields[] = "landing_page_data = :landing_page_data"; $params[':landing_page_data'] = $data['landing_page_data']; }
 
-        // 2. Sync User Name (Optional but good for consistency)
-        $sql = "UPDATE users SET first_name = :first_name WHERE white_label_id = :id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL')";
+        // New Signature Fields
+        if (isset($data['signatory_name'])) { $fields[] = "signatory_name = :signatory_name"; $params[':signatory_name'] = $data['signatory_name']; }
+        if (isset($data['signatory_designation'])) { $fields[] = "signatory_designation = :signatory_designation"; $params[':signatory_designation'] = $data['signatory_designation']; }
+        if (isset($data['signature_url'])) { $fields[] = "signature_url = :signature_url"; $params[':signature_url'] = $data['signature_url']; }
+
+        if (empty($fields)) return true; // Nothing to update
+
+        $sql = "UPDATE white_label_clients SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $db->prepare($sql);
-        $stmt->bindValue(':first_name', $company_name);
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
+        $stmt->execute($params);
+
+        // Sync User Name if company name changed
+        if (isset($data['company_name'])) {
+            $sql = "UPDATE users SET first_name = :first_name WHERE white_label_id = :id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL')";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':first_name', $data['company_name']);
+            $stmt->bindValue(':id', $id);
+            $stmt->execute();
+        }
 
         $db->commit();
         return true;
@@ -296,7 +301,7 @@ function assign_white_label_subscription($data) {
         $stmt->bindValue(':start_date', $data['start_date']);
         $stmt->bindValue(':end_date', $data['end_date']);
         $stmt->bindValue(':amount', $data['amount']);
-        $stmt->bindValue(':due_amount', $data['due_amount'] ?? 0.00); // Added
+        $stmt->bindValue(':due_amount', $data['due_amount'] ?? 0.00);
         $stmt->bindValue(':payment_status', $data['payment_status']);
         $stmt->execute();
 

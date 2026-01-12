@@ -26,6 +26,26 @@ function get_all_subscription_plans($type = null, $white_label_id = null) {
     return $stmt->fetchAll();
 }
 
+function get_active_subscription_plans($white_label_id = null) {
+    $db = get_db_connection();
+    $sql = "SELECT * FROM subscription_plans WHERE status = 'active' AND type = 'PARTNER'";
+    $params = [];
+
+    if ($white_label_id === 'GLOBAL') {
+        $sql .= " AND white_label_id IS NULL";
+    } elseif ($white_label_id) {
+        $sql .= " AND white_label_id = :wl_id";
+        $params[':wl_id'] = $white_label_id;
+    }
+    // If $white_label_id is null, it fetches ALL active partner plans (default behavior for Super Admin initially)
+
+    $sql .= " ORDER BY price ASC";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
 function get_subscription_plan_by_id($id) {
     $db = get_db_connection();
 

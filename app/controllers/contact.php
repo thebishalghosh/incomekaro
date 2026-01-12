@@ -1,6 +1,7 @@
 <?php
 require_once APP_PATH . '/core/mailer.php';
 require_once APP_PATH . '/core/database.php';
+require_once APP_PATH . '/core/whitelabel.php'; // Ensure IS_WHITE_LABEL is available
 
 function contact_index() {
     view('contact/index');
@@ -13,9 +14,15 @@ function contact_store() {
         $subject = filter_input(INPUT_POST, 'subject', FILTER_SANITIZE_STRING);
         $message = filter_input(INPUT_POST, 'message', FILTER_SANITIZE_STRING);
 
+        // Determine redirect URL based on context
+        $redirect_url = 'contact/index';
+        if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL) {
+            $redirect_url = '/#contact'; // Redirect to landing page contact section
+        }
+
         if (empty($name) || empty($email) || empty($message)) {
             flash('contact_error', 'Please fill in all required fields.', 'alert alert-danger');
-            redirect('contact/index');
+            redirect($redirect_url);
         }
 
         // Determine White Label ID
@@ -64,6 +71,6 @@ function contact_store() {
             flash('contact_error', 'Failed to save message. Please try again later.', 'alert alert-danger');
         }
 
-        redirect('contact/index');
+        redirect($redirect_url);
     }
 }

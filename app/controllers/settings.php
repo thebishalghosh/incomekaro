@@ -16,6 +16,8 @@ function settings_index() {
         $landing_data = [
             'hero' => ['title' => '', 'text' => '', 'image' => ''],
             'about' => ['title' => '', 'text' => '', 'image' => ''],
+            'contact_phone' => '',
+            'contact_address' => '',
             'products' => [
                 ['title' => 'Credit Card DSA', 'desc' => 'Sell credit cards from leading banks like SBI, ICICI, HDFC, Citi, RBL, etc.'],
                 ['title' => 'Personal & Business Loan', 'desc' => 'Sell instant personal loans, business loans, home loans, LAP from top banks.'],
@@ -50,6 +52,17 @@ function settings_update() {
             $file_name = time() . '_logo_' . basename($_FILES['logo']['name']);
             if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $file_name)) {
                 $logo_url = 'uploads/logos/' . $file_name;
+            }
+        }
+
+        // Handle Signature Upload
+        $signature_url = $wl['signature_url'] ?? null;
+        if (isset($_FILES['signature']) && $_FILES['signature']['error'] === 0) {
+            $upload_dir = APP_ROOT . '/public/uploads/signatures/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            $file_name = time() . '_sig_' . basename($_FILES['signature']['name']);
+            if (move_uploaded_file($_FILES['signature']['tmp_name'], $upload_dir . $file_name)) {
+                $signature_url = 'uploads/signatures/' . $file_name;
             }
         }
 
@@ -90,6 +103,8 @@ function settings_update() {
                 'text' => $_POST['about_text'],
                 'image' => $about_image
             ],
+            'contact_phone' => $_POST['contact_phone'],
+            'contact_address' => $_POST['contact_address'],
             'products' => []
         ];
 
@@ -103,9 +118,20 @@ function settings_update() {
             }
         }
 
+        // Prepare Data for Update
+        $update_data = [
+            'company_name' => $company_name,
+            'logo_url' => $logo_url,
+            'primary_color' => $primary_color,
+            'secondary_color' => $secondary_color,
+            'landing_page_data' => json_encode($landing_data),
+            'signatory_name' => $_POST['signatory_name'] ?? null,
+            'signatory_designation' => $_POST['signatory_designation'] ?? null,
+            'signature_url' => $signature_url
+        ];
+
         // 3. Update Database
-        // We need a specific function to update settings without changing domain/email/status
-        if (update_white_label_settings($wl['id'], $company_name, $logo_url, $primary_color, $secondary_color, json_encode($landing_data))) {
+        if (update_white_label_settings($wl['id'], $update_data)) {
             flash('settings_success', 'Settings Updated Successfully');
         } else {
             flash('settings_error', 'Failed to update settings', 'alert alert-danger');

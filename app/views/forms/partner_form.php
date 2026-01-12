@@ -1,6 +1,6 @@
 <?php view('layouts/header', ['title' => isset($partner) ? 'Edit Partner' : 'Add Partner']); ?>
 
-<div class="row">
+<div class="row justify-content-center">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -12,8 +12,10 @@
             </a>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-lg">
-            <div class="card-body p-4 p-md-5">
+        <?php flash('ptr_error'); ?>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-5">
                 <form action="<?php echo isset($partner) ? url('partner/update/' . $partner['id']) : url('partner/store'); ?>" method="POST" enctype="multipart/form-data">
 
                     <!-- Super Admin: Partner Type Selection -->
@@ -22,14 +24,14 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="partner_type" class="form-label fw-bold">Partner Type</label>
-                                <select class="form-select" id="partner_type" name="partner_type" onchange="toggleWhiteLabelSelect()">
+                                <select class="form-select form-select-lg" id="partner_type" name="partner_type" onchange="toggleWhiteLabelSelect()">
                                     <option value="PLATFORM">Platform Partner (Direct)</option>
                                     <option value="WHITE_LABEL">White Label Partner</option>
                                 </select>
                             </div>
                             <div class="col-md-6" id="white_label_select_container" style="display: none;">
                                 <label for="white_label_id" class="form-label fw-bold">Select White Label Client</label>
-                                <select class="form-select" id="white_label_id" name="white_label_id">
+                                <select class="form-select form-select-lg" id="white_label_id" name="white_label_id" onchange="fetchPlans()">
                                     <option value="">-- Select Client --</option>
                                     <?php if (!empty($white_labels)): ?>
                                         <?php foreach ($white_labels as $wl): ?>
@@ -47,7 +49,7 @@
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <label for="profile_image" class="form-label fw-bold">Profile Image <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(this)">
+                            <input type="file" class="form-control form-control-lg" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(this)">
                             <div class="mt-3" id="image_preview_container" style="<?php echo (isset($partner) && !empty($partner['profile']['profile_image'])) ? '' : 'display:none;'; ?>">
                                 <img id="image_preview" src="<?php echo (isset($partner) && !empty($partner['profile']['profile_image'])) ? asset($partner['profile']['profile_image']) : '#'; ?>" alt="Profile Preview" style="height: 100px; width: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #dee2e6;">
                             </div>
@@ -61,27 +63,27 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="full_name" class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="full_name" name="full_name" value="<?php echo !empty($partner['profile']) ? $partner['profile']['full_name'] : ''; ?>" required>
+                            <input type="text" class="form-control form-control-lg" id="full_name" name="full_name" value="<?php echo !empty($partner['profile']) ? $partner['profile']['full_name'] : ''; ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label for="mobile" class="form-label fw-bold">Mobile Number <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="mobile" name="mobile" value="<?php echo !empty($partner['profile']) ? $partner['profile']['mobile'] : ''; ?>" required>
+                            <input type="tel" class="form-control form-control-lg" id="mobile" name="mobile" value="<?php echo !empty($partner['profile']) ? $partner['profile']['mobile'] : ''; ?>" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="email" class="form-label fw-bold">Email Address <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="email" name="email" value="<?php echo !empty($partner['profile']) ? $partner['profile']['email'] : ''; ?>" required>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?php echo !empty($partner['profile']) ? $partner['profile']['email'] : ''; ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label for="whatsapp" class="form-label fw-bold">WhatsApp Number</label>
-                            <input type="tel" class="form-control" id="whatsapp" name="whatsapp" value="<?php echo !empty($partner['profile']) ? $partner['profile']['whatsapp'] : ''; ?>">
+                            <input type="tel" class="form-control form-control-lg" id="whatsapp" name="whatsapp" value="<?php echo !empty($partner['profile']) ? $partner['profile']['whatsapp'] : ''; ?>">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="dob" class="form-label fw-bold">Date of Birth</label>
-                            <input type="date" class="form-control" id="dob" name="dob" value="<?php echo !empty($partner['profile']) ? $partner['profile']['dob'] : ''; ?>">
+                            <input type="date" class="form-control form-control-lg" id="dob" name="dob" value="<?php echo !empty($partner['profile']) ? $partner['profile']['dob'] : ''; ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold d-block">Gender</label>
@@ -96,6 +98,16 @@
                         </div>
                     </div>
 
+                    <?php if (!isset($partner)): ?>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control form-control-lg" name="password" required>
+                                <div class="form-text">This password will be used for the partner's login.</div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <hr class="my-4 text-muted">
 
                     <!-- Bank Details -->
@@ -103,27 +115,27 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="account_holder_name" class="form-label fw-bold">Account Holder Name</label>
-                            <input type="text" class="form-control" id="account_holder_name" name="account_holder_name" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['account_holder_name'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="account_holder_name" name="account_holder_name" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['account_holder_name'] : ''; ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="bank_name" class="form-label fw-bold">Bank Name</label>
-                            <input type="text" class="form-control" id="bank_name" name="bank_name" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['bank_name'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="bank_name" name="bank_name" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['bank_name'] : ''; ?>">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="account_number" class="form-label fw-bold">Account Number</label>
-                            <input type="text" class="form-control" id="account_number" name="account_number" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['account_number'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="account_number" name="account_number" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['account_number'] : ''; ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="ifsc_code" class="form-label fw-bold">IFSC Code</label>
-                            <input type="text" class="form-control" id="ifsc_code" name="ifsc_code" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['ifsc_code'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="ifsc_code" name="ifsc_code" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['ifsc_code'] : ''; ?>">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="branch" class="form-label fw-bold">Branch</label>
-                            <input type="text" class="form-control" id="branch" name="branch" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['branch'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="branch" name="branch" value="<?php echo !empty($partner['bank_details']) ? $partner['bank_details']['branch'] : ''; ?>">
                         </div>
                     </div>
 
@@ -134,7 +146,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="plan_id" class="form-label fw-bold">Select Plan</label>
-                            <select class="form-select" id="plan_id" name="plan_id" onchange="updatePlanPrice()">
+                            <select class="form-select form-select-lg" id="plan_id" name="plan_id" onchange="updatePlanPrice()">
                                 <option value="">-- Select Plan --</option>
                                 <?php if (!empty($plans)): ?>
                                     <?php foreach ($plans as $p): ?>
@@ -151,17 +163,17 @@
                         </div>
                         <div class="col-md-6">
                             <label for="payment_amount" class="form-label fw-bold">Payment Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="payment_amount" name="payment_amount" placeholder="0.00" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['payment_amount'] : ''; ?>" readonly>
+                            <input type="number" step="0.01" class="form-control form-control-lg" id="payment_amount" name="payment_amount" placeholder="0.00" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['payment_amount'] : ''; ?>" readonly>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="due_amount" class="form-label fw-bold">Due Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="due_amount" name="due_amount" placeholder="0.00" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['due_amount'] : ''; ?>">
+                            <input type="number" step="0.01" class="form-control form-control-lg" id="due_amount" name="due_amount" placeholder="0.00" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['due_amount'] : ''; ?>">
                         </div>
                         <div class="col-md-4">
                             <label for="payment_mode" class="form-label fw-bold">Payment Mode</label>
-                            <select class="form-select" id="payment_mode" name="payment_mode">
+                            <select class="form-select form-select-lg" id="payment_mode" name="payment_mode">
                                 <option value="Online" <?php echo (!empty($partner['subscription']) && $partner['subscription']['payment_mode'] == 'Online') ? 'selected' : ''; ?>>Online</option>
                                 <option value="Cash" <?php echo (!empty($partner['subscription']) && $partner['subscription']['payment_mode'] == 'Cash') ? 'selected' : ''; ?>>Cash</option>
                                 <option value="Cheque" <?php echo (!empty($partner['subscription']) && $partner['subscription']['payment_mode'] == 'Cheque') ? 'selected' : ''; ?>>Cheque</option>
@@ -169,7 +181,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transaction_id" class="form-label fw-bold">Transaction ID</label>
-                            <input type="text" class="form-control" id="transaction_id" name="transaction_id" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['transaction_id'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="transaction_id" name="transaction_id" value="<?php echo !empty($partner['subscription']) ? $partner['subscription']['transaction_id'] : ''; ?>">
                         </div>
                     </div>
 
@@ -179,20 +191,20 @@
                     <h5 class="fw-bold text-primary mb-4">Permanent Address</h5>
                     <div class="mb-3">
                         <label for="perm_address" class="form-label fw-bold">Address <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="perm_address" name="perm_address" rows="2" required><?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['address'] : ''; ?></textarea>
+                        <textarea class="form-control form-control-lg" id="perm_address" name="perm_address" rows="2" required><?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['address'] : ''; ?></textarea>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="perm_state" class="form-label fw-bold">State <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="perm_state" name="perm_state" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['state'] : ''; ?>" required>
+                            <input type="text" class="form-control form-control-lg" id="perm_state" name="perm_state" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['state'] : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
                             <label for="perm_city" class="form-label fw-bold">City <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="perm_city" name="perm_city" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['city'] : ''; ?>" required>
+                            <input type="text" class="form-control form-control-lg" id="perm_city" name="perm_city" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['city'] : ''; ?>" required>
                         </div>
                         <div class="col-md-4">
                             <label for="perm_pincode" class="form-label fw-bold">Pincode <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="perm_pincode" name="perm_pincode" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['pincode'] : ''; ?>" required>
+                            <input type="text" class="form-control form-control-lg" id="perm_pincode" name="perm_pincode" value="<?php echo !empty($partner['address_permanent']) ? $partner['address_permanent']['pincode'] : ''; ?>" required>
                         </div>
                     </div>
 
@@ -207,20 +219,20 @@
                     <div id="office_address_section">
                         <div class="mb-3">
                             <label for="office_address" class="form-label fw-bold">Address</label>
-                            <textarea class="form-control" id="office_address" name="office_address" rows="2"><?php echo !empty($partner['address_office']) ? $partner['address_office']['address'] : ''; ?></textarea>
+                            <textarea class="form-control form-control-lg" id="office_address" name="office_address" rows="2"><?php echo !empty($partner['address_office']) ? $partner['address_office']['address'] : ''; ?></textarea>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="office_state" class="form-label fw-bold">State</label>
-                                <input type="text" class="form-control" id="office_state" name="office_state" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['state'] : ''; ?>">
+                                <input type="text" class="form-control form-control-lg" id="office_state" name="office_state" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['state'] : ''; ?>">
                             </div>
                             <div class="col-md-4">
                                 <label for="office_city" class="form-label fw-bold">City</label>
-                                <input type="text" class="form-control" id="office_city" name="office_city" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['city'] : ''; ?>">
+                                <input type="text" class="form-control form-control-lg" id="office_city" name="office_city" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['city'] : ''; ?>">
                             </div>
                             <div class="col-md-4">
                                 <label for="office_pincode" class="form-label fw-bold">Pincode</label>
-                                <input type="text" class="form-control" id="office_pincode" name="office_pincode" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['pincode'] : ''; ?>">
+                                <input type="text" class="form-control form-control-lg" id="office_pincode" name="office_pincode" value="<?php echo !empty($partner['address_office']) ? $partner['address_office']['pincode'] : ''; ?>">
                             </div>
                         </div>
                     </div>
@@ -232,15 +244,15 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="gst" class="form-label fw-bold">GST Number</label>
-                            <input type="text" class="form-control" id="gst" name="gst" value="<?php echo !empty($partner['identity']) ? $partner['identity']['gst'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="gst" name="gst" value="<?php echo !empty($partner['identity']) ? $partner['identity']['gst'] : ''; ?>">
                         </div>
                         <div class="col-md-4">
                             <label for="aadhaar" class="form-label fw-bold">Aadhar Number</label>
-                            <input type="text" class="form-control" id="aadhaar" name="aadhaar" value="<?php echo !empty($partner['identity']) ? $partner['identity']['aadhaar'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="aadhaar" name="aadhaar" value="<?php echo !empty($partner['identity']) ? $partner['identity']['aadhaar'] : ''; ?>">
                         </div>
                         <div class="col-md-4">
                             <label for="pan" class="form-label fw-bold">PAN Number</label>
-                            <input type="text" class="form-control" id="pan" name="pan" value="<?php echo !empty($partner['identity']) ? $partner['identity']['pan'] : ''; ?>">
+                            <input type="text" class="form-control form-control-lg" id="pan" name="pan" value="<?php echo !empty($partner['identity']) ? $partner['identity']['pan'] : ''; ?>">
                         </div>
                     </div>
 
@@ -270,8 +282,10 @@ function toggleWhiteLabelSelect() {
     const container = document.getElementById('white_label_select_container');
     if (type === 'WHITE_LABEL') {
         container.style.display = 'block';
+        fetchPlans(); // Fetch plans for the selected WL (or empty if none selected)
     } else {
         container.style.display = 'none';
+        fetchPlans('PLATFORM'); // Fetch global plans
     }
 }
 
@@ -304,6 +318,33 @@ function updatePlanPrice() {
     } else {
         priceInput.value = '';
     }
+}
+
+function fetchPlans(wlId = null) {
+    if (wlId === null) {
+        const select = document.getElementById('white_label_id');
+        wlId = select.value;
+    }
+
+    const planSelect = document.getElementById('plan_id');
+    planSelect.innerHTML = '<option value="">Loading...</option>';
+
+    fetch('<?php echo url('subscription/get_plans_by_wl'); ?>?wl_id=' + wlId)
+        .then(response => response.json())
+        .then(data => {
+            planSelect.innerHTML = '<option value="">-- Select Plan --</option>';
+            data.forEach(plan => {
+                const option = document.createElement('option');
+                option.value = plan.id;
+                option.setAttribute('data-price', plan.formatted_price);
+                option.textContent = `${plan.name} (₹${plan.formatted_price})`;
+                planSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching plans:', error);
+            planSelect.innerHTML = '<option value="">Error loading plans</option>';
+        });
 }
 </script>
 

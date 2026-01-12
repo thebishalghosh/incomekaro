@@ -28,6 +28,11 @@
                     <i class="fas fa-box-open me-2"></i> Products
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 fw-bold" id="agreement-tab" data-bs-toggle="tab" data-bs-target="#agreement" type="button" role="tab">
+                    <i class="fas fa-file-contract me-2"></i> Agreement
+                </button>
+            </li>
         </ul>
     </div>
 
@@ -119,6 +124,20 @@
                             <textarea class="form-control" name="about_text" rows="3"><?php echo $landing['about']['text'] ?? ''; ?></textarea>
                         </div>
                     </div>
+
+                    <hr>
+
+                    <h5 class="fw-bold text-primary mb-4">Contact Info</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Contact Phone</label>
+                            <input type="text" class="form-control" name="contact_phone" value="<?php echo $landing['contact_phone'] ?? ''; ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Contact Address</label>
+                            <input type="text" class="form-control" name="contact_address" value="<?php echo $landing['contact_address'] ?? ''; ?>">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Products Tab -->
@@ -144,6 +163,35 @@
                                 </div>
                             </div>
                         <?php endfor; ?>
+                    </div>
+                </div>
+
+                <!-- Agreement Tab -->
+                <div class="tab-pane fade" id="agreement" role="tabpanel">
+                    <h5 class="fw-bold text-primary mb-4">Agreement Settings</h5>
+                    <p class="text-muted mb-4">Configure the authorized signatory details for the partner agreement.</p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Signatory Name</label>
+                            <input type="text" class="form-control" name="signatory_name" value="<?php echo $wl['signatory_name'] ?? ''; ?>" placeholder="e.g. John Doe">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Designation</label>
+                            <input type="text" class="form-control" name="signatory_designation" value="<?php echo $wl['signatory_designation'] ?? ''; ?>" placeholder="e.g. CEO">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Digital Signature</label>
+                        <input type="file" class="form-control" name="signature" accept="image/*">
+                        <div class="form-text">Upload a PNG/JPG image of the signature (transparent background recommended).</div>
+
+                        <?php if (!empty($wl['signature_url'])): ?>
+                            <div class="mt-3 p-3 bg-light border rounded d-inline-block">
+                                <img src="<?php echo asset($wl['signature_url']); ?>" alt="Current Signature" style="height: 60px;">
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 

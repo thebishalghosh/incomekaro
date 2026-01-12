@@ -419,6 +419,146 @@ function create_full_partner($data) {
     }
 }
 
+function update_full_partner($data) {
+    $db = get_db_connection();
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Update partners
+        $sql = "UPDATE partners SET status = :status WHERE id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':status', $data['status']);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+
+        // 2. Update partner_profiles
+        $sql = "UPDATE partner_profiles SET
+                full_name = :full_name,
+                mobile = :mobile,
+                email = :email,
+                whatsapp = :whatsapp,
+                dob = :dob,
+                gender = :gender
+                WHERE partner_id = :id";
+
+        if (!empty($data['profile']['profile_image'])) {
+            $sql = "UPDATE partner_profiles SET
+                    full_name = :full_name,
+                    mobile = :mobile,
+                    email = :email,
+                    whatsapp = :whatsapp,
+                    dob = :dob,
+                    gender = :gender,
+                    profile_image = :profile_image
+                    WHERE partner_id = :id";
+        }
+
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':full_name', $data['profile']['full_name']);
+        $stmt->bindValue(':mobile', $data['profile']['mobile']);
+        $stmt->bindValue(':email', $data['profile']['email']);
+        $stmt->bindValue(':whatsapp', $data['profile']['whatsapp']);
+        $stmt->bindValue(':dob', $data['profile']['dob'] ?: null);
+        $stmt->bindValue(':gender', $data['profile']['gender']);
+        $stmt->bindValue(':id', $data['id']);
+
+        if (!empty($data['profile']['profile_image'])) {
+            $stmt->bindValue(':profile_image', $data['profile']['profile_image']);
+        }
+        $stmt->execute();
+
+        // 3. Update Addresses (Delete and Re-insert is easier, or Update if exists)
+        // Let's use Delete/Insert for simplicity or Update if ID known.
+        // Since we don't pass address IDs, let's update by type.
+
+        // Permanent
+        $sql = "UPDATE partner_addresses SET address = :address, state = :state, city = :city, pincode = :pincode WHERE partner_id = :id AND type = 'permanent'";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':address', $data['address_permanent']['address']);
+        $stmt->bindValue(':state', $data['address_permanent']['state']);
+        $stmt->bindValue(':city', $data['address_permanent']['city']);
+        $stmt->bindValue(':pincode', $data['address_permanent']['pincode']);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+        if ($stmt->rowCount() == 0) { // If not exists, insert
+             $sql = "INSERT INTO partner_addresses (id, partner_id, type, address, state, city, pincode) VALUES (:id, :pid, 'permanent', :addr, :st, :ct, :pin)";
+             $stmt = $db->prepare($sql);
+             $stmt->execute(['id'=>uniqid('pa-'), 'pid'=>$data['id'], 'addr'=>$data['address_permanent']['address'], 'st'=>$data['address_permanent']['state'], 'ct'=>$data['address_permanent']['city'], 'pin'=>$data['address_permanent']['pincode']]);
+        }
+
+        // Office
+        $sql = "UPDATE partner_addresses SET address = :address, state = :state, city = :city, pincode = :pincode WHERE partner_id = :id AND type = 'office'";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':address', $data['address_office']['address']);
+        $stmt->bindValue(':state', $data['address_office']['state']);
+        $stmt->bindValue(':city', $data['address_office']['city']);
+        $stmt->bindValue(':pincode', $data['address_office']['pincode']);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+        if ($stmt->rowCount() == 0 && !empty($data['address_office']['address'])) {
+             $sql = "INSERT INTO partner_addresses (id, partner_id, type, address, state, city, pincode) VALUES (:id, :pid, 'office', :addr, :st, :ct, :pin)";
+             $stmt = $db->prepare($sql);
+             $stmt->execute(['id'=>uniqid('pa-'), 'pid'=>$data['id'], 'addr'=>$data['address_office']['address'], 'st'=>$data['address_office']['state'], 'ct'=>$data['address_office']['city'], 'pin'=>$data['address_office']['pincode']]);
+        }
+
+        // 4. Update Identity
+        $sql = "UPDATE partner_identity SET gst = :gst, aadhaar = :aadhaar, pan = :pan WHERE partner_id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':gst', $data['identity']['gst']);
+        $stmt->bindValue(':aadhaar', $data['identity']['aadhaar']);
+        $stmt->bindValue(':pan', $data['identity']['pan']);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+
+        // 5. Update Subscription (Only payment details, plan change logic is complex)
+        // For now, just update payment details of the latest subscription
+        $sql = "UPDATE partner_subscriptions SET payment_amount = :amt, due_amount = :due, payment_mode = :mode, transaction_id = :tid WHERE partner_id = :id ORDER BY created_at DESC LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':amt', $data['subscription']['payment_amount']);
+        $stmt->bindValue(':due', $data['subscription']['due_amount']);
+        $stmt->bindValue(':mode', $data['subscription']['payment_mode']);
+        $stmt->bindValue(':tid', $data['subscription']['transaction_id']);
+        $stmt->bindValue(':id', $data['id']);
+        $stmt->execute();
+
+        // 6. Update Bank Details (via User)
+        $user = $db->query("SELECT id FROM users WHERE partner_id = '" . $data['id'] . "'")->fetch();
+        if ($user) {
+            $sql = "UPDATE user_bank_details SET account_holder_name = :holder, bank_name = :bank, account_number = :acc, ifsc_code = :ifsc, branch = :branch WHERE user_id = :uid";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':holder', $data['bank_details']['account_holder_name']);
+            $stmt->bindValue(':bank', $data['bank_details']['bank_name']);
+            $stmt->bindValue(':acc', $data['bank_details']['account_number']);
+            $stmt->bindValue(':ifsc', $data['bank_details']['ifsc_code']);
+            $stmt->bindValue(':branch', $data['bank_details']['branch']);
+            $stmt->bindValue(':uid', $user['id']);
+            $stmt->execute();
+
+            if ($stmt->rowCount() == 0) { // Insert if missing
+                $sql = "INSERT INTO user_bank_details (id, user_id, account_holder_name, bank_name, account_number, ifsc_code, branch) VALUES (:id, :uid, :holder, :bank, :acc, :ifsc, :branch)";
+                $stmt = $db->prepare($sql);
+                $stmt->execute([
+                    'id' => uniqid('ub-'),
+                    'uid' => $user['id'],
+                    'holder' => $data['bank_details']['account_holder_name'],
+                    'bank' => $data['bank_details']['bank_name'],
+                    'acc' => $data['bank_details']['account_number'],
+                    'ifsc' => $data['bank_details']['ifsc_code'],
+                    'branch' => $data['bank_details']['branch']
+                ]);
+            }
+        }
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log($e->getMessage());
+        return false;
+    }
+}
+
 function delete_partner($id) {
     $db = get_db_connection();
 

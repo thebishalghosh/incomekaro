@@ -403,3 +403,8 @@ CREATE TABLE wallet_transactions (
                                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+ALTER TABLE white_label_clients
+    ADD COLUMN signatory_name VARCHAR(255) NULL,
+    ADD COLUMN signatory_designation VARCHAR(255) NULL,
+    ADD COLUMN signature_url TEXT NULL;

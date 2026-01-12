@@ -3,29 +3,63 @@ require_once APP_PATH . '/models/partner.php';
 require_once APP_PATH . '/models/white_label.php';
 require_once APP_PATH . '/models/subscription.php';
 require_once APP_PATH . '/models/user.php';
+require_once APP_PATH . '/core/mailer.php'; // Include Mailer
 
 function partner_index() {
-    require_role('SUPER_ADMIN');
-    $partners = get_all_partners_for_admin();
+    require_login();
+
+    $partners = [];
+    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        $partners = get_all_partners_for_admin();
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $db = get_db_connection();
+        // Added JOIN to fetch white_label_name
+        $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name
+                FROM partners p
+                LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+                LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
+                WHERE p.white_label_id = :wl_id
+                ORDER BY p.created_at DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['wl_id' => $user['white_label_id']]);
+        $partners = $stmt->fetchAll();
+
+    } elseif ($_SESSION['role_code'] === 'RM') {
+        $partners = get_partners_by_rm($_SESSION['user_id']);
+    } else {
+        die('Access Denied');
+    }
+
     view('dashboard/partners_list', ['partners' => $partners]);
 }
 
 function partner_create() {
-    require_role('SUPER_ADMIN');
-    $white_labels = get_all_white_labels();
-    $plans = get_active_subscription_plans();
-    $rms = get_users_by_role('RM'); // Fetch RMs
+    require_login();
+
+    $white_labels = [];
+    $wl_id_filter = null;
+
+    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        $white_labels = get_all_white_labels();
+        $wl_id_filter = 'GLOBAL';
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $wl_id_filter = $user['white_label_id'];
+    }
+
+    $plans = get_active_subscription_plans($wl_id_filter);
+    $rms = get_users_by_role('RM');
+
     view('forms/partner_form', ['white_labels' => $white_labels, 'plans' => $plans, 'rms' => $rms]);
 }
 
 function partner_store() {
-    require_role('SUPER_ADMIN');
+    require_login();
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // Sanitize inputs
         $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
-        // Handle File Upload
         $profile_image = '';
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/partners/';
@@ -39,13 +73,28 @@ function partner_store() {
             }
         }
 
-        // Prepare Data Array
+        $white_label_id = null;
+        $partner_type = 'PLATFORM';
+
+        if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+            if (!empty($_POST['white_label_id'])) {
+                $white_label_id = $_POST['white_label_id'];
+                $partner_type = 'WHITE_LABEL';
+            }
+        } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+            $user = find_user_by_id($_SESSION['user_id']);
+            $white_label_id = $user['white_label_id'];
+            $partner_type = 'WHITE_LABEL';
+        }
+
+        $raw_password = $_POST['password']; // Keep raw password for email
+
         $data = [
             'id' => uniqid('ptr-'),
-            'white_label_id' => !empty($_POST['white_label_id']) ? $_POST['white_label_id'] : null,
-            'partner_type' => !empty($_POST['white_label_id']) ? 'WHITE_LABEL' : 'PLATFORM',
+            'white_label_id' => $white_label_id,
+            'partner_type' => $partner_type,
             'status' => 'active',
-            'created_by' => $_SESSION['user_id'], // Track who created this partner
+            'created_by' => $_SESSION['user_id'],
 
             'profile' => [
                 'full_name' => trim($_POST['full_name']),
@@ -86,23 +135,50 @@ function partner_store() {
             ],
 
             'subscription' => [
-                'plan_name' => $_POST['plan_name'],
-                'payment_amount' => $_POST['payment_amount'],
-                'due_amount' => $_POST['due_amount'],
-                'payment_mode' => $_POST['payment_mode'],
-                'transaction_id' => $_POST['transaction_id']
+                'plan_name' => $_POST['plan_name'] ?? '',
+                'payment_amount' => $_POST['payment_amount'] ?? 0,
+                'due_amount' => $_POST['due_amount'] ?? 0,
+                'payment_mode' => $_POST['payment_mode'] ?? 'Cash',
+                'transaction_id' => $_POST['transaction_id'] ?? ''
             ],
 
-            'user_password_hash' => password_hash($_POST['password'], PASSWORD_DEFAULT)
+            'user_password_hash' => password_hash($raw_password, PASSWORD_DEFAULT)
         ];
 
+        if (!empty($_POST['plan_id'])) {
+            $plan = get_subscription_plan_by_id($_POST['plan_id']);
+            if ($plan) {
+                $data['subscription']['plan_name'] = $plan['name'];
+            }
+        }
+
         if (create_full_partner($data)) {
-            // Assign RM if selected
-            if (!empty($_POST['rm_id'])) {
+            if (!empty($_POST['rm_id']) && $_SESSION['role_code'] === 'SUPER_ADMIN') {
                 assign_rm_to_partner($data['id'], $_POST['rm_id']);
             }
 
-            flash('ptr_success', 'Partner Created Successfully');
+            // Send Welcome Email
+            $to = $data['profile']['email'];
+            $subject = "Welcome to " . get_site_name() . " - Your Login Credentials";
+            $login_url = url('/'); // Or specific login page
+
+            $message = "
+                <h3>Welcome, {$data['profile']['full_name']}!</h3>
+                <p>Your partner account has been successfully created.</p>
+                <p><strong>Login Details:</strong></p>
+                <ul>
+                    <li><strong>Email:</strong> {$data['profile']['email']}</li>
+                    <li><strong>Password:</strong> {$raw_password}</li>
+                </ul>
+                <p><a href='{$login_url}'>Click here to Login</a></p>
+                <p>Please change your password after your first login.</p>
+                <br>
+                <p>Best Regards,<br>" . get_site_name() . " Team</p>
+            ";
+
+            send_email($to, $subject, $message);
+
+            flash('ptr_success', 'Partner Created Successfully. Email sent.');
             redirect('partner/index');
         } else {
             flash('ptr_error', 'Failed to create partner', 'alert alert-danger');
@@ -116,31 +192,58 @@ function partner_edit($id) {
 
     $partner = get_partner_by_id($id);
     if (!$partner) {
-        redirect('dashboard/index');
+        redirect('partner/index');
     }
 
-    // Access Control
+    $white_labels = [];
+    $wl_id_filter = null;
+
     if ($_SESSION['role_code'] === 'RM') {
         if ($partner['rm_id'] !== $_SESSION['user_id']) {
             die('Access Denied');
         }
-    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        if ($partner['white_label_id']) {
+            $wl_id_filter = $partner['white_label_id'];
+        } else {
+            $wl_id_filter = 'GLOBAL';
+        }
+
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
+        }
+        $wl_id_filter = $user['white_label_id'];
+
+    } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        $white_labels = get_all_white_labels();
+        if ($partner['white_label_id']) {
+            $wl_id_filter = $partner['white_label_id'];
+        } else {
+            $wl_id_filter = 'GLOBAL';
+        }
+    } else {
         die('Access Denied');
     }
 
-    $white_labels = get_all_white_labels();
-    $plans = get_active_subscription_plans();
+    $plans = get_active_subscription_plans($wl_id_filter);
     $rms = get_users_by_role('RM');
+
     view('forms/partner_form', ['partner' => $partner, 'white_labels' => $white_labels, 'plans' => $plans, 'rms' => $rms]);
 }
 
 function partner_update($id) {
     require_login();
 
-    // Access Control Check before processing
     if ($_SESSION['role_code'] === 'RM') {
         $partner = get_partner_by_id($id);
         if (!$partner || $partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if (!$partner || $partner['white_label_id'] !== $user['white_label_id']) {
             die('Access Denied');
         }
     } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
@@ -150,7 +253,6 @@ function partner_update($id) {
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
-        // Handle File Upload (Only if new file is uploaded)
         $profile_image = null;
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
             $upload_dir = APP_ROOT . '/public/uploads/partners/';
@@ -166,7 +268,7 @@ function partner_update($id) {
 
         $data = [
             'id' => $id,
-            'status' => 'active', // Status update handled separately usually, but keeping active on edit
+            'status' => 'active',
 
             'profile' => [
                 'full_name' => trim($_POST['full_name']),
@@ -207,7 +309,7 @@ function partner_update($id) {
             ],
 
             'subscription' => [
-                'plan_name' => $_POST['plan_name'],
+                'plan_name' => $_POST['plan_name'] ?? '',
                 'payment_amount' => $_POST['payment_amount'],
                 'due_amount' => $_POST['due_amount'],
                 'payment_mode' => $_POST['payment_mode'],
@@ -215,15 +317,20 @@ function partner_update($id) {
             ]
         ];
 
+        if (!empty($_POST['plan_id'])) {
+            $plan = get_subscription_plan_by_id($_POST['plan_id']);
+            if ($plan) {
+                $data['subscription']['plan_name'] = $plan['name'];
+            }
+        }
+
         if (update_full_partner($data)) {
-            // Update RM (Only Super Admin can reassign RM)
             if (isset($_POST['rm_id']) && $_SESSION['role_code'] === 'SUPER_ADMIN') {
                 assign_rm_to_partner($id, $_POST['rm_id']);
             }
 
             flash('ptr_success', 'Partner Updated Successfully');
 
-            // Redirect based on role
             if ($_SESSION['role_code'] === 'RM') {
                 redirect('rm/partners');
             } else {
@@ -236,32 +343,29 @@ function partner_update($id) {
     }
 }
 
-function partner_update_status($id) {
-    require_role('SUPER_ADMIN');
-
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $status = $_POST['status'];
-        if (update_partner_status($id, $status)) {
-            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
-        } else {
-            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
-        }
-        redirect('partner/index');
-    }
-}
-
 function partner_delete($id) {
-    require_role('SUPER_ADMIN');
+    require_login();
+
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
+
     if (delete_partner($id)) {
         flash('ptr_success', 'Partner Deleted');
     } else {
-        flash('ptr_error', 'Could not delete partner.', 'alert alert-danger');
+        flash('ptr_error', 'Failed to delete partner', 'alert alert-danger');
     }
     redirect('partner/index');
 }
 
 function partner_profile($id) {
-    require_login(); // Allow any logged in user to potentially access, but check role below
+    require_login();
 
     $partner = get_partner_by_id($id);
     if (!$partner) {
@@ -269,14 +373,16 @@ function partner_profile($id) {
         redirect('dashboard/index');
     }
 
-    // Role-based Access Control
     if ($_SESSION['role_code'] === 'RM') {
-        // Check if this partner is assigned to this RM
         if ($partner['rm_id'] !== $_SESSION['user_id']) {
-            die('Access Denied: You are not assigned to this partner.');
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
         }
     } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
-        // Other roles (like White Label) logic can go here
         die('Access Denied');
     }
 
@@ -287,15 +393,19 @@ function partner_profile($id) {
 function partner_verify_kyc($id) {
     require_login();
 
-    // Allow Super Admin OR RM to verify KYC
-    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'RM') {
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'RM' && $_SESSION['role_code'] !== 'WHITE_LABEL') {
         die('Access Denied');
     }
 
-    // If RM, verify assignment
     if ($_SESSION['role_code'] === 'RM') {
         $partner = get_partner_by_id($id);
         if ($partner['rm_id'] !== $_SESSION['user_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
             die('Access Denied');
         }
     }

@@ -59,6 +59,19 @@ function get_all_roles() {
     return $stmt->fetchAll();
 }
 
+function get_users_by_role($role_code) {
+    $db = get_db_connection();
+    $sql = "SELECT u.*, r.name as role_name
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE r.code = :role_code
+            ORDER BY u.first_name";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':role_code', $role_code);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
 function create_user($data) {
     $db = get_db_connection();
 

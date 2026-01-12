@@ -110,6 +110,17 @@
                 <div class="tab-content p-3" id="myTabContent">
                     <!-- Details Tab -->
                     <div class="tab-pane fade show active" id="details" role="tabpanel">
+
+                        <!-- Added Personal Info Section -->
+                        <h5 class="fw-bold text-primary mb-4">Personal Information</h5>
+                        <dl class="row mb-4">
+                            <dt class="col-sm-3 text-muted">Date of Birth</dt>
+                            <dd class="col-sm-9 fw-bold"><?php echo !empty($partner['profile']['dob']) ? date('d M Y', strtotime($partner['profile']['dob'])) : 'N/A'; ?></dd>
+
+                            <dt class="col-sm-3 text-muted">Gender</dt>
+                            <dd class="col-sm-9 fw-bold text-capitalize"><?php echo $partner['profile']['gender'] ?: 'N/A'; ?></dd>
+                        </dl>
+
                         <h5 class="fw-bold text-primary mb-4">Permanent Address</h5>
                         <address class="mb-4">
                             <?php echo $partner['address_permanent']['address']; ?><br>

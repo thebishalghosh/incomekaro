@@ -25,7 +25,7 @@
         .logo {
             max-height: 50px;
             margin-bottom: 10px;
-            filter: brightness(0) invert(1); /* Make logo white */
+            /* filter: brightness(0) invert(1);  Removed filter to keep original logo colors */
         }
         h1 {
             font-size: 24px;
@@ -113,27 +113,37 @@
 </head>
 <body>
     <?php
-        function get_base64_image($path) {
-            if (!file_exists($path)) return '';
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $data = file_get_contents($path);
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        // Helper to get base64 image if needed (DomPDF handles URLs if isRemoteEnabled=true, but base64 is safer for local files)
+        function get_image_src($path_or_url) {
+            // If it's a URL (http), return as is (assuming isRemoteEnabled=true)
+            if (strpos($path_or_url, 'http') === 0) {
+                return $path_or_url;
+            }
+            // If local path, convert to base64
+            if (file_exists($path_or_url)) {
+                $type = pathinfo($path_or_url, PATHINFO_EXTENSION);
+                $data = file_get_contents($path_or_url);
+                return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+            return '';
         }
 
-        $logo_path = APP_ROOT . '/public/images/logo.png';
+        // Determine if White Label
+        $is_white_label = defined('IS_WHITE_LABEL') && IS_WHITE_LABEL;
+
+        // Paths for Main Site Signatures
         $pratap_sig_path = APP_ROOT . '/public/images/PratapMondal.png';
         $suraj_sig_path = APP_ROOT . '/public/images/SurajKar.png';
     ?>
 
     <div class="header">
-        <!-- Using white logo if possible, or just the image -->
-        <img src="<?php echo get_base64_image($logo_path); ?>" class="logo"><br>
+        <img src="<?php echo $company['logo']; ?>" class="logo"><br>
         <h1>Business Partnership Agreement</h1>
-        <h2>Sunglory Software Private Limited (Incomekaro)</h2>
+        <h2><?php echo $company['name']; ?></h2>
     </div>
 
     <div class="content">
-        <p>This Business Partnership Agreement (“Agreement”) is entered into between <strong>Sunglory Software Private Limited</strong>, operating under the brand name <strong>Incomekaro</strong> (hereinafter referred to as the “Company”), and the Partner detailed below, effective from <span class="data-field"><?php echo date('jS F Y \a\t H:i:s', strtotime($partner['agreement_accepted_at'] ?? 'now')); ?></span>.</p>
+        <p>This Business Partnership Agreement (“Agreement”) is entered into between <strong><?php echo $company['name']; ?></strong> (hereinafter referred to as the “Company”), and the Partner detailed below, effective from <span class="data-field"><?php echo date('jS F Y \a\t H:i:s', strtotime($partner['agreement_accepted_at'] ?? 'now')); ?></span>.</p>
 
         <div class="section-title">Partner Details</div>
         <table class="info-table">
@@ -144,7 +154,7 @@
         </table>
 
         <div class="section-title">Registered Office</div>
-        <p>Astra Tower, Unit No. ASO-303, 3rd Floor, Astra Tower, New Town, North 24 Parganas – 700161, West Bengal, India</p>
+        <p><?php echo nl2br($company['address']); ?></p>
 
         <div class="section-title">Partner’s Office Address</div>
         <p class="data-field">
@@ -159,11 +169,11 @@
 
         <div class="section-title">Terms of Software & Services</div>
         <ul>
-            <li>The software platform shall be provided exclusively by Sunglory Software Private Limited.</li>
-            <li>All services shall be delivered through the Incomekaro platform.</li>
+            <li>The software platform shall be provided exclusively by <?php echo $company['name']; ?>.</li>
+            <li>All services shall be delivered through the platform.</li>
             <li>All payments made by the Partner are non-refundable.</li>
             <li>The Partner is granted only a limited software usage license, free of charge, strictly for authorized business purposes.</li>
-            <li>Ownership of the software and platform remains entirely with Sunglory Software Private Limited.</li>
+            <li>Ownership of the software and platform remains entirely with <?php echo $company['name']; ?>.</li>
         </ul>
 
         <div class="section-title">Non-Disclosure Agreement (NDA)</div>
@@ -208,19 +218,30 @@
         <p><strong>Effective Date:</strong> <?php echo date('jS F Y, H:i:s', strtotime($partner['agreement_accepted_at'] ?? 'now')); ?></p>
 
         <div class="signature-box">
-            <div style="text-align: center; color: #6A5ACD; font-weight: bold; margin-bottom: 15px;">WELCOME TO THE FAMILY OF SUNGLORY SOFTWARE PRIVATE LIMITED</div>
+            <div style="text-align: center; color: #6A5ACD; font-weight: bold; margin-bottom: 15px;">WELCOME TO THE FAMILY OF <?php echo strtoupper($company['name']); ?></div>
 
             <div class="signature-row">
-                <div class="sig-col">
-                    <img src="<?php echo get_base64_image($pratap_sig_path); ?>" class="sig-img"><br>
-                    <strong>Pratap Mondal</strong><br>
-                    <span style="font-size: 10px; color: #666;">CEO</span>
-                </div>
-                <div class="sig-col">
-                    <img src="<?php echo get_base64_image($suraj_sig_path); ?>" class="sig-img"><br>
-                    <strong>Suraj Kar</strong><br>
-                    <span style="font-size: 10px; color: #666;">CEO</span>
-                </div>
+                <?php if (!$is_white_label): ?>
+                    <!-- Main Site Signatures -->
+                    <div class="sig-col">
+                        <img src="<?php echo get_image_src($pratap_sig_path); ?>" class="sig-img"><br>
+                        <strong>Pratap Mondal</strong><br>
+                        <span style="font-size: 10px; color: #666;">CEO</span>
+                    </div>
+                    <div class="sig-col">
+                        <img src="<?php echo get_image_src($suraj_sig_path); ?>" class="sig-img"><br>
+                        <strong>Suraj Kar</strong><br>
+                        <span style="font-size: 10px; color: #666;">CEO</span>
+                    </div>
+                <?php else: ?>
+                    <!-- White Label Generic Signature -->
+                    <div class="sig-col" style="width: 100%;">
+                        <div style="height: 50px; border-bottom: 1px solid #ccc; width: 200px; margin: 0 auto;"></div>
+                        <br>
+                        <strong>Authorized Signatory</strong><br>
+                        <span style="font-size: 10px; color: #666;"><?php echo $company['name']; ?></span>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <div style="text-align: center; margin-top: 20px; font-size: 10px; color: #888;">
@@ -230,7 +251,7 @@
     </div>
 
     <div class="footer">
-        Incomekaro | https://incomekaro.in | © <?php echo date('Y'); ?> Sunglory Software Private Limited. All Rights Reserved.
+        <?php echo $company['name']; ?> | <?php echo $_SERVER['HTTP_HOST']; ?> | © <?php echo date('Y'); ?> <?php echo $company['name']; ?>. All Rights Reserved.
     </div>
 </body>
 </html>

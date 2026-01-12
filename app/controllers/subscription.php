@@ -75,6 +75,31 @@ function subscription_filter() {
     exit; // Stop further execution
 }
 
+// API for Partner Form
+function subscription_get_plans_by_wl() {
+    require_login();
+
+    $wl_id = $_GET['wl_id'] ?? '';
+
+    if ($wl_id === 'PLATFORM' || empty($wl_id)) {
+        $wl_id_filter = 'GLOBAL';
+    } else {
+        $wl_id_filter = $wl_id;
+    }
+
+    $plans = get_active_subscription_plans($wl_id_filter);
+
+    // Calculate total price for each plan
+    foreach ($plans as &$p) {
+        $p['total_price'] = $p['price'] * (1 + $p['gst_rate'] / 100);
+        $p['formatted_price'] = number_format($p['total_price'], 2);
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($plans);
+    exit;
+}
+
 function subscription_create() {
     require_login();
 

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Agreement - <?php echo SITE_NAME; ?></title>
+    <title>Partner Agreement - <?php echo $company['name']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>">
     <style>
         body {
-            background-color: var(--light-bg);
+            background-color: #f8f9fa; /* var(--light-bg) fallback */
         }
         .agreement-card {
             border: none;
@@ -83,7 +83,7 @@
             margin-bottom: 10px;
         }
         .welcome-box {
-            background-color: var(--light-bg);
+            background-color: #f8f9fa; /* var(--light-bg) fallback */
             border: 1px solid #e0e0e0;
             border-radius: 10px;
             padding: 25px;
@@ -109,7 +109,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="text-center mb-4">
-                <img src="<?php echo asset('images/logo.png'); ?>" alt="<?php echo SITE_NAME; ?> Logo" style="max-height: 60px;">
+                <img src="<?php echo $company['logo']; ?>" alt="<?php echo $company['name']; ?> Logo" style="max-height: 60px;">
             </div>
 
             <div class="card agreement-card">
@@ -121,9 +121,9 @@
                 <div class="agreement-content">
 
                     <h4 class="agreement-title">BUSINESS PARTNERSHIP AGREEMENT</h4>
-                    <div class="agreement-subtitle">Sunglory Software Private Limited (Operating as “Incomekaro”)</div>
+                    <div class="agreement-subtitle"><?php echo $company['name']; ?></div>
 
-                    <p>This Business Partnership Agreement (“Agreement”) is entered into between <strong>Sunglory Software Private Limited</strong>, operating under the brand name <strong>Incomekaro</strong> (hereinafter referred to as the “Company”), and the Partner detailed below, effective from <span class="data-field"><?php echo date('jS F Y \a\t H:i:s'); ?></span>.</p>
+                    <p>This Business Partnership Agreement (“Agreement”) is entered into between <strong><?php echo $company['name']; ?></strong> (hereinafter referred to as the “Company”), and the Partner detailed below, effective from <span class="data-field"><?php echo date('jS F Y \a\t H:i:s'); ?></span>.</p>
 
                     <div class="section-title">PARTNER DETAILS</div>
                     <p>
@@ -135,9 +135,7 @@
 
                     <div class="section-title">REGISTERED OFFICE OF THE COMPANY</div>
                     <p>
-                        Astra Tower, Unit No. ASO-303,<br>
-                        3rd Floor, Astra Tower, New Town,<br>
-                        North 24 Parganas – 700161, West Bengal, India
+                        <?php echo nl2br($company['address']); ?>
                     </p>
 
                     <div class="section-title">PARTNER’S OFFICE ADDRESS</div>
@@ -155,11 +153,11 @@
 
                     <div class="section-title">TERMS OF SOFTWARE & SERVICES</div>
                     <ul>
-                        <li>The software platform shall be provided exclusively by Sunglory Software Private Limited.</li>
-                        <li>All services shall be delivered through the Incomekaro platform.</li>
+                        <li>The software platform shall be provided exclusively by <?php echo $company['name']; ?>.</li>
+                        <li>All services shall be delivered through the platform.</li>
                         <li>All payments made by the Partner are non-refundable.</li>
                         <li>The Partner is granted only a limited software usage license, free of charge, strictly for authorized business purposes.</li>
-                        <li>Ownership of the software and platform remains entirely with Sunglory Software Private Limited.</li>
+                        <li>Ownership of the software and platform remains entirely with <?php echo $company['name']; ?>.</li>
                     </ul>
 
                     <div class="section-title">NON-DISCLOSURE AGREEMENT (NDA)</div>
@@ -210,7 +208,7 @@
 
                     <div class="section-title">INTELLECTUAL PROPERTY RIGHTS</div>
                     <ul>
-                        <li>All intellectual property, including software, applications, designs, trademarks, and trade names, shall remain the exclusive property of Sunglory Software Private Limited (Incomekaro).</li>
+                        <li>All intellectual property, including software, applications, designs, trademarks, and trade names, shall remain the exclusive property of <?php echo $company['name']; ?>.</li>
                         <li>The Partner is granted limited usage rights solely for approved business operations.</li>
                         <li>Any copying, modification, reverse engineering, or unauthorized distribution is strictly prohibited and may result in termination and legal action.</li>
                     </ul>
@@ -219,7 +217,7 @@
                     <p>Both parties agree to maintain strict confidentiality of all proprietary business information. Any unauthorized use, sharing, or disclosure shall result in immediate termination and legal remedies.</p>
 
                     <div class="section-title">GOVERNING LAW & DISPUTE RESOLUTION</div>
-                    <p>This Agreement shall be governed by the laws applicable within the jurisdiction of Sunglory Software Private Limited (Incomekaro). All disputes shall be resolved through arbitration, following procedures prescribed by the Company.</p>
+                    <p>This Agreement shall be governed by the laws applicable within the jurisdiction of <?php echo $company['name']; ?>. All disputes shall be resolved through arbitration, following procedures prescribed by the Company.</p>
 
                     <div class="section-title">TERMINATION</div>
                     <p>The Company reserves the right to terminate this Agreement immediately in cases of:</p>
@@ -241,27 +239,42 @@
                     <p><strong>Effective Date:</strong> <?php echo date('jS F Y, H:i:s'); ?></p>
 
                     <div class="welcome-box">
-                        <h5 class="text-center fw-bold" style="color: var(--primary-color);">WELCOME TO THE FAMILY OF SUNGLORY SOFTWARE PRIVATE LIMITED (INCOMEKARO)</h5>
+                        <h5 class="text-center fw-bold" style="color: var(--primary-color);">WELCOME TO THE FAMILY OF <?php echo strtoupper($company['name']); ?></h5>
 
-                        <div class="row mt-5">
-                            <div class="col-6 text-center signature-block">
-                                <img src="<?php echo asset('images/PratapMondal.png'); ?>" alt="Pratap Mondal Signature">
-                                <p class="mt-2 mb-0"><strong>Pratap Mondal</strong></p>
-                                <p class="small text-muted">CEO</p>
-                            </div>
-                            <div class="col-6 text-center signature-block">
-                                <img src="<?php echo asset('images/SurajKar.png'); ?>" alt="Suraj Kar Signature">
-                                <p class="mt-2 mb-0"><strong>Suraj Kar</strong></p>
-                                <p class="small text-muted">CEO</p>
-                            </div>
+                        <div class="row mt-5 justify-content-center">
+                            <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                                <!-- Main Site Signatures -->
+                                <div class="col-6 text-center signature-block">
+                                    <img src="<?php echo asset('images/PratapMondal.png'); ?>" alt="Pratap Mondal Signature">
+                                    <p class="mt-2 mb-0"><strong>Pratap Mondal</strong></p>
+                                    <p class="small text-muted">CEO</p>
+                                </div>
+                                <div class="col-6 text-center signature-block">
+                                    <img src="<?php echo asset('images/SurajKar.png'); ?>" alt="Suraj Kar Signature">
+                                    <p class="mt-2 mb-0"><strong>Suraj Kar</strong></p>
+                                    <p class="small text-muted">CEO</p>
+                                </div>
+                            <?php else: ?>
+                                <!-- White Label Signature -->
+                                <div class="col-6 text-center signature-block">
+                                    <?php if (!empty($company['signature_url'])): ?>
+                                        <img src="<?php echo $company['signature_url']; ?>" alt="Signature">
+                                    <?php else: ?>
+                                        <div style="height: 50px; border-bottom: 1px solid #ccc; width: 200px; margin: 0 auto;"></div>
+                                    <?php endif; ?>
+
+                                    <p class="mt-2 mb-0"><strong><?php echo $company['signatory_name']; ?></strong></p>
+                                    <p class="small text-muted"><?php echo $company['signatory_designation']; ?></p>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <p class="text-center mt-4 small text-muted"><i class="fas fa-lock me-1"></i> This Agreement has been digitally signed and accepted by the Partner via email-based authentication.</p>
                     </div>
 
                     <div class="text-center mt-4 small text-muted">
-                        Incomekaro | https://incomekaro.in<br>
-                        © <?php echo date('Y'); ?> Sunglory Software Private Limited. All Rights Reserved.
+                        <?php echo $company['name']; ?> | <?php echo $_SERVER['HTTP_HOST']; ?><br>
+                        © <?php echo date('Y'); ?> <?php echo $company['name']; ?>. All Rights Reserved.
                     </div>
 
                 </div>
