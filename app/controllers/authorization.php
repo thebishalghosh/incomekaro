@@ -15,9 +15,15 @@ function authorization_download() {
 
     $partner = get_partner_by_id($user['partner_id']);
 
-    // To render the HTML of the view into a variable
+    if (empty($partner['agreement_accepted_at'])) {
+        flash('ptr_error', 'Please accept the agreement first.', 'alert alert-warning');
+        redirect('agreement/index');
+    }
+
+    $company_details = get_company_details();
+
     ob_start();
-    view('documents/authorization_pdf', ['partner' => $partner]);
+    view('authorization/pdf', ['partner' => $partner, 'company' => $company_details]);
     $html = ob_get_clean();
 
     $options = new Options();
@@ -28,6 +34,5 @@ function authorization_download() {
     $dompdf->setPaper('A4', 'portrait');
     $dompdf->render();
 
-    // Output the generated PDF to Browser
-    $dompdf->stream("IncomeKaro_Authorization_" . $partner['id'] . ".pdf", ["Attachment" => false]);
+    $dompdf->stream("Authorization_" . $partner['id'] . ".pdf", ["Attachment" => false]);
 }

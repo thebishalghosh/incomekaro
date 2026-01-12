@@ -113,21 +113,6 @@
 </head>
 <body>
     <?php
-        // Helper to get base64 image if needed (DomPDF handles URLs if isRemoteEnabled=true, but base64 is safer for local files)
-        function get_image_src($path_or_url) {
-            // If it's a URL (http), return as is (assuming isRemoteEnabled=true)
-            if (strpos($path_or_url, 'http') === 0) {
-                return $path_or_url;
-            }
-            // If local path, convert to base64
-            if (file_exists($path_or_url)) {
-                $type = pathinfo($path_or_url, PATHINFO_EXTENSION);
-                $data = file_get_contents($path_or_url);
-                return 'data:image/' . $type . ';base64,' . base64_encode($data);
-            }
-            return '';
-        }
-
         // Determine if White Label
         $is_white_label = defined('IS_WHITE_LABEL') && IS_WHITE_LABEL;
 
@@ -234,12 +219,16 @@
                         <span style="font-size: 10px; color: #666;">CEO</span>
                     </div>
                 <?php else: ?>
-                    <!-- White Label Generic Signature -->
+                    <!-- White Label Signature -->
                     <div class="sig-col" style="width: 100%;">
-                        <div style="height: 50px; border-bottom: 1px solid #ccc; width: 200px; margin: 0 auto;"></div>
-                        <br>
-                        <strong>Authorized Signatory</strong><br>
-                        <span style="font-size: 10px; color: #666;"><?php echo $company['name']; ?></span>
+                        <?php if (!empty($company['signature_url'])): ?>
+                            <img src="<?php echo get_image_src($company['signature_url']); ?>" class="sig-img"><br>
+                        <?php else: ?>
+                            <div style="height: 50px; border-bottom: 1px solid #ccc; width: 200px; margin: 0 auto;"></div><br>
+                        <?php endif; ?>
+
+                        <strong><?php echo $company['signatory_name']; ?></strong><br>
+                        <span style="font-size: 10px; color: #666;"><?php echo $company['signatory_designation']; ?></span>
                     </div>
                 <?php endif; ?>
             </div>

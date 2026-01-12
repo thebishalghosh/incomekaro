@@ -3,10 +3,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark">Dashboard Overview</h2>
-        <p class="text-muted">Welcome back, <?php echo $_SESSION['user_name'] ?? 'Admin'; ?>!</p>
+        <p class="text-muted">Welcome back, Super Admin!</p>
     </div>
     <div>
-        <button class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Report</button>
+        <a href="<?php echo url('white_label/create'); ?>" class="btn btn-primary"><i class="fas fa-plus me-2"></i> Add White Label</a>
     </div>
 </div>
 
@@ -15,237 +15,222 @@
     <div class="col-xl-3 col-md-6">
         <div class="stat-card purple">
             <div class="icon-box">
-                <i class="fas fa-building"></i>
+                <i class="fas fa-users"></i>
             </div>
-            <?php
-                $db = get_db_connection();
-                $wl_count = $db->query("SELECT COUNT(*) FROM white_label_clients WHERE status='active'")->fetchColumn();
-            ?>
-            <h3><?php echo $wl_count; ?></h3>
-            <p>Active White Labels</p>
+            <h3><?php echo $stats['total_partners'] ?? 0; ?></h3>
+            <p>Total Partners</p>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card blue">
             <div class="icon-box">
-                <i class="fas fa-handshake"></i>
+                <i class="fas fa-file-alt"></i>
             </div>
-            <?php
-                $partner_count = $db->query("SELECT COUNT(*) FROM partners WHERE status='active'")->fetchColumn();
-            ?>
-            <h3><?php echo $partner_count; ?></h3>
-            <p>Total Partners</p>
+            <h3><?php echo $stats['total_applications'] ?? 0; ?></h3>
+            <p>Total Applications</p>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card green">
             <div class="icon-box">
-                <i class="fas fa-rupee-sign"></i>
+                <i class="fas fa-building"></i>
             </div>
-            <h3>₹4.5L</h3>
-            <p>Total Revenue (This Month)</p>
+            <h3><?php echo $stats['total_white_labels'] ?? 0; ?></h3>
+            <p>White Labels</p>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card orange">
             <div class="icon-box">
-                <i class="fas fa-file-invoice"></i>
+                <i class="fas fa-exclamation-circle"></i>
             </div>
-            <h3>45</h3>
-            <p>Pending Applications</p>
+            <h3><?php echo $stats['pending_applications'] ?? 0; ?></h3>
+            <p>Action Required</p>
         </div>
     </div>
 </div>
 
-<!-- Charts Row -->
+<!-- Charts Row 1 -->
 <div class="row g-4 mb-4">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="fw-bold mb-0">Revenue Analytics</h5>
+            <div class="card-header bg-white border-0 pt-4 ps-4">
+                <h5 class="fw-bold mb-0 text-primary">Partner Growth (Last 6 Months)</h5>
             </div>
             <div class="card-body">
-                <div id="revenueChart" style="width: 100%; height: 350px;"></div>
+                <div id="growthChart" style="width: 100%; height: 300px;"></div>
             </div>
         </div>
     </div>
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="fw-bold mb-0">Partner Distribution</h5>
+            <div class="card-header bg-white border-0 pt-4 ps-4">
+                <h5 class="fw-bold mb-0 text-primary">Application Status</h5>
             </div>
             <div class="card-body">
-                <div id="partnerChart" style="width: 100%; height: 350px;"></div>
+                <div id="statusChart" style="width: 100%; height: 300px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Activity & Top Services -->
-<div class="row g-4">
+<!-- Charts Row 2 & Recent Apps -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 ps-4">
+                <h5 class="fw-bold mb-0 text-primary">Applications by Category</h5>
+            </div>
+            <div class="card-body">
+                <div id="categoryChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 py-3">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold mb-0">Recent Applications</h5>
+                <a href="<?php echo url('application/index'); ?>" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead class="bg-light">
                             <tr>
                                 <th class="ps-4">ID</th>
-                                <th>Customer</th>
+                                <th>Partner</th>
                                 <th>Service</th>
                                 <th>Status</th>
-                                <th>Date</th>
+                                <th class="pe-4 text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="ps-4">#APP-001</td>
-                                <td>Rahul Kumar</td>
-                                <td>Personal Loan</td>
-                                <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                <td>Oct 24, 2023</td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4">#APP-002</td>
-                                <td>Sneha Gupta</td>
-                                <td>GST Registration</td>
-                                <td><span class="badge bg-success">Approved</span></td>
-                                <td>Oct 23, 2023</td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4">#APP-003</td>
-                                <td>Amit Singh</td>
-                                <td>Credit Card</td>
-                                <td><span class="badge bg-danger">Rejected</span></td>
-                                <td>Oct 22, 2023</td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4">#APP-004</td>
-                                <td>Priya Sharma</td>
-                                <td>ITR Filing</td>
-                                <td><span class="badge bg-info text-dark">Processing</span></td>
-                                <td>Oct 21, 2023</td>
-                            </tr>
+                            <?php if (!empty($stats['recent_applications'])): ?>
+                                <?php foreach ($stats['recent_applications'] as $app): ?>
+                                    <tr>
+                                        <td class="ps-4"><span class="text-muted small">#<?php echo substr($app['id'], -6); ?></span></td>
+                                        <td class="fw-bold"><?php echo $app['partner_name']; ?></td>
+                                        <td><span class="badge bg-light text-dark border"><?php echo $app['service_name']; ?></span></td>
+                                        <td>
+                                            <?php
+                                                $status_class = 'bg-secondary';
+                                                if ($app['status'] == 'approved') $status_class = 'bg-success';
+                                                elseif ($app['status'] == 'rejected') $status_class = 'bg-danger';
+                                                elseif ($app['status'] == 'submitted') $status_class = 'bg-primary';
+                                                elseif ($app['status'] == 'under_verification') $status_class = 'bg-warning text-dark';
+                                            ?>
+                                            <span class="badge <?php echo $status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', $app['status'])); ?></span>
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <a href="<?php echo url('application/view/' . $app['id']); ?>" class="btn btn-sm btn-light"><i class="fas fa-eye"></i></a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                                        <p class="mb-0">No applications found yet.</p>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
-                </div>
-            </div>
-            <div class="card-footer bg-white border-0 text-center py-3">
-                <a href="<?php echo url('application/index'); ?>" class="text-decoration-none fw-bold">View All Applications</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="fw-bold mb-0">Top Performing Services</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-4">
-                    <div class="flex-shrink-0">
-                        <div class="icon-box bg-light text-primary rounded p-3">
-                            <i class="fas fa-credit-card fa-lg"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="mb-1 fw-bold">Credit Cards</h6>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
-                        </div>
-                    </div>
-                    <div class="ms-3 fw-bold">75%</div>
-                </div>
-
-                <div class="d-flex align-items-center mb-4">
-                    <div class="flex-shrink-0">
-                        <div class="icon-box bg-light text-success rounded p-3">
-                            <i class="fas fa-money-bill-wave fa-lg"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="mb-1 fw-bold">Personal Loans</h6>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%"></div>
-                        </div>
-                    </div>
-                    <div class="ms-3 fw-bold">60%</div>
-                </div>
-
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="icon-box bg-light text-warning rounded p-3">
-                            <i class="fas fa-file-contract fa-lg"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="mb-1 fw-bold">GST Filing</h6>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
-                        </div>
-                    </div>
-                    <div class="ms-3 fw-bold">45%</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Google Charts Script -->
+<!-- Google Charts -->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(drawCharts);
 
     function drawCharts() {
-        // Revenue Chart
-        var revenueData = google.visualization.arrayToDataTable([
-            ['Month', 'Revenue'],
-            ['Jan',  10000],
-            ['Feb',  15000],
-            ['Mar',  20000],
-            ['Apr',  25000],
-            ['May',  30000],
-            ['Jun',  45000]
+        // 1. Status Chart (Pie)
+        var statusData = google.visualization.arrayToDataTable([
+            ['Status', 'Count'],
+            <?php
+                if (!empty($stats['by_status'])) {
+                    foreach ($stats['by_status'] as $status => $count) {
+                        echo "['" . str_replace('_', ' ', $status) . "', " . $count . "],";
+                    }
+                } else {
+                    echo "['No Data', 1]";
+                }
+            ?>
         ]);
 
-        var revenueOptions = {
-            title: 'Monthly Revenue',
+        var statusOptions = {
+            pieHole: 0.4,
+            colors: ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'],
+            chartArea: {width: '90%', height: '80%'},
+            legend: {position: 'bottom'},
+            pieSliceText: 'value'
+        };
+
+        var statusChart = new google.visualization.PieChart(document.getElementById('statusChart'));
+        statusChart.draw(statusData, statusOptions);
+
+        // 2. Category Chart (Column)
+        var categoryData = google.visualization.arrayToDataTable([
+            ['Category', 'Applications', { role: 'style' }],
+            <?php
+                if (!empty($stats['by_category'])) {
+                    $colors = ['#6A5ACD', '#20B2AA', '#FF7F50', '#FF6347', '#4682B4'];
+                    $i = 0;
+                    foreach ($stats['by_category'] as $cat => $count) {
+                        $color = $colors[$i % count($colors)];
+                        echo "['" . $cat . "', " . $count . ", '$color'],";
+                        $i++;
+                    }
+                } else {
+                    echo "['No Data', 0, '#ccc']";
+                }
+            ?>
+        ]);
+
+        var categoryOptions = {
+            legend: { position: "none" },
+            chartArea: {width: '80%', height: '70%'},
+            vAxis: { minValue: 0, format: '0' }
+        };
+
+        var categoryChart = new google.visualization.ColumnChart(document.getElementById('categoryChart'));
+        categoryChart.draw(categoryData, categoryOptions);
+
+        // 3. Growth Chart (Line)
+        var growthData = google.visualization.arrayToDataTable([
+            ['Month', 'New Partners'],
+            <?php
+                if (!empty($stats['partner_growth'])) {
+                    foreach ($stats['partner_growth'] as $month => $count) {
+                        echo "['" . date('M Y', strtotime($month . '-01')) . "', " . $count . "],";
+                    }
+                } else {
+                    echo "['" . date('M Y') . "', 0]";
+                }
+            ?>
+        ]);
+
+        var growthOptions = {
             curveType: 'function',
             legend: { position: 'bottom' },
             colors: ['#6A5ACD'],
-            vAxis: { format: 'currency' },
-            chartArea: { width: '85%', height: '70%' }
+            chartArea: {width: '85%', height: '70%'},
+            vAxis: { minValue: 0, format: '0' },
+            pointSize: 5
         };
 
-        var revenueChart = new google.visualization.LineChart(document.getElementById('revenueChart'));
-        revenueChart.draw(revenueData, revenueOptions);
-
-        // Partner Distribution Chart
-        var partnerData = google.visualization.arrayToDataTable([
-            ['Type', 'Count'],
-            ['Platform Partners',     11],
-            ['White Label Partners',      2]
-        ]);
-
-        var partnerOptions = {
-            title: 'Partner Distribution',
-            pieHole: 0.4,
-            colors: ['#6A5ACD', '#9370DB'],
-            legend: { position: 'bottom' },
-            chartArea: { width: '90%', height: '80%' }
-        };
-
-        var partnerChart = new google.visualization.PieChart(document.getElementById('partnerChart'));
-        partnerChart.draw(partnerData, partnerOptions);
+        var growthChart = new google.visualization.LineChart(document.getElementById('growthChart'));
+        growthChart.draw(growthData, growthOptions);
     }
 
-    // Resize charts on window resize
-    window.onresize = function() {
-        drawCharts();
-    };
+    // Make charts responsive
+    window.addEventListener('resize', drawCharts);
 </script>
 
 <?php view('layouts/footer'); ?>

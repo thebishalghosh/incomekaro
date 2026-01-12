@@ -147,3 +147,68 @@ function send_email($to, $subject, $body, $is_html = true) {
         return true;
     }
 }
+
+// Helper function to get dynamic company details
+function get_company_details() {
+    global $WL_CONFIG;
+
+    $details = [
+        'name' => 'IncomeKaro',
+        'address' => 'Astra Tower, Unit No. ASO-303, 3rd Floor, Astra Tower, New Town, North 24 Parganas – 700161, West Bengal, India', // Default
+        'email' => 'support@incomekaro.in',
+        'logo' => asset('images/logo.png'),
+        'signatory_name' => 'Pratap Mondal',
+        'signatory_designation' => 'CEO',
+        'signature_url' => asset('images/PratapMondal.png') // Default signature
+    ];
+
+    if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL && $WL_CONFIG) {
+        $details['name'] = $WL_CONFIG['company_name'];
+        $details['email'] = $WL_CONFIG['support_email'];
+        if (!empty($WL_CONFIG['logo_url'])) {
+            $details['logo'] = asset($WL_CONFIG['logo_url']);
+        }
+
+        // Check landing page data for address override
+        $landing = !empty($WL_CONFIG['landing_page_data']) ? json_decode($WL_CONFIG['landing_page_data'], true) : [];
+        if (!empty($landing['contact_address'])) {
+            $details['address'] = $landing['contact_address'];
+        }
+
+        // Signature Details
+        if (!empty($WL_CONFIG['signatory_name'])) {
+            $details['signatory_name'] = $WL_CONFIG['signatory_name'];
+        } else {
+            $details['signatory_name'] = 'Authorized Signatory';
+        }
+
+        if (!empty($WL_CONFIG['signatory_designation'])) {
+            $details['signatory_designation'] = $WL_CONFIG['signatory_designation'];
+        } else {
+            $details['signatory_designation'] = '';
+        }
+
+        if (!empty($WL_CONFIG['signature_url'])) {
+            $details['signature_url'] = asset($WL_CONFIG['signature_url']);
+        } else {
+            $details['signature_url'] = null; // No signature uploaded
+        }
+    }
+
+    return $details;
+}
+
+// Helper to get base64 image if needed (DomPDF handles URLs if isRemoteEnabled=true, but base64 is safer for local files)
+function get_image_src($path_or_url) {
+    // If it's a URL (http), return as is (assuming isRemoteEnabled=true)
+    if (strpos($path_or_url, 'http') === 0) {
+        return $path_or_url;
+    }
+    // If local path, convert to base64
+    if (file_exists($path_or_url)) {
+        $type = pathinfo($path_or_url, PATHINFO_EXTENSION);
+        $data = file_get_contents($path_or_url);
+        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
+    return '';
+}

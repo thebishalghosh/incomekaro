@@ -2,6 +2,7 @@
 require_once APP_PATH . '/models/white_label.php';
 require_once APP_PATH . '/models/partner.php'; // Include Partner Model
 require_once APP_PATH . '/models/user.php';    // Include User Model
+require_once APP_PATH . '/models/dashboard.php'; // Include Dashboard Model
 
 function dashboard_index() {
     require_login();
@@ -21,7 +22,10 @@ function dashboard_index() {
 
 function dashboard_super_admin() {
     require_role('SUPER_ADMIN');
-    view('dashboard/super_admin');
+
+    $stats = get_super_admin_stats();
+
+    view('dashboard/super_admin', ['stats' => $stats]);
 }
 
 function dashboard_white_label() {

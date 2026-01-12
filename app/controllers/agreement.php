@@ -24,7 +24,7 @@ function agreement_index() {
     }
 
     // Prepare Company Details
-    $company_details = get_company_details_for_agreement();
+    $company_details = get_company_details();
 
     view('agreement/index', ['partner' => $partner, 'company' => $company_details]);
 }
@@ -69,7 +69,7 @@ function agreement_download() {
     }
 
     $partner = get_partner_by_id($user['partner_id']);
-    $company_details = get_company_details_for_agreement();
+    $company_details = get_company_details();
 
     // To render the HTML of the view into a variable
     ob_start();
@@ -86,54 +86,4 @@ function agreement_download() {
 
     // Output the generated PDF to Browser
     $dompdf->stream("Agreement_" . $partner['id'] . ".pdf", ["Attachment" => false]);
-}
-
-// Helper function to get dynamic company details
-function get_company_details_for_agreement() {
-    global $WL_CONFIG;
-
-    $details = [
-        'name' => 'IncomeKaro',
-        'address' => 'Astra Tower, Unit No. ASO-303, 3rd Floor, Astra Tower, New Town, North 24 Parganas – 700161, West Bengal, India', // Default
-        'email' => 'support@incomekaro.in',
-        'logo' => asset('images/logo.png'),
-        'signatory_name' => 'Pratap Mondal',
-        'signatory_designation' => 'CEO',
-        'signature_url' => asset('images/PratapMondal.png') // Default signature
-    ];
-
-    if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL && $WL_CONFIG) {
-        $details['name'] = $WL_CONFIG['company_name'];
-        $details['email'] = $WL_CONFIG['support_email'];
-        if (!empty($WL_CONFIG['logo_url'])) {
-            $details['logo'] = asset($WL_CONFIG['logo_url']);
-        }
-
-        // Check landing page data for address override
-        $landing = !empty($WL_CONFIG['landing_page_data']) ? json_decode($WL_CONFIG['landing_page_data'], true) : [];
-        if (!empty($landing['contact_address'])) {
-            $details['address'] = $landing['contact_address'];
-        }
-
-        // Signature Details
-        if (!empty($WL_CONFIG['signatory_name'])) {
-            $details['signatory_name'] = $WL_CONFIG['signatory_name'];
-        } else {
-            $details['signatory_name'] = 'Authorized Signatory';
-        }
-
-        if (!empty($WL_CONFIG['signatory_designation'])) {
-            $details['signatory_designation'] = $WL_CONFIG['signatory_designation'];
-        } else {
-            $details['signatory_designation'] = '';
-        }
-
-        if (!empty($WL_CONFIG['signature_url'])) {
-            $details['signature_url'] = asset($WL_CONFIG['signature_url']);
-        } else {
-            $details['signature_url'] = null; // No signature uploaded
-        }
-    }
-
-    return $details;
 }

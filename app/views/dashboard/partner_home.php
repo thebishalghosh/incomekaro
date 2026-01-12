@@ -1,4 +1,10 @@
-<?php view('layouts/partner_header', ['title' => 'Partner Dashboard']); ?>
+<?php
+    view('layouts/partner_header', ['title' => 'Partner Dashboard']);
+
+    // Fetch dynamic company details
+    require_once APP_PATH . '/core/helpers.php'; // Ensure helper is loaded
+    $company = get_company_details();
+?>
 
 <div class="container">
     <!-- Partner Hero Section -->
@@ -92,7 +98,7 @@
                     <div class="icon-box mx-auto">
                         <i class="fas fa-certificate"></i>
                     </div>
-                    <h5 class="card-title fw-bold mt-3">IncomeKaro Certificate</h5>
+                    <h5 class="card-title fw-bold mt-3">Certificate</h5>
                     <a href="<?php echo url('certificate/download'); ?>" class="btn btn-primary mt-3" target="_blank"><i class="fas fa-download me-2"></i>Download</a>
                 </div>
             </div>
@@ -114,7 +120,7 @@
                     <div class="icon-box mx-auto">
                         <i class="fas fa-file-contract"></i>
                     </div>
-                    <h5 class="card-title fw-bold mt-3">IncomeKaro Agreement</h5>
+                    <h5 class="card-title fw-bold mt-3">Agreement</h5>
                     <a href="<?php echo url('agreement/download'); ?>" class="btn btn-primary mt-3" target="_blank"><i class="fas fa-download me-2"></i>Download</a>
                 </div>
             </div>

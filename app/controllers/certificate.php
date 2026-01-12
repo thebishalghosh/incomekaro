@@ -15,9 +15,17 @@ function certificate_download() {
 
     $partner = get_partner_by_id($user['partner_id']);
 
+    // Ensure agreement is accepted before downloading certificate
+    if (empty($partner['agreement_accepted_at'])) {
+        flash('ptr_error', 'Please accept the agreement first.', 'alert alert-warning');
+        redirect('agreement/index');
+    }
+
+    $company_details = get_company_details();
+
     // To render the HTML of the view into a variable
     ob_start();
-    view('documents/certificate_pdf', ['partner' => $partner]);
+    view('certificate/pdf', ['partner' => $partner, 'company' => $company_details]);
     $html = ob_get_clean();
 
     $options = new Options();
@@ -25,9 +33,9 @@ function certificate_download() {
     $dompdf = new Dompdf($options);
 
     $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'landscape'); // Certificates look better in landscape
+    $dompdf->setPaper('A4', 'landscape'); // Certificate usually landscape
     $dompdf->render();
 
     // Output the generated PDF to Browser
-    $dompdf->stream("IncomeKaro_Certificate_" . $partner['id'] . ".pdf", ["Attachment" => false]);
+    $dompdf->stream("Certificate_" . $partner['id'] . ".pdf", ["Attachment" => false]);
 }
