@@ -408,3 +408,6 @@ ALTER TABLE white_label_clients
     ADD COLUMN signatory_name VARCHAR(255) NULL,
     ADD COLUMN signatory_designation VARCHAR(255) NULL,
     ADD COLUMN signature_url TEXT NULL;
+
+
+ALTER TABLE users ADD COLUMN monthly_target DECIMAL(15,2) DEFAULT 0.00;

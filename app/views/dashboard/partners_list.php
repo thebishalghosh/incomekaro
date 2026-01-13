@@ -138,7 +138,10 @@
                                     <?php endif; ?>
 
                                     <a href="<?php echo url('partner/profile/' . $partner['id']); ?>" class="btn btn-sm btn-light me-1" title="View Profile"><i class="fas fa-eye"></i></a>
-                                    <a href="<?php echo url('partner/edit/' . $partner['id']); ?>" class="btn btn-sm btn-info text-white me-1" title="Edit"><i class="fas fa-edit"></i></a>
+
+                                    <?php if ($_SESSION['role_code'] !== 'RM'): ?>
+                                        <a href="<?php echo url('partner/edit/' . $partner['id']); ?>" class="btn btn-sm btn-info text-white me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <?php endif; ?>
 
                                     <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                         <a href="<?php echo url('partner/delete/' . $partner['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will delete all partner data.');" title="Delete"><i class="fas fa-trash"></i></a>

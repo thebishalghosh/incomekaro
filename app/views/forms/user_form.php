@@ -68,14 +68,14 @@
                                 <div class="form-text">Role cannot be changed for White Label Admins.</div>
                             <?php else: ?>
                                 <!-- Dropdown for Regular Users -->
-                                <select class="form-select form-select-lg" id="role_id" name="role_id" required>
+                                <select class="form-select form-select-lg" id="role_id" name="role_id" required onchange="toggleTargetField()">
                                     <option value="">Select Role</option>
                                     <?php foreach ($roles as $role): ?>
                                         <?php
                                             // Hide WHITE_LABEL and PARTNER_ADMIN roles from manual creation
                                             if ($role['code'] !== 'WHITE_LABEL' && $role['code'] !== 'PARTNER_ADMIN'):
                                         ?>
-                                            <option value="<?php echo $role['id']; ?>" <?php echo (isset($user) && $user['role_id'] == $role['id']) ? 'selected' : ''; ?>>
+                                            <option value="<?php echo $role['id']; ?>" data-code="<?php echo $role['code']; ?>" <?php echo (isset($user) && $user['role_id'] == $role['id']) ? 'selected' : ''; ?>>
                                                 <?php echo $role['name']; ?>
                                             </option>
                                         <?php endif; ?>
@@ -89,6 +89,15 @@
                             <?php if (!isset($user)): ?>
                                 <div class="form-text text-success"><i class="fas fa-envelope me-1"></i> This password will be emailed to the user.</div>
                             <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Target Field (Hidden by default, shown for RM) -->
+                    <div class="row mb-4" id="target_container" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="monthly_target" class="form-label fw-bold text-success"><i class="fas fa-bullseye me-2"></i> Monthly Target (₹)</label>
+                            <input type="number" step="0.01" class="form-control form-control-lg border-success" id="monthly_target" name="monthly_target" value="<?php echo isset($user) ? $user['monthly_target'] : '0.00'; ?>">
+                            <div class="form-text">Set the monthly revenue target for this Relationship Manager.</div>
                         </div>
                     </div>
 
@@ -153,5 +162,27 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleTargetField() {
+        const roleSelect = document.getElementById('role_id');
+        const targetContainer = document.getElementById('target_container');
+
+        // Get selected option
+        const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+        const roleCode = selectedOption.getAttribute('data-code');
+
+        if (roleCode === 'RM') {
+            targetContainer.style.display = 'flex';
+        } else {
+            targetContainer.style.display = 'none';
+        }
+    }
+
+    // Run on load to set initial state
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleTargetField();
+    });
+</script>
 
 <?php view('layouts/footer'); ?>

@@ -79,8 +79,8 @@ function create_user($data) {
         $db->beginTransaction();
 
         // 1. Insert User
-        $sql = "INSERT INTO users (id, white_label_id, partner_id, role_id, first_name, last_name, email, phone, password_hash, status)
-                VALUES (:id, :white_label_id, :partner_id, :role_id, :first_name, :last_name, :email, :phone, :password_hash, :status)";
+        $sql = "INSERT INTO users (id, white_label_id, partner_id, role_id, first_name, last_name, email, phone, password_hash, status, monthly_target)
+                VALUES (:id, :white_label_id, :partner_id, :role_id, :first_name, :last_name, :email, :phone, :password_hash, :status, :monthly_target)";
 
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':id', $data['id']);
@@ -93,6 +93,7 @@ function create_user($data) {
         $stmt->bindValue(':phone', $data['phone']);
         $stmt->bindValue(':password_hash', $data['password_hash']);
         $stmt->bindValue(':status', $data['status']);
+        $stmt->bindValue(':monthly_target', $data['monthly_target']);
         $stmt->execute();
 
         // 2. Insert Bank Details (if provided)
@@ -132,7 +133,8 @@ function update_user($data) {
                 email = :email,
                 phone = :phone,
                 status = :status,
-                role_id = :role_id
+                role_id = :role_id,
+                monthly_target = :monthly_target
                 WHERE id = :id";
 
         $stmt = $db->prepare($sql);
@@ -143,6 +145,7 @@ function update_user($data) {
         $stmt->bindValue(':phone', $data['phone']);
         $stmt->bindValue(':status', $data['status']);
         $stmt->bindValue(':role_id', $data['role_id']);
+        $stmt->bindValue(':monthly_target', $data['monthly_target']);
         $stmt->execute();
 
         // 2. Update Bank Details

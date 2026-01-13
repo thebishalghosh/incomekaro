@@ -40,6 +40,7 @@ function user_store() {
             'role_id' => $_POST['role_id'],
             'status' => isset($_POST['is_active']) ? 'active' : 'inactive',
             'password_hash' => password_hash($_POST['password'], PASSWORD_DEFAULT),
+            'monthly_target' => !empty($_POST['monthly_target']) ? $_POST['monthly_target'] : 0.00,
             'bank_details' => $bank_details
         ];
 
@@ -87,6 +88,7 @@ function user_update($id) {
             'phone' => trim($_POST['phone']),
             'role_id' => $_POST['role_id'],
             'status' => isset($_POST['is_active']) ? 'active' : 'inactive',
+            'monthly_target' => !empty($_POST['monthly_target']) ? $_POST['monthly_target'] : 0.00,
             'bank_details' => $bank_details
         ];
 
