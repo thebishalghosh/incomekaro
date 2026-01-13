@@ -13,7 +13,12 @@ function view($view_path, $data = []) {
 }
 
 function redirect($path) {
-    header('Location: ' . URL_ROOT . '/' . $path);
+    // Check if path is already a full URL
+    if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
+        header('Location: ' . $path);
+    } else {
+        header('Location: ' . URL_ROOT . '/' . ltrim($path, '/'));
+    }
     exit;
 }
 
@@ -211,4 +216,17 @@ function get_image_src($path_or_url) {
         return 'data:image/' . $type . ';base64,' . base64_encode($data);
     }
     return '';
+}
+
+// Notification Helpers
+function get_my_notifications($limit = 5) {
+    if (!isLoggedIn()) return [];
+    require_once APP_PATH . '/models/notification.php';
+    return get_user_notifications($_SESSION['user_id'], $limit);
+}
+
+function get_my_unread_count() {
+    if (!isLoggedIn()) return 0;
+    require_once APP_PATH . '/models/notification.php';
+    return get_unread_count($_SESSION['user_id']);
 }

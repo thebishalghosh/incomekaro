@@ -1,4 +1,28 @@
-<?php view('layouts/header', ['title' => 'Application Details']); ?>
+<?php
+// Conditionally load the correct header based on user role
+if (isset($_SESSION['role_code']) && $_SESSION['role_code'] === 'PARTNER_ADMIN') {
+    view('layouts/partner_header', ['title' => 'Application Details']);
+} else {
+    view('layouts/header', ['title' => 'Application Details']);
+}
+?>
+
+<style>
+    /* Dynamic Theme Colors Override */
+    :root {
+        --app-primary-color: <?php echo $wl_colors['primary'] ?? '#6A5ACD'; ?>;
+        --app-secondary-color: <?php echo $wl_colors['secondary'] ?? '#483D8B'; ?>;
+    }
+
+    /* Override Bootstrap Primary Colors if WL colors exist */
+    <?php if (!empty($wl_colors)): ?>
+    .text-primary { color: var(--app-primary-color) !important; }
+    .bg-primary { background-color: var(--app-primary-color) !important; }
+    .btn-primary { background-color: var(--app-primary-color) !important; border-color: var(--app-primary-color) !important; }
+    .btn-outline-primary { color: var(--app-primary-color) !important; border-color: var(--app-primary-color) !important; }
+    .btn-outline-primary:hover { background-color: var(--app-primary-color) !important; color: #fff !important; }
+    <?php endif; ?>
+</style>
 
 <div class="row">
     <div class="col-12">
@@ -52,8 +76,8 @@
                     </div>
                     <div class="col-md-6">
                         <h6 class="text-muted text-uppercase small fw-bold">Partner Details</h6>
-                        <p class="mb-1"><strong class="me-2">Name:</strong> <?php echo $application['partner_full_name'] ?: $application['partner_name']; ?></p>
-                        <p class="mb-0"><strong class="me-2">Phone:</strong> <?php echo $application['partner_phone']; ?></p>
+                        <p class="mb-1"><strong class="me-2">Name:</strong> <?php echo $application['partner_name']; ?></p>
+                        <p class="mb-0"><strong class="me-2">ID:</strong> <?php echo $application['partner_id']; ?></p>
                     </div>
                 </div>
                 <hr>
@@ -64,7 +88,7 @@
                         <?php foreach($application['meta'] as $key => $value): ?>
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <p class="text-muted mb-0 small text-uppercase"><?php echo str_replace('_', ' ', $key); ?></p>
-                                <p class="fw-bold mb-0"><?php echo htmlspecialchars($value) ?: '-'; ?></p>
+                                <p class="fw-bold mb-0"><?php echo is_array($value) ? implode(', ', $value) : (htmlspecialchars($value) ?: '-'); ?></p>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -101,35 +125,42 @@
             </div>
         </div>
 
-        <!-- Actions Card (Admin Only) -->
-        <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+        <!-- Actions Card (Visible to all who can comment/update) -->
+        <?php if ($_SESSION['role_code'] !== 'PARTNER_ADMIN'): ?>
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-light border-0 p-3">
-                <h5 class="fw-bold mb-0">Actions</h5>
+                <h5 class="fw-bold mb-0">Actions & Notes</h5>
             </div>
             <div class="card-body p-3">
-                <p class="text-muted small">Update the status of this application.</p>
                 <form action="<?php echo url('application/update_status/' . $application['id']); ?>" method="POST">
+
+                    <!-- Status Update (Only for Super Admin & RM) -->
+                    <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'RM'): ?>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Update Status</label>
+                            <select class="form-select" name="status">
+                                <option value="FRESH" <?php echo $application['status'] == 'FRESH' ? 'selected' : ''; ?>>FRESH</option>
+                                <option value="DOCUMENTS_UPLOAD" <?php echo $application['status'] == 'DOCUMENTS_UPLOAD' ? 'selected' : ''; ?>>DOCUMENTS UPLOAD</option>
+                                <option value="HOLD" <?php echo $application['status'] == 'HOLD' ? 'selected' : ''; ?>>HOLD</option>
+                                <option value="LOGIN" <?php echo $application['status'] == 'LOGIN' ? 'selected' : ''; ?>>LOGIN</option>
+                                <option value="DOCUMENTS_PENDING" <?php echo $application['status'] == 'DOCUMENTS_PENDING' ? 'selected' : ''; ?>>DOCUMENTS PENDING</option>
+                                <option value="BANKAR_PENDENCY" <?php echo $application['status'] == 'BANKAR_PENDENCY' ? 'selected' : ''; ?>>BANKAR PENDENCY</option>
+                                <option value="REJECT" <?php echo $application['status'] == 'REJECT' ? 'selected' : ''; ?>>REJECT</option>
+                                <option value="APPROVED" <?php echo $application['status'] == 'APPROVED' ? 'selected' : ''; ?>>APPROVED</option>
+                                <option value="COMPLETED" <?php echo $application['status'] == 'COMPLETED' ? 'selected' : ''; ?>>COMPLETED</option>
+                            </select>
+                        </div>
+                    <?php else: ?>
+                        <!-- Pass current status if user can't change it -->
+                        <input type="hidden" name="status" value="<?php echo $application['status']; ?>">
+                    <?php endif; ?>
+
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">New Status</label>
-                        <select class="form-select" name="status">
-                            <option value="FRESH" <?php echo $application['status'] == 'FRESH' ? 'selected' : ''; ?>>FRESH</option>
-                            <option value="DOCUMENTS_UPLOAD" <?php echo $application['status'] == 'DOCUMENTS_UPLOAD' ? 'selected' : ''; ?>>DOCUMENTS UPLOAD</option>
-                            <option value="HOLD" <?php echo $application['status'] == 'HOLD' ? 'selected' : ''; ?>>HOLD</option>
-                            <option value="LOGIN" <?php echo $application['status'] == 'LOGIN' ? 'selected' : ''; ?>>LOGIN</option>
-                            <option value="DOCUMENTS_PENDING" <?php echo $application['status'] == 'DOCUMENTS_PENDING' ? 'selected' : ''; ?>>DOCUMENTS PENDING</option>
-                            <option value="BANKAR_PENDENCY" <?php echo $application['status'] == 'BANKAR_PENDENCY' ? 'selected' : ''; ?>>BANKAR PENDENCY</option>
-                            <option value="REJECT" <?php echo $application['status'] == 'REJECT' ? 'selected' : ''; ?>>REJECT</option>
-                            <option value="APPROVED" <?php echo $application['status'] == 'APPROVED' ? 'selected' : ''; ?>>APPROVED</option>
-                            <option value="COMPLETED" <?php echo $application['status'] == 'COMPLETED' ? 'selected' : ''; ?>>COMPLETED</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Comment (Optional)</label>
-                        <textarea class="form-control" name="comment" rows="2" placeholder="Reason for update..."></textarea>
+                        <label class="form-label small fw-bold">Add Note / Comment</label>
+                        <textarea class="form-control" name="comment" rows="3" placeholder="Type your comment or reason for update..."></textarea>
                     </div>
                     <div class="d-grid">
-                        <button class="btn btn-primary" type="submit">Update Status</button>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane me-2"></i>Submit</button>
                     </div>
                 </form>
             </div>
@@ -194,4 +225,11 @@
     </div>
 </div>
 
-<?php view('layouts/footer'); ?>
+<?php
+// Conditionally load the correct footer
+if (isset($_SESSION['role_code']) && $_SESSION['role_code'] === 'PARTNER_ADMIN') {
+    view('layouts/partner_footer');
+} else {
+    view('layouts/footer');
+}
+?>

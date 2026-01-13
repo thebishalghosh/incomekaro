@@ -3,6 +3,7 @@ require_once APP_PATH . '/models/service.php';
 require_once APP_PATH . '/models/application.php';
 require_once APP_PATH . '/models/user.php';
 require_once APP_PATH . '/models/partner.php';
+require_once APP_PATH . '/models/notification.php'; // Include Notification Model
 
 function application_index() {
     require_login();
@@ -20,6 +21,30 @@ function application_index() {
         } else {
             redirect('dashboard/index');
         }
+    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $applications = get_applications_by_white_label($user['white_label_id']);
+        view('dashboard/applications_list', ['applications' => $applications]);
+    } elseif ($_SESSION['role_code'] === 'RM') {
+        // RM Logic
+        require_once APP_PATH . '/models/rm.php'; // Ensure RM model is loaded if needed, or use direct query
+        // Using the query logic from previous RM controller update
+        $db = get_db_connection();
+        $sql = "SELECT sa.*, s.name as service_name,
+                COALESCE(pp.full_name, p.name) as partner_full_name,
+                p.id as partner_id,
+                wl.company_name as white_label_name
+                FROM service_applications sa
+                JOIN services s ON sa.service_id = s.id
+                JOIN partners p ON sa.partner_id = p.id
+                LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+                LEFT JOIN white_label_clients wl ON sa.white_label_id = wl.id
+                WHERE p.rm_id = :rm_id
+                ORDER BY sa.created_at DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['rm_id' => $_SESSION['user_id']]);
+        $applications = $stmt->fetchAll();
+        view('dashboard/applications_list', ['applications' => $applications]);
     } else {
         $applications = [];
         view('dashboard/applications_list', ['applications' => $applications]);
@@ -42,7 +67,19 @@ function application_view($id) {
         }
     }
 
-    view('dashboard/application_view', ['application' => $application]);
+    // Fetch White Label Colors if applicable
+    $wl_colors = null;
+    if (!empty($application['white_label_id'])) {
+        $wl = get_white_label_by_id($application['white_label_id']);
+        if ($wl) {
+            $wl_colors = [
+                'primary' => $wl['primary_color'],
+                'secondary' => $wl['secondary_color']
+            ];
+        }
+    }
+
+    view('dashboard/application_view', ['application' => $application, 'wl_colors' => $wl_colors]);
 }
 
 function application_edit($id) {
@@ -60,7 +97,7 @@ function application_edit($id) {
         if ($application['partner_id'] !== $user['partner_id']) {
             die('Access Denied');
         }
-    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL' && $_SESSION['role_code'] !== 'RM') {
         die('Access Denied');
     }
 
@@ -86,7 +123,7 @@ function application_update($id) {
             if ($current_app['partner_id'] !== $user['partner_id']) {
                 die('Access Denied');
             }
-        } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL' && $_SESSION['role_code'] !== 'RM') {
             die('Access Denied');
         }
 
@@ -96,18 +133,24 @@ function application_update($id) {
             mkdir($upload_dir, 0777, true);
         }
 
-        if (isset($_FILES['docs'])) {
+        if (isset($_FILES['docs']) && is_array($_FILES['docs']['name'])) {
             foreach ($_FILES['docs']['name'] as $key => $name) {
+                // Ensure we have a valid file upload
                 if (!empty($name) && $_FILES['docs']['error'][$key] === 0) {
-                    $file_ext = pathinfo($name, PATHINFO_EXTENSION);
-                    $file_name = time() . '_' . uniqid() . '.' . $file_ext;
-                    $target_file = $upload_dir . $file_name;
+                    $tmp_name = $_FILES['docs']['tmp_name'][$key];
 
-                    if (move_uploaded_file($_FILES['docs']['tmp_name'], $target_file)) {
-                        $documents[] = [
-                            'type' => strtoupper($key),
-                            'url' => 'uploads/applications/' . $file_name
-                        ];
+                    // Verify tmp_name is a string (not array)
+                    if (is_string($tmp_name) && is_uploaded_file($tmp_name)) {
+                        $file_ext = pathinfo($name, PATHINFO_EXTENSION);
+                        $file_name = time() . '_' . uniqid() . '.' . $file_ext;
+                        $target_file = $upload_dir . $file_name;
+
+                        if (move_uploaded_file($tmp_name, $target_file)) {
+                            $documents[] = [
+                                'type' => strtoupper($key),
+                                'url' => 'uploads/applications/' . $file_name
+                            ];
+                        }
                     }
                 }
             }
@@ -123,7 +166,7 @@ function application_update($id) {
 
         if (update_full_application($data)) {
             // Log the update with current status
-            $role_name = ($_SESSION['role_code'] === 'SUPER_ADMIN') ? 'Admin' : 'Partner';
+            $role_name = $_SESSION['role_code'];
             $log_message = "Application details updated by $role_name. (Current Status: " . str_replace('_', ' ', $current_app['status']) . ")";
             add_application_comment($id, $_SESSION['user_id'], $log_message);
 
@@ -137,28 +180,67 @@ function application_update($id) {
 }
 
 function application_update_status($id) {
-    require_role('SUPER_ADMIN');
+    require_login(); // Changed from require_role('SUPER_ADMIN') to allow RM/WL
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status = $_POST['status'];
         $comment = trim($_POST['comment'] ?? '');
 
-        if (update_application_status($id, $status)) {
-            $log_message = "Status updated to " . str_replace('_', ' ', $status);
-            if (!empty($comment)) {
-                $log_message .= "\nNote: " . $comment;
-            }
-            add_application_comment($id, $_SESSION['user_id'], $log_message);
+        // Fetch current app to check if status changed
+        $current_app = get_application_by_id($id);
+        $status_changed = ($current_app['status'] !== $status);
 
-            flash('app_success', 'Application status updated to ' . ucfirst($status));
-        } else {
-            flash('app_error', 'Failed to update status.', 'alert alert-danger');
+        // Update Status if changed
+        if ($status_changed) {
+            // Security Check for Status Update: Only Super Admin & RM
+            if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'RM') {
+                if (update_application_status($id, $status)) {
+                    $log_message = "Status updated to " . str_replace('_', ' ', $status);
+                    add_application_comment($id, $_SESSION['user_id'], $log_message);
+
+                    // Notify Partner
+                    $db = get_db_connection();
+                    $stmt = $db->prepare("SELECT id FROM users WHERE partner_id = :pid AND role_id = (SELECT id FROM roles WHERE code = 'PARTNER_ADMIN') LIMIT 1");
+                    $stmt->execute(['pid' => $current_app['partner_id']]);
+                    $partner_user_id = $stmt->fetchColumn();
+
+                    if ($partner_user_id) {
+                        create_notification(
+                            $partner_user_id,
+                            'Application Status Update',
+                            "Your application for {$current_app['customer_name']} has been updated to " . ucfirst(str_replace('_', ' ', $status)) . ".",
+                            url('application/view/' . $id)
+                        );
+                    }
+                    flash('app_success', 'Status Updated');
+                } else {
+                    flash('app_error', 'Failed to update status.', 'alert alert-danger');
+                }
+            } else {
+                // WL Admin tried to change status (should be prevented by UI, but good to check)
+                // But wait, the form submits status even if hidden.
+                // If WL Admin submits, status will be same as current (from hidden input).
+                // So $status_changed will be false.
+            }
         }
+
+        // Add Comment if provided
+        if (!empty($comment)) {
+            if (add_application_comment($id, $_SESSION['user_id'], $comment)) {
+                if (!$status_changed) {
+                    flash('app_success', 'Comment added.');
+                }
+            } else {
+                flash('app_error', 'Failed to add comment.', 'alert alert-danger');
+            }
+        }
+
         redirect('application/view/' . $id);
     }
 }
 
 function application_add_comment($id) {
+    // Kept for backward compatibility or direct API calls
     require_login();
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -285,18 +367,23 @@ function application_store() {
             mkdir($upload_dir, 0777, true);
         }
 
-        if (isset($_FILES['docs'])) {
+        if (isset($_FILES['docs']) && is_array($_FILES['docs']['name'])) {
             foreach ($_FILES['docs']['name'] as $key => $name) {
                 if (!empty($name) && $_FILES['docs']['error'][$key] === 0) {
-                    $file_ext = pathinfo($name, PATHINFO_EXTENSION);
-                    $file_name = time() . '_' . uniqid() . '.' . $file_ext;
-                    $target_file = $upload_dir . $file_name;
+                    $tmp_name = $_FILES['docs']['tmp_name'][$key];
 
-                    if (move_uploaded_file($_FILES['docs']['tmp_name'], $target_file)) {
-                        $documents[] = [
-                            'type' => strtoupper($key),
-                            'url' => 'uploads/applications/' . $file_name
-                        ];
+                    // Verify tmp_name is a string (not array)
+                    if (is_string($tmp_name) && is_uploaded_file($tmp_name)) {
+                        $file_ext = pathinfo($name, PATHINFO_EXTENSION);
+                        $file_name = time() . '_' . uniqid() . '.' . $file_ext;
+                        $target_file = $upload_dir . $file_name;
+
+                        if (move_uploaded_file($tmp_name, $target_file)) {
+                            $documents[] = [
+                                'type' => strtoupper($key),
+                                'url' => 'uploads/applications/' . $file_name
+                            ];
+                        }
                     }
                 }
             }
@@ -318,6 +405,34 @@ function application_store() {
 
         if (create_full_application($data)) {
             add_application_comment($data['id'], $_SESSION['user_id'], "Application submitted with status: " . str_replace('_', ' ', $status));
+
+            // Notify RM
+            if (!empty($partner['rm_id'])) {
+                create_notification(
+                    $partner['rm_id'],
+                    'New Application',
+                    "Partner {$partner['name']} submitted a new application for {$data['customer']['name']}.",
+                    url('application/view/' . $data['id'])
+                );
+            }
+
+            // Notify White Label Admin (if applicable)
+            if (!empty($partner['white_label_id'])) {
+                $db = get_db_connection();
+                $stmt = $db->prepare("SELECT id FROM users WHERE white_label_id = :wl_id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL') LIMIT 1");
+                $stmt->execute(['wl_id' => $partner['white_label_id']]);
+                $wl_admin_id = $stmt->fetchColumn();
+
+                if ($wl_admin_id) {
+                    create_notification(
+                        $wl_admin_id,
+                        'New Application',
+                        "Partner {$partner['name']} submitted a new application.",
+                        url('application/view/' . $data['id'])
+                    );
+                }
+            }
+
             redirect('application/success');
         } else {
             flash('app_error', 'Failed to submit application. Please try again.', 'alert alert-danger');

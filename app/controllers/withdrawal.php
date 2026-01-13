@@ -1,6 +1,7 @@
 <?php
 require_once APP_PATH . '/models/user.php'; // For wallet functions
 require_once APP_PATH . '/core/database.php';
+require_once APP_PATH . '/models/notification.php'; // Include Notification Model
 
 function withdrawal_index() {
     require_login();
@@ -98,6 +99,29 @@ function withdrawal_store() {
             ]);
 
             $db->commit();
+
+            // Notify Admin
+            if (!empty($user['white_label_id'])) {
+                // Notify WL Admin
+                $stmt = $db->prepare("SELECT id FROM users WHERE white_label_id = :wl_id AND role_id = (SELECT id FROM roles WHERE code = 'WHITE_LABEL') LIMIT 1");
+                $stmt->execute(['wl_id' => $user['white_label_id']]);
+                $admin_id = $stmt->fetchColumn();
+            } else {
+                // Notify Super Admin
+                $stmt = $db->prepare("SELECT id FROM users WHERE role_id = (SELECT id FROM roles WHERE code = 'SUPER_ADMIN') LIMIT 1");
+                $stmt->execute();
+                $admin_id = $stmt->fetchColumn();
+            }
+
+            if ($admin_id) {
+                create_notification(
+                    $admin_id,
+                    'New Withdrawal Request',
+                    "User {$user['first_name']} requested a withdrawal of ₹{$amount}.",
+                    url('withdrawal/index')
+                );
+            }
+
             flash('withdraw_success', 'Withdrawal request submitted.');
 
         } catch (Exception $e) {
@@ -120,7 +144,7 @@ function withdrawal_approve($id) {
     $db = get_db_connection();
 
     // Fetch withdrawal details including user's WL ID
-    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
+    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code, w.user_id FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
     $stmt->execute(['id' => $id]);
     $result = $stmt->fetch();
     $target_wl_id = $result['white_label_id'];
@@ -134,8 +158,6 @@ function withdrawal_approve($id) {
         }
     } elseif ($_SESSION['role_code'] === 'SUPER_ADMIN') {
         // Super Admin cannot approve WL Partner withdrawals
-        // But CAN approve WL Admin (Client) withdrawals or Platform Partner withdrawals
-
         if ($target_role === 'PARTNER_ADMIN' && !empty($target_wl_id)) {
             flash('withdraw_error', 'Super Admin cannot approve White Label Partner withdrawals.', 'alert alert-danger');
             redirect('withdrawal/index');
@@ -145,6 +167,14 @@ function withdrawal_approve($id) {
     $stmt = $db->prepare("UPDATE withdrawals SET status = 'approved' WHERE id = :id AND status = 'requested'");
 
     if ($stmt->execute(['id' => $id])) {
+        // Notify User
+        create_notification(
+            $result['user_id'],
+            'Withdrawal Approved',
+            "Your withdrawal request has been approved.",
+            url('withdrawal/index')
+        );
+
         flash('withdraw_success', 'Withdrawal approved.');
     } else {
         flash('withdraw_error', 'Failed to approve.');
@@ -194,6 +224,15 @@ function withdrawal_reject($id) {
             update_wallet_balance($withdrawal['user_id'], $withdrawal['gross_amount'], 'credit', 'Withdrawal Refund', $id);
 
             $db->commit();
+
+            // Notify User
+            create_notification(
+                $withdrawal['user_id'],
+                'Withdrawal Rejected',
+                "Your withdrawal request has been rejected and refunded.",
+                url('withdrawal/index')
+            );
+
             flash('withdraw_success', 'Withdrawal rejected and refunded.');
 
         } catch (Exception $e) {
@@ -216,7 +255,7 @@ function withdrawal_mark_paid($id) {
     $db = get_db_connection();
 
     // Fetch details
-    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
+    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code, w.user_id FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
     $stmt->execute(['id' => $id]);
     $result = $stmt->fetch();
     $target_wl_id = $result['white_label_id'];
@@ -239,6 +278,14 @@ function withdrawal_mark_paid($id) {
     $stmt = $db->prepare("UPDATE withdrawals SET status = 'paid' WHERE id = :id AND status = 'approved'");
 
     if ($stmt->execute(['id' => $id])) {
+        // Notify User
+        create_notification(
+            $result['user_id'],
+            'Withdrawal Paid',
+            "Your withdrawal has been processed and paid.",
+            url('withdrawal/index')
+        );
+
         flash('withdraw_success', 'Marked as Paid.');
     }
 

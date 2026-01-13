@@ -4,6 +4,7 @@ require_once APP_PATH . '/models/white_label.php';
 require_once APP_PATH . '/models/subscription.php';
 require_once APP_PATH . '/models/user.php';
 require_once APP_PATH . '/core/mailer.php'; // Include Mailer
+require_once APP_PATH . '/models/notification.php'; // Include Notification Model
 
 function partner_index() {
     require_login();
@@ -348,31 +349,6 @@ function partner_update($id) {
     }
 }
 
-function partner_update_status($id) {
-    require_login();
-
-    // Security Check
-    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
-        $user = find_user_by_id($_SESSION['user_id']);
-        $partner = get_partner_by_id($id);
-        if ($partner['white_label_id'] !== $user['white_label_id']) {
-            die('Access Denied');
-        }
-    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
-        die('Access Denied');
-    }
-
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $status = $_POST['status'];
-        if (update_partner_status($id, $status)) {
-            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
-        } else {
-            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
-        }
-        redirect('partner/index');
-    }
-}
-
 function partner_delete($id) {
     require_login();
 
@@ -443,6 +419,22 @@ function partner_verify_kyc($id) {
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status = $_POST['status'];
         if (update_kyc_status($id, $status)) {
+
+            // Notify Partner
+            $db = get_db_connection();
+            $stmt = $db->prepare("SELECT id FROM users WHERE partner_id = :pid AND role_id = (SELECT id FROM roles WHERE code = 'PARTNER_ADMIN') LIMIT 1");
+            $stmt->execute(['pid' => $id]);
+            $partner_user_id = $stmt->fetchColumn();
+
+            if ($partner_user_id) {
+                create_notification(
+                    $partner_user_id,
+                    'KYC Status Update',
+                    "Your KYC status has been updated to " . $status . ".",
+                    url('dashboard/partner')
+                );
+            }
+
             flash('ptr_success', 'KYC Status Updated');
         } else {
             flash('ptr_error', 'Failed to update KYC status', 'alert alert-danger');
@@ -461,5 +453,30 @@ function partner_assign_rm($id) {
             flash('ptr_error', 'Failed to assign RM', 'alert alert-danger');
         }
         redirect('partner/profile/' . $id);
+    }
+}
+
+function partner_update_status($id) {
+    require_login();
+
+    // Security Check
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $status = $_POST['status'];
+        if (update_partner_status($id, $status)) {
+            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
+        } else {
+            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
+        }
+        redirect('partner/index');
     }
 }

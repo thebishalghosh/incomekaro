@@ -411,3 +411,14 @@ ALTER TABLE white_label_clients
 
 
 ALTER TABLE users ADD COLUMN monthly_target DECIMAL(15,2) DEFAULT 0.00;
+
+CREATE TABLE notifications (
+                               id CHAR(36) PRIMARY KEY,
+                               user_id CHAR(36) NOT NULL,
+                               title VARCHAR(255) NOT NULL,
+                               message TEXT,
+                               link VARCHAR(255),
+                               is_read BOOLEAN DEFAULT FALSE,
+                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

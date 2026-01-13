@@ -83,7 +83,7 @@
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
 // Added 'inquiry' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry'];
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
@@ -104,38 +104,96 @@ if ($is_dashboard && isLoggedIn()):
                 <i class="fas fa-bars"></i>
             </div>
 
-            <div class="user-profile dropdown">
-                <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="user-avatar">
-                        <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)); ?>
-                    </div>
-                    <div class="d-none d-md-block">
-                        <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
-                        <div class="small text-muted" style="font-size: 0.75rem;">
-                            <?php
-                                $role_display = $_SESSION['role_code'] ?? 'Role';
-                                if ($role_display === 'WHITE_LABEL') {
-                                    echo 'Administrator';
-                                } elseif ($role_display === 'SUPER_ADMIN') {
-                                    echo 'Super Admin';
-                                } elseif ($role_display === 'PARTNER_ADMIN') {
-                                    echo 'Partner';
-                                } else {
-                                    echo ucfirst(strtolower(str_replace('_', ' ', $role_display)));
-                                }
-                            ?>
+            <div class="d-flex align-items-center">
+                <!-- Notification Bell -->
+                <div class="dropdown me-3">
+                    <a href="#" class="text-muted position-relative" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell fa-lg"></i>
+                        <?php $unread_count = get_my_unread_count(); ?>
+                        <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; <?php echo $unread_count > 0 ? '' : 'display: none;'; ?>">
+                            <?php echo $unread_count; ?>
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 350px;">
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                            <h6 class="mb-0 fw-bold">Notifications</h6>
+                            <a href="<?php echo url('notification/mark_all_read'); ?>" class="small text-decoration-none">Mark all as read</a>
                         </div>
+                        <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                            <?php $notifications = get_my_notifications(); ?>
+                            <?php if (empty($notifications)): ?>
+                                <div class="text-center p-4 text-muted">
+                                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                    <p>No new notifications.</p>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($notifications as $notif): ?>
+                                    <a href="<?php echo url('notification/read/' . $notif['id']); ?>" class="list-group-item list-group-item-action <?php echo $notif['is_read'] ? '' : 'bg-light'; ?>">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1 fw-bold small"><?php echo $notif['title']; ?></h6>
+                                            <small class="text-muted"><?php echo date('d M', strtotime($notif['created_at'])); ?></small>
+                                        </div>
+                                        <p class="mb-1 small text-muted"><?php echo $notif['message']; ?></p>
+                                    </a>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <a href="<?php echo url('notification/index'); ?>" class="dropdown-item text-center small py-2">View All Notifications</a>
                     </div>
-                    <i class="fas fa-chevron-down ms-2 text-muted small"></i>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                </ul>
+
+                <!-- User Profile -->
+                <div class="user-profile dropdown">
+                    <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar">
+                            <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)); ?>
+                        </div>
+                        <div class="d-none d-md-block">
+                            <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
+                            <div class="small text-muted" style="font-size: 0.75rem;">
+                                <?php
+                                    $role_display = $_SESSION['role_code'] ?? 'Role';
+                                    if ($role_display === 'WHITE_LABEL') {
+                                        echo 'Administrator';
+                                    } elseif ($role_display === 'SUPER_ADMIN') {
+                                        echo 'Super Admin';
+                                    } elseif ($role_display === 'PARTNER_ADMIN') {
+                                        echo 'Partner';
+                                    } else {
+                                        echo ucfirst(strtolower(str_replace('_', ' ', $role_display)));
+                                    }
+                                ?>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down ms-2 text-muted small"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </header>
+
+        <!-- Notification Polling Script -->
+        <script>
+            setInterval(function() {
+                fetch('<?php echo url('notification/count'); ?>')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.getElementById('notification-badge');
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('Error polling notifications:', error));
+            }, 30000); // Poll every 30 seconds
+        </script>
 
         <div class="container-fluid p-4">
 

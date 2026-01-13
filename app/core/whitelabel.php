@@ -1,71 +1,86 @@
 <?php
-// White Label Logic
+// White Label System
+// This file is included very early, so we need to be careful with dependencies.
 
-$host = $_SERVER['HTTP_HOST'];
+$WL_CONFIG = null;
+$domain = $_SERVER['HTTP_HOST'];
 
-// Strip port if present (e.g. localhost:8000 -> localhost)
-if (strpos($host, ':') !== false) {
-    $host = explode(':', $host)[0];
+// Load all white label clients from a cached file or database
+// For simplicity, let's assume a function get_all_wl_domains() exists
+// This should be optimized in a real application (e.g., using a cache)
+try {
+    $db = get_db_connection();
+    $stmt = $db->prepare("SELECT * FROM white_label_clients WHERE primary_domain = :domain OR id IN (SELECT white_label_id FROM white_label_domains WHERE domain = :domain)");
+    $stmt->execute(['domain' => $domain]);
+    $WL_CONFIG = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // Database might not be ready yet, fail silently
+    $WL_CONFIG = null;
 }
 
-$default_host = 'incomekaro.test'; // Hardcoded main domain for safety, or fetch from env
-
-// Global variable to store White Label Config
-global $WL_CONFIG;
-$WL_CONFIG = null;
-
-// If the current host is NOT the default host, check for White Label
-if ($host !== $default_host && $host !== 'localhost') {
-    $db = get_db_connection();
-
-    $stmt = $db->prepare("SELECT * FROM white_label_clients WHERE primary_domain = :domain AND status = 'active'");
-    $stmt->execute(['domain' => $host]);
-    $client = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($client) {
-        $WL_CONFIG = $client;
-
-        // Decode JSON data
-        if (!empty($client['landing_page_data'])) {
-            $WL_CONFIG['landing_data'] = json_decode($client['landing_page_data'], true);
-        }
-
-        // Define a constant for easy checking
-        define('IS_WHITE_LABEL', true);
-    } else {
-        // Domain not found in DB -> Redirect to Main Site
-        // This prevents unregistered domains from showing the main site content
-        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-        header("Location: " . $protocol . "://" . $default_host);
-        exit;
-    }
+if ($WL_CONFIG) {
+    define('IS_WHITE_LABEL', true);
 } else {
     define('IS_WHITE_LABEL', false);
 }
 
-// Helper function to get Site Name
 function get_site_name() {
     global $WL_CONFIG;
-    return $WL_CONFIG ? $WL_CONFIG['company_name'] : SITE_NAME;
-}
-
-// Helper function to get Logo URL
-function get_logo_url() {
-    global $WL_CONFIG;
-    if ($WL_CONFIG && !empty($WL_CONFIG['logo_url'])) {
-        return asset($WL_CONFIG['logo_url']);
+    if (IS_WHITE_LABEL && isset($WL_CONFIG['company_name'])) {
+        return $WL_CONFIG['company_name'];
     }
-    return asset('images/logo.png');
+    return SITE_NAME; // Default from config.php
 }
 
-// Helper function to get Primary Color
 function get_primary_color() {
     global $WL_CONFIG;
-    return $WL_CONFIG ? $WL_CONFIG['primary_color'] : '#667eea'; // Default purple
+    if (IS_WHITE_LABEL && isset($WL_CONFIG['primary_color'])) {
+        return $WL_CONFIG['primary_color'];
+    }
+    return '#6A5ACD'; // Default
 }
 
-// Helper function to get Secondary Color
 function get_secondary_color() {
     global $WL_CONFIG;
-    return $WL_CONFIG ? $WL_CONFIG['secondary_color'] : '#764ba2'; // Default dark purple
+    if (IS_WHITE_LABEL && isset($WL_CONFIG['secondary_color'])) {
+        return $WL_CONFIG['secondary_color'];
+    }
+    return '#483D8B'; // Default
+}
+
+function get_logo_url() {
+    global $WL_CONFIG;
+
+    // Priority 1: Logged-in User's White Label
+    if (isset($_SESSION['user_id'])) {
+        // This is a potential performance hit on every page load. Caching user info in session is better.
+        // Let's check if we already have the user's WL ID in session.
+        // Assuming we don't, we fetch it.
+
+        try {
+            $db = get_db_connection();
+            $stmt = $db->prepare("SELECT white_label_id FROM users WHERE id = :id");
+            $stmt->execute(['id' => $_SESSION['user_id']]);
+            $user_wl_id = $stmt->fetchColumn();
+
+            if ($user_wl_id) {
+                $stmt = $db->prepare("SELECT logo_url FROM white_label_clients WHERE id = :id");
+                $stmt->execute(['id' => $user_wl_id]);
+                $logo = $stmt->fetchColumn();
+                if ($logo) {
+                    return asset($logo);
+                }
+            }
+        } catch (Exception $e) {
+            // DB error, fall through
+        }
+    }
+
+    // Priority 2: Domain-based White Label
+    if (IS_WHITE_LABEL && !empty($WL_CONFIG['logo_url'])) {
+        return asset($WL_CONFIG['logo_url']);
+    }
+
+    // Priority 3: Default Logo
+    return asset('images/logo.png');
 }
