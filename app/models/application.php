@@ -1,10 +1,14 @@
 <?php
 function get_all_applications_for_admin() {
     $db = get_db_connection();
-    $sql = "SELECT sa.*, s.name as service_name, p.name as partner_name, wl.company_name as white_label_name
+    $sql = "SELECT sa.*, s.name as service_name,
+            COALESCE(pp.full_name, p.name) as partner_full_name,
+            p.name as partner_name,
+            wl.company_name as white_label_name
             FROM service_applications sa
             JOIN services s ON sa.service_id = s.id
             JOIN partners p ON sa.partner_id = p.id
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON sa.white_label_id = wl.id
             ORDER BY sa.created_at DESC";
     $stmt = $db->query($sql);
@@ -13,9 +17,15 @@ function get_all_applications_for_admin() {
 
 function get_partner_applications($partner_id) {
     $db = get_db_connection();
-    $sql = "SELECT sa.*, s.name as service_name
+    // Even for partners, we might want to show their own name or just avoid the error
+    // But usually the view hides the partner column for partners.
+    // Let's fetch it anyway for consistency.
+    $sql = "SELECT sa.*, s.name as service_name,
+            COALESCE(pp.full_name, p.name) as partner_full_name
             FROM service_applications sa
             JOIN services s ON sa.service_id = s.id
+            JOIN partners p ON sa.partner_id = p.id
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             WHERE sa.partner_id = :partner_id
             ORDER BY sa.created_at DESC";
     $stmt = $db->prepare($sql);
@@ -43,9 +53,12 @@ function get_applications_by_white_label($white_label_id) {
 
 function get_partner_applications_by_service($partner_id, $service_id) {
     $db = get_db_connection();
-    $sql = "SELECT sa.*, s.name as service_name
+    $sql = "SELECT sa.*, s.name as service_name,
+            COALESCE(pp.full_name, p.name) as partner_full_name
             FROM service_applications sa
             JOIN services s ON sa.service_id = s.id
+            JOIN partners p ON sa.partner_id = p.id
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             WHERE sa.partner_id = :partner_id AND sa.service_id = :service_id
             ORDER BY sa.created_at DESC";
     $stmt = $db->prepare($sql);
@@ -59,11 +72,29 @@ function get_application_by_id($id) {
     $db = get_db_connection();
 
     // Fetch main application data
-    $sql = "SELECT sa.*, s.name as service_name, s.form_type, p.name as partner_name, p.id as partner_id
+    $sql = "SELECT sa.*, s.name as service_name, s.form_type,
+            COALESCE(pp.full_name, p.name) as partner_name,
+            p.id as partner_id,
+            wl.white_label_id -- Fetch WL ID for color logic
             FROM service_applications sa
             JOIN services s ON sa.service_id = s.id
             JOIN partners p ON sa.partner_id = p.id
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+            LEFT JOIN white_label_clients wl ON sa.white_label_id = wl.id
             WHERE sa.id = :id";
+
+    // Wait, the query above has an error: wl.white_label_id doesn't exist, it's wl.id or sa.white_label_id
+    // Correcting:
+    $sql = "SELECT sa.*, s.name as service_name, s.form_type,
+            COALESCE(pp.full_name, p.name) as partner_name,
+            p.id as partner_id,
+            sa.white_label_id
+            FROM service_applications sa
+            JOIN services s ON sa.service_id = s.id
+            JOIN partners p ON sa.partner_id = p.id
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+            WHERE sa.id = :id";
+
     $stmt = $db->prepare($sql);
     $stmt->bindValue(':id', $id);
     $stmt->execute();
