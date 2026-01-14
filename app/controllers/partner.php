@@ -15,7 +15,13 @@ function partner_index() {
     } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
         $user = find_user_by_id($_SESSION['user_id']);
         $db = get_db_connection();
-        // Added JOIN to fetch user_id and wallet_balance
+
+        // Fetch Partner Admin Role ID for filtering
+        $role_stmt = $db->prepare("SELECT id FROM roles WHERE code = 'PARTNER_ADMIN'");
+        $role_stmt->execute();
+        $partner_role_id = $role_stmt->fetchColumn();
+
+        // Refined Query: Join only the PARTNER_ADMIN user and LATEST bank detail
         $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
                 u.id as user_id, u.wallet_balance,
                 (SELECT COUNT(*) FROM user_bank_details WHERE user_id = u.id) as has_bank_details,
@@ -23,12 +29,14 @@ function partner_index() {
                 FROM partners p
                 LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
                 LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
-                LEFT JOIN users u ON u.partner_id = p.id
-                LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
+                LEFT JOIN users u ON u.partner_id = p.id AND u.role_id = :role_id
+                LEFT JOIN user_bank_details ubd ON ubd.id = (
+                    SELECT id FROM user_bank_details WHERE user_id = u.id ORDER BY id DESC LIMIT 1
+                )
                 WHERE p.white_label_id = :wl_id
                 ORDER BY p.created_at DESC";
         $stmt = $db->prepare($sql);
-        $stmt->execute(['wl_id' => $user['white_label_id']]);
+        $stmt->execute(['wl_id' => $user['white_label_id'], 'role_id' => $partner_role_id]);
         $partners = $stmt->fetchAll();
 
     } elseif ($_SESSION['role_code'] === 'RM') {
@@ -349,6 +357,31 @@ function partner_update($id) {
     }
 }
 
+function partner_update_status($id) {
+    require_login();
+
+    // Security Check
+    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+        $partner = get_partner_by_id($id);
+        if ($partner['white_label_id'] !== $user['white_label_id']) {
+            die('Access Denied');
+        }
+    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
+        die('Access Denied');
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $status = $_POST['status'];
+        if (update_partner_status($id, $status)) {
+            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
+        } else {
+            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
+        }
+        redirect('partner/index');
+    }
+}
+
 function partner_delete($id) {
     require_login();
 
@@ -453,30 +486,5 @@ function partner_assign_rm($id) {
             flash('ptr_error', 'Failed to assign RM', 'alert alert-danger');
         }
         redirect('partner/profile/' . $id);
-    }
-}
-
-function partner_update_status($id) {
-    require_login();
-
-    // Security Check
-    if ($_SESSION['role_code'] === 'WHITE_LABEL') {
-        $user = find_user_by_id($_SESSION['user_id']);
-        $partner = get_partner_by_id($id);
-        if ($partner['white_label_id'] !== $user['white_label_id']) {
-            die('Access Denied');
-        }
-    } elseif ($_SESSION['role_code'] !== 'SUPER_ADMIN') {
-        die('Access Denied');
-    }
-
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $status = $_POST['status'];
-        if (update_partner_status($id, $status)) {
-            flash('ptr_success', 'Partner status updated to ' . ucfirst($status));
-        } else {
-            flash('ptr_error', 'Failed to update status.', 'alert alert-danger');
-        }
-        redirect('partner/index');
     }
 }

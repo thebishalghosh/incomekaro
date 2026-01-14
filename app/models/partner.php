@@ -524,10 +524,10 @@ function update_full_partner($data) {
         $stmt->bindValue(':id', $data['id']);
         $stmt->execute();
 
-        // 5. Update Subscription (Only payment details, plan change logic is complex)
-        // For now, just update payment details of the latest subscription
-        $sql = "UPDATE partner_subscriptions SET payment_amount = :amt, due_amount = :due, payment_mode = :mode, transaction_id = :tid WHERE partner_id = :id ORDER BY created_at DESC LIMIT 1";
+        // 5. Update Subscription (Added plan_name update)
+        $sql = "UPDATE partner_subscriptions SET plan_name = :plan_name, payment_amount = :amt, due_amount = :due, payment_mode = :mode, transaction_id = :tid WHERE partner_id = :id ORDER BY created_at DESC LIMIT 1";
         $stmt = $db->prepare($sql);
+        $stmt->bindValue(':plan_name', $data['subscription']['plan_name']);
         $stmt->bindValue(':amt', $data['subscription']['payment_amount']);
         $stmt->bindValue(':due', $data['subscription']['due_amount']);
         $stmt->bindValue(':mode', $data['subscription']['payment_mode']);

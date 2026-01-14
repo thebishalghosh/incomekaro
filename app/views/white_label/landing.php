@@ -1,21 +1,23 @@
 <?php view('layouts/header', ['title' => 'Home']); ?>
 
 <?php
-    // Fetch Landing Data
-    $landing = $wl['landing_data'] ?? [];
+    // $landing is passed from the controller. No need to fetch it from $wl.
+    // If $landing is empty (e.g. not set in DB), we use defaults.
 
     // Hero Section
-    $hero_title = $landing['hero']['title'] ?? 'Welcome to ' . $wl['company_name'];
-    $hero_text = $landing['hero']['text'] ?? 'Your trusted partner for financial growth.';
+    $hero_title = !empty($landing['hero']['title']) ? $landing['hero']['title'] : 'Welcome to ' . $wl['company_name'];
+    $hero_text = !empty($landing['hero']['text']) ? $landing['hero']['text'] : 'Your trusted partner for financial growth.';
     $hero_image = !empty($landing['hero']['image']) ? asset($landing['hero']['image']) : asset('images/hero.png');
 
     // About Section
-    $about_title = $landing['about']['title'] ?? 'Who We Are';
-    $about_text = $landing['about']['text'] ?? 'We provide the best financial solutions.';
+    $about_title = !empty($landing['about']['title']) ? $landing['about']['title'] : 'Who We Are';
+    $about_text = !empty($landing['about']['text']) ? $landing['about']['text'] : 'We provide the best financial solutions.';
     $about_image = !empty($landing['about']['image']) ? asset($landing['about']['image']) : asset('images/about-img.png');
 
     // Contact Info
     $contact_email = $wl['support_email'];
+    $contact_phone = !empty($landing['contact_phone']) ? $landing['contact_phone'] : '';
+    $contact_address = !empty($landing['contact_address']) ? $landing['contact_address'] : '';
 
     // Products
     $products = $landing['products'] ?? [];
@@ -165,15 +167,29 @@
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 backdrop-blur">
+                        <?php if (!empty($contact_phone)): ?>
+                        <div class="d-flex align-items-center p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 backdrop-blur mb-4">
                             <div class="icon-box bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-phone"></i>
                             </div>
                             <div>
-                                <small class="text-white-50 text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Working Hours</small>
-                                <div class="fs-6 fw-bold">Mon - Sat: 10 AM - 7 PM</div>
+                                <small class="text-white-50 text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Call Us</small>
+                                <div class="fs-6 fw-bold"><?php echo $contact_phone; ?></div>
                             </div>
                         </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($contact_address)): ?>
+                        <div class="d-flex align-items-center p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 backdrop-blur">
+                            <div class="icon-box bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <small class="text-white-50 text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Visit Us</small>
+                                <div class="fs-6 fw-bold"><?php echo $contact_address; ?></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
