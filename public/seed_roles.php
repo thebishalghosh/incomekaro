@@ -7,28 +7,28 @@ echo "<h1>Seeding Roles...</h1>";
 $db = get_db_connection();
 
 $roles = [
-    ['code' => 'SUPER_ADMIN', 'name' => 'Super Admin'],
-    ['code' => 'RM', 'name' => 'Relationship Manager'],
-    ['code' => 'SALES_EXEC', 'name' => 'Sales Executive'],
-    ['code' => 'PARTNER_ADMIN', 'name' => 'Partner Admin'],
+    'SUPER_ADMIN' => 'Super Admin',
+    'WHITE_LABEL' => 'White Label Admin',
+    'PARTNER_ADMIN' => 'Partner Admin',
+    'RM' => 'Relationship Manager',
+    'SALES_EXEC' => 'Sales Executive'
 ];
 
-$count = 0;
-foreach ($roles as $role) {
+foreach ($roles as $code => $name) {
+    // Check if exists
     $stmt = $db->prepare("SELECT id FROM roles WHERE code = :code");
-    $stmt->execute(['code' => $role['code']]);
+    $stmt->execute(['code' => $code]);
+    $existing = $stmt->fetch();
 
-    if ($stmt->fetch()) {
-        echo "<p style='color:orange;'>Role '" . $role['name'] . "' already exists. Skipping.</p>";
+    if (!$existing) {
+        $sql = "INSERT INTO roles (code, name) VALUES (:code, :name)";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['code' => $code, 'name' => $name]);
+        echo "Created role: <strong>$name ($code)</strong><br>";
     } else {
-        $insert_stmt = $db->prepare("INSERT INTO roles (code, name) VALUES (:code, :name)");
-        if ($insert_stmt->execute($role)) {
-            echo "<p style='color:green;'>Role '" . $role['name'] . "' created successfully.</p>";
-            $count++;
-        }
+        echo "Role exists: $name ($code)<br>";
     }
 }
 
-echo "<h2>Seed Complete!</h2>";
-echo "<p><b>$count</b> new role(s) created.</p>";
-echo "<p><a href='" . URL_ROOT . "/user/create'>Go back to Create User form</a></p>";
+echo "<br><strong style='color:green'>Role seeding completed.</strong>";
+?>
