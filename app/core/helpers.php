@@ -127,6 +127,13 @@ function send_email($to, $subject, $body, $is_html = true) {
             $mail->Password   = getenv('SMTP_PASS');
             $mail->Port       = getenv('SMTP_PORT') ?: 1025;
 
+            // SSL/TLS settings (Auto-detect based on port)
+            if ($mail->Port == 465) {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } elseif ($mail->Port == 587) {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
             // Recipients
             $mail->setFrom(getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in', getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
             $mail->addAddress($to);
@@ -141,6 +148,11 @@ function send_email($to, $subject, $body, $is_html = true) {
             $mail->send();
             return true;
         } catch (Exception $e) {
+            // Log error to a file for debugging
+            $log_file = APP_ROOT . '/debug_mail_error.txt';
+            $log_entry = date('Y-m-d H:i:s') . " - Error sending to $to: " . $mail->ErrorInfo . "\n";
+            file_put_contents($log_file, $log_entry, FILE_APPEND);
+
             error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
             return false;
         }
