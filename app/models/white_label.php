@@ -62,56 +62,72 @@ function create_white_label($data, $password = 'password123') {
             $stmt->bindValue(':password_hash', $password_hash);
             $stmt->execute();
 
-            // Send Welcome Email to Client
-            $subject = "Welcome to " . SITE_NAME . " - Your White Label Account";
-            $login_url = URL_ROOT;
+            // Commit transaction BEFORE sending email
+            // This ensures the user is created even if email fails
+            $db->commit();
 
-            $message = "
-                <h3>Welcome, {$data['company_name']}!</h3>
-                <p>Your White Label account has been successfully created.</p>
-                <p><strong>Login Details:</strong></p>
-                <ul>
-                    <li><strong>Email:</strong> {$data['support_email']}</li>
-                    <li><strong>Password:</strong> {$password}</li>
-                </ul>
-                <p><a href='{$login_url}'>Click here to Login</a></p>
-                <p>Please change your password after your first login.</p>
-                <br>
-                <p>Best Regards,<br>" . SITE_NAME . " Team</p>
-            ";
+            // Send Welcome Email (Non-blocking)
+            try {
+                $subject = "Welcome to " . SITE_NAME . " - Your White Label Account";
+                $login_url = URL_ROOT;
 
-            send_email($data['support_email'], $subject, $message);
+                $message = "
+                    <h3>Welcome, {$data['company_name']}!</h3>
+                    <p>Your White Label account has been successfully created.</p>
+                    <p><strong>Login Details:</strong></p>
+                    <ul>
+                        <li><strong>Email:</strong> {$data['support_email']}</li>
+                        <li><strong>Password:</strong> {$password}</li>
+                    </ul>
+                    <p><a href='{$login_url}'>Click here to Login</a></p>
+                    <p>Please change your password after your first login.</p>
+                    <br>
+                    <p>Best Regards,<br>" . SITE_NAME . " Team</p>
+                ";
 
-            // Send Copy to Super Admin
-            $sa_stmt = $db->prepare("SELECT email FROM users WHERE role_id = (SELECT id FROM roles WHERE code = 'SUPER_ADMIN') LIMIT 1");
-            $sa_stmt->execute();
-            $super_admin_email = $sa_stmt->fetchColumn();
+                send_email($data['support_email'], $subject, $message);
 
-            $sa_subject = "New White Label Created: " . $data['company_name'];
-            $sa_message = "
-                <h3>New White Label Client Created</h3>
-                <p>A new white label client has been onboarded.</p>
-                <p><strong>Client Details:</strong></p>
-                <ul>
-                    <li><strong>Company:</strong> {$data['company_name']}</li>
-                    <li><strong>Domain:</strong> {$data['primary_domain']}</li>
-                    <li><strong>Email:</strong> {$data['support_email']}</li>
-                    <li><strong>Password:</strong> {$password}</li>
-                </ul>
-            ";
+                // Send Copy to Super Admin
+                $sa_stmt = $db->prepare("SELECT email FROM users WHERE role_id = (SELECT id FROM roles WHERE code = 'SUPER_ADMIN') LIMIT 1");
+                $sa_stmt->execute();
+                $super_admin_email = $sa_stmt->fetchColumn();
 
-            if ($super_admin_email) {
-                send_email($super_admin_email, $sa_subject, $sa_message);
+                $sa_subject = "New White Label Created: " . $data['company_name'];
+                $sa_message = "
+                    <h3>New White Label Client Created</h3>
+                    <p>A new white label client has been onboarded.</p>
+                    <p><strong>Client Details:</strong></p>
+                    <ul>
+                        <li><strong>Company:</strong> {$data['company_name']}</li>
+                        <li><strong>Domain:</strong> {$data['primary_domain']}</li>
+                        <li><strong>Email:</strong> {$data['support_email']}</li>
+                        <li><strong>Password:</strong> {$password}</li>
+                    </ul>
+                ";
+
+                if ($super_admin_email) {
+                    send_email($super_admin_email, $sa_subject, $sa_message);
+                }
+
+                // Send Copy to contact@incomekaro.org
+                send_email('contact@incomekaro.org', $sa_subject, $sa_message);
+            } catch (Exception $emailError) {
+                // Log email error but don't fail the creation
+                error_log("Email sending failed for WL creation: " . $emailError->getMessage());
             }
 
-            // Send Copy to contact@incomekaro.org
-            send_email('contact@incomekaro.org', $sa_subject, $sa_message);
+            return true; // Return true because DB commit was successful
+        } else {
+            // Role missing, rollback
+            $db->rollBack();
+            return false;
         }
 
-        $db->commit();
-        return true;
     } catch (Exception $e) {
-        $db->rollBack();
+        // DB Error, rollback
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
         error_log($e->getMessage());
         return false;
     }
