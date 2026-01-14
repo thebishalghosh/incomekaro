@@ -1,6 +1,7 @@
 <?php
-require_once 'app/core/config.php';
-require_once 'app/core/database.php';
+// Adjusted paths since we are now in public/
+require_once '../app/core/config.php';
+require_once '../app/core/database.php';
 
 echo "<h1>Seeding Super Admin...</h1>";
 
