@@ -241,13 +241,52 @@
 </section>
 
 <!-- CTA Section -->
-<section class="py-5 bg-primary text-white text-center">
+<section class="py-5 text-white text-center" style="background-color: #0f172a;">
     <div class="container">
-        <h2 class="fw-bold mb-3">Ready to Take Your Business to the Next Level?</h2>
-        <p class="lead mb-4 opacity-75">Incomekaro empowers businesses with powerful solutions to boost visibility and accelerate growth.</p>
-        <a href="#contact" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-primary">Contact Us</a>
+        <h2 class="fw-bold mb-3 display-6">Ready to Take Your Business to the Next Level?</h2>
+        <p class="lead mb-5 opacity-75 mx-auto" style="max-width: 700px;">Incomekaro empowers businesses with powerful solutions to boost visibility and accelerate growth.</p>
+        <a href="#contact" class="btn btn-outline-light btn-lg rounded-pill px-5 fw-bold hover-lift">Contact Us</a>
     </div>
 </section>
+
+<!-- Policy & Disclaimer Section (Main Site Only) -->
+<?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+<section class="py-5 bg-light border-top">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-12 mb-4">
+                <h5 class="text-dark fw-bold mb-3 border-bottom pb-2 d-inline-block">Policy</h5>
+                <p class="text-muted small fw-bold mb-1">Loan Approval and Rejection Bank or NBFC Policy</p>
+                <p class="text-muted small" style="line-height: 1.6;">SUNGLORY SOFTWARE PRIVATE LIMITED is present in more than 27+ states of India- ANDHRA PRADESH | ASSAM | BIHAR | CHANDIGARH | CHHATTISGARH | DELHI | GUJARAT | HIMACHAL PRADESH | HARYANA | JHARKHAND | JAMMU AND KASHMIR | KARNATAKA | MAHARASHTRA | MADHYA PRADESH | MONIPUR | MEGHALAYA | ORISSA | PUNJAB | RAJASTHAN | SIKKIM | TAMIL NADU | TRIPURA | TELANGANA | UTTARAKHAND | UTTAR PRADESH | WEST BENGAL. With lots of <span class="text-danger">❤</span> from SUNGLORY SOFTWARE PRIVATE LIMITED</p>
+            </div>
+
+            <div class="col-md-6">
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-start h-100">
+                    <i class="fas fa-exclamation-triangle fa-lg me-3 mt-1"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Attention</h6>
+                        <p class="small mb-0">SUNGLORY SOFTWARE PRIVATE LIMITED never asks any details related to debit cards, credit cards and Net Banking like CVV, OTP, SMS. If any such call or mail comes, report it to <a href="mailto:support@incomekaro.in" class="fw-bold text-dark">support@incomekaro.in</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-start h-100">
+                    <i class="fas fa-exclamation-triangle fa-lg me-3 mt-1"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Attention</h6>
+                        <p class="small mb-0">SUNGLORY SOFTWARE PRIVATE LIMITED doesn't charge any amount in the name of Loan Approval & Disbursal. If you get any such information, mail it to <a href="mailto:support@incomekaro.in" class="fw-bold text-dark">support@incomekaro.in</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4 text-center">
+                <p class="small text-muted mb-0">CIN: <span class="fw-bold text-dark">U62013WB2025PTC276552</span></p>
+            </div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <style>
     .shadow-hover { transition: all 0.3s ease; }
@@ -255,6 +294,7 @@
     .letter-spacing-2 { letter-spacing: 2px; }
     .grayscale-hover { filter: grayscale(100%); transition: filter 0.3s; }
     .grayscale-hover:hover { filter: grayscale(0%); }
+    .hover-lift:hover { transform: translateY(-3px); }
 
     /* Floating Balls Animation */
     .floating-ball {
