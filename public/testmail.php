@@ -4,6 +4,11 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Load Composer Autoloader
+if (file_exists('../vendor/autoload.php')) {
+    require_once '../vendor/autoload.php';
+}
+
 require_once '../app/core/config.php';
 require_once '../app/core/mailer.php';
 
@@ -55,6 +60,7 @@ if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
     }
 } else {
     echo "<h2 style='color:red'>PHPMailer class not found!</h2>";
+    echo "Please run 'composer install' or ensure vendor/autoload.php exists.";
 }
 
 echo "<hr><h3>Current Config:</h3>";
