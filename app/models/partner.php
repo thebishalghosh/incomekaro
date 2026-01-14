@@ -41,6 +41,22 @@ function get_partners_by_rm($rm_id) {
     return $stmt->fetchAll();
 }
 
+function get_partners_by_creator($creator_id) {
+    $db = get_db_connection();
+    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance
+            FROM partners p
+            LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
+            LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
+            LEFT JOIN users u ON u.partner_id = p.id
+            WHERE p.created_by = :creator_id
+            ORDER BY p.created_at DESC";
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':creator_id', $creator_id);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
 function get_partner_by_id($id) {
     $db = get_db_connection();
 

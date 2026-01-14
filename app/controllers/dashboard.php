@@ -14,8 +14,12 @@ function dashboard_index() {
         redirect('dashboard/white_label');
     } elseif ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
         redirect('dashboard/partner');
+    } elseif ($_SESSION['role_code'] === 'RM') {
+        redirect('rm/index');
+    } elseif ($_SESSION['role_code'] === 'SALES_EXEC') {
+        redirect('sales/index');
     } else {
-        // Fallback for other roles (RM, Sales Exec, etc.)
+        // Fallback for other roles
         view('dashboard/home', ['title' => 'Dashboard', 'message' => 'Welcome to your dashboard']);
     }
 }

@@ -1,6 +1,6 @@
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <a href="<?php echo url('dashboard/super_admin'); ?>" class="sidebar-brand">
+        <a href="<?php echo url('dashboard/index'); ?>" class="sidebar-brand">
             <img src="<?php echo get_logo_url(); ?>" alt="<?php echo get_site_name(); ?>" style="max-height: 40px;">
         </a>
     </div>
@@ -64,7 +64,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="<?php echo (strpos($_GET['url'] ?? '', 'report') !== false) ? 'active' : ''; ?>">
+                <a href="<?php echo url('report/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'report') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-chart-bar"></i> Global Reports
                 </a>
             </li>
@@ -136,6 +136,30 @@
             <li>
                 <a href="<?php echo url('settings/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'settings') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-paint-brush"></i> Branding & Domain
+                </a>
+            </li>
+
+        <!-- SALES EXECUTIVE MENU -->
+        <?php elseif (isset($_SESSION['role_code']) && $_SESSION['role_code'] == 'SALES_EXEC'): ?>
+            <li>
+                <a href="<?php echo url('sales/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'sales/index') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="menu-header small text-uppercase text-white-50 px-4 py-2 mt-2">My Business</li>
+            <li>
+                <a href="<?php echo url('sales/partners'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'sales/partners') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-users"></i> My Partners
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('sales/create_partner'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'sales/create_partner') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-user-plus"></i> Add Partner
+                </a>
+            </li>
+            <li>
+                <a href="<?php echo url('withdrawal/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'withdrawal') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-wallet"></i> Withdrawals
                 </a>
             </li>
 

@@ -82,8 +82,8 @@
 // Determine if we are in Dashboard mode
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
-// Added 'inquiry' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification'];
+// Added 'profile' to the list of dashboard routes
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification', 'sales', 'profile'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
@@ -168,7 +168,7 @@ if ($is_dashboard && isLoggedIn()):
                         <i class="fas fa-chevron-down ms-2 text-muted small"></i>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                        <li><a class="dropdown-item" href="<?php echo url('profile/index'); ?>"><i class="fas fa-user me-2"></i> Profile</a></li>
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>

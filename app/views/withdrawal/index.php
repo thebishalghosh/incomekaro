@@ -112,12 +112,6 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                                                 // Logic to hide actions for Super Admin if it's a WL Partner
                                                 $show_actions = true;
                                                 if ($_SESSION['role_code'] === 'SUPER_ADMIN' && !empty($wd['white_label_id'])) {
-                                                    // Check if it's a Partner (not the WL Admin themselves)
-                                                    // We don't have role_code in $wd here unless we joined roles table.
-                                                    // I updated controller to join roles table, so $wd['role_code'] should be available?
-                                                    // Wait, I updated controller to fetch r.code as role_code.
-                                                    // Let's check if $wd['role_code'] is available.
-
                                                     if (isset($wd['role_code']) && $wd['role_code'] === 'PARTNER_ADMIN') {
                                                         $show_actions = false;
                                                     }
@@ -225,7 +219,11 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                         <div class="text-center py-3">
                             <i class="fas fa-university fa-2x text-warning mb-2"></i>
                             <p class="text-muted small">No bank details found.</p>
-                            <a href="<?php echo url('dashboard/partner'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
+                            <?php if ($_SESSION['role_code'] === 'PARTNER_ADMIN'): ?>
+                                <a href="<?php echo url('dashboard/partner'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
+                            <?php else: ?>
+                                <a href="<?php echo url('profile/index'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </form>
