@@ -84,3 +84,36 @@ function get_logo_url() {
     // Priority 3: Default Logo
     return asset('images/logo.png');
 }
+
+function get_favicon_url() {
+    global $WL_CONFIG;
+
+    // Priority 1: Logged-in User's White Label
+    if (isset($_SESSION['user_id'])) {
+        try {
+            $db = get_db_connection();
+            $stmt = $db->prepare("SELECT white_label_id FROM users WHERE id = :id");
+            $stmt->execute(['id' => $_SESSION['user_id']]);
+            $user_wl_id = $stmt->fetchColumn();
+
+            if ($user_wl_id) {
+                $stmt = $db->prepare("SELECT logo_url FROM white_label_clients WHERE id = :id");
+                $stmt->execute(['id' => $user_wl_id]);
+                $logo = $stmt->fetchColumn();
+                if ($logo) {
+                    return asset($logo); // Use logo as favicon
+                }
+            }
+        } catch (Exception $e) {
+            // DB error, fall through
+        }
+    }
+
+    // Priority 2: Domain-based White Label
+    if (IS_WHITE_LABEL && !empty($WL_CONFIG['logo_url'])) {
+        return asset($WL_CONFIG['logo_url']);
+    }
+
+    // Priority 3: Default Favicon
+    return asset('images/fav.png');
+}
