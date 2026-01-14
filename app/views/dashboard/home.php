@@ -131,75 +131,45 @@
             <h2 class="fw-bold display-6">Simple, Transparent Pricing</h2>
             <p class="text-muted mx-auto" style="max-width: 600px;">Get lifetime access with our Incomekaro subscription plan. Enjoy zero monthly fees and full premium features — forever.</p>
         </div>
-        <div class="row g-4">
-            <!-- Silver Plan -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card plan-card h-100 text-center p-4 border rounded-4 shadow-sm position-relative overflow-hidden">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-muted mb-3">Silver Plan</h5>
-                        <h2 class="fw-bold display-5 mb-0">₹2499</h2>
-                        <p class="text-muted small mb-4">+ 18% GST</p>
-                        <ul class="list-unstyled text-start small mb-4">
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Small businesses / Startups</li>
-                        </ul>
-                        <a href="#" class="btn btn-outline-primary w-100 rounded-pill">Choose Plan</a>
-                    </div>
-                </div>
-            </div>
+        <div class="row g-4 justify-content-center">
+            <?php if (!empty($plans)): ?>
+                <?php foreach ($plans as $plan): ?>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card plan-card h-100 text-center p-4 border rounded-4 shadow-sm position-relative overflow-hidden d-flex flex-column">
+                            <?php if (stripos($plan['name'], 'Gold') !== false): ?>
+                                <div class="position-absolute top-0 end-0 bg-primary text-white px-3 py-1 small fw-bold rounded-bottom-start">Popular</div>
+                            <?php endif; ?>
 
-            <!-- Gold Plan -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card plan-card h-100 text-center p-4 border-primary border-2 rounded-4 shadow position-relative overflow-hidden">
-                    <div class="position-absolute top-0 end-0 bg-primary text-white px-3 py-1 small fw-bold rounded-bottom-start">Popular</div>
-                    <div class="card-body">
-                        <h5 class="fw-bold text-primary mb-3">Gold Plan</h5>
-                        <h2 class="fw-bold display-5 mb-0 text-primary">₹9999</h2>
-                        <p class="text-muted small mb-4">+ 18% GST</p>
-                        <ul class="list-unstyled text-start small mb-4">
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Expanding businesses</li>
-                        </ul>
-                        <a href="#" class="btn btn-primary w-100 rounded-pill">Choose Plan</a>
-                    </div>
-                </div>
-            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="fw-bold <?php echo (stripos($plan['name'], 'Gold') !== false) ? 'text-primary' : 'text-muted'; ?> mb-3"><?php echo $plan['name']; ?></h5>
+                                <h2 class="fw-bold display-5 mb-0 <?php echo (stripos($plan['name'], 'Gold') !== false) ? 'text-primary' : ''; ?>">₹<?php echo number_format($plan['price']); ?></h2>
+                                <p class="text-muted small mb-4">+ <?php echo $plan['gst_rate']; ?>% GST</p>
 
-            <!-- Platinum Plan -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card plan-card h-100 text-center p-4 border rounded-4 shadow-sm position-relative overflow-hidden">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-muted mb-3">Platinum Plan</h5>
-                        <h2 class="fw-bold display-5 mb-0">₹14999</h2>
-                        <p class="text-muted small mb-4">+ 18% GST</p>
-                        <ul class="list-unstyled text-start small mb-4">
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Large businesses / Professionals</li>
-                        </ul>
-                        <a href="#" class="btn btn-outline-primary w-100 rounded-pill">Choose Plan</a>
-                    </div>
-                </div>
-            </div>
+                                <?php if ($plan['type'] === 'WHITE_LABEL'): ?>
+                                    <div class="badge bg-info-subtle text-info mb-3 px-3 py-2 rounded-pill border border-info-subtle align-self-center">
+                                        <i class="fas fa-paint-brush me-1"></i> White Label Branding
+                                    </div>
+                                <?php endif; ?>
 
-            <!-- Franchise -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card plan-card h-100 text-center p-4 bg-dark text-white rounded-4 shadow-lg position-relative overflow-hidden">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-white-50 mb-3">FRANCHISE</h5>
-                        <h2 class="fw-bold display-5 mb-0">₹70000</h2>
-                        <p class="text-white-50 small mb-4">+ 18% GST</p>
-                        <ul class="list-unstyled text-start small mb-4">
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
-                            <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Full Customization</li>
-                        </ul>
-                        <a href="#" class="btn btn-light w-100 rounded-pill">Choose Plan</a>
+                                <ul class="list-unstyled text-start small mb-4 flex-grow-1">
+                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
+                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
+                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i><?php echo $plan['description'] ?? 'Standard Features'; ?></li>
+                                    <li class="mb-3 text-muted fst-italic"><i class="fas fa-plus-circle text-primary me-2"></i>And many more...</li>
+                                </ul>
+
+                                <div class="mt-auto w-100">
+                                    <a href="<?php echo url('contact/index?subject=Interest in ' . urlencode($plan['name'])); ?>" class="btn <?php echo (stripos($plan['name'], 'Gold') !== false) ? 'btn-primary' : 'btn-outline-primary'; ?> w-100 rounded-pill">Choose Plan</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="col-12 text-center">
+                    <p class="text-muted">No plans available at the moment.</p>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
 </section>

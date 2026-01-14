@@ -1,4 +1,6 @@
 <?php
+require_once APP_PATH . '/models/subscription.php'; // Required for dynamic pricing
+
 function home_index() {
     if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL) {
         // Load White Label Landing Page
@@ -9,18 +11,18 @@ function home_index() {
 
         view('white_label/landing', ['wl' => $WL_CONFIG, 'landing' => $landing]);
     } else {
-        // Load Default Landing Page
-        // Actually, for the main site, we usually have a public landing page too, not just dashboard/home.
-        // But based on current code, it loads dashboard/home.
-        // Let's keep it as is for main site, or redirect to a public view if exists.
-        // Assuming 'home/index' is the public landing for main site.
+        // Load Main Site Landing Page
+
+        // Fetch Global Plans for Pricing Section
+        $plans = get_active_subscription_plans('GLOBAL');
 
         if (file_exists(APP_PATH . '/views/home/index.php')) {
-            view('home/index');
+            view('home/index', ['plans' => $plans]);
         } else {
             $data = [
                 'title' => 'Welcome to IncomeKaro',
-                'message' => 'Your white-label financial platform is ready.'
+                'message' => 'Your white-label financial platform is ready.',
+                'plans' => $plans // <--- ADDED THIS
             ];
             view('dashboard/home', $data);
         }

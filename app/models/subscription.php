@@ -10,8 +10,8 @@ function get_all_subscription_plans($type = null, $white_label_id = null) {
     }
 
     if ($white_label_id === 'GLOBAL') {
-        // Explicitly fetch global plans (NULL)
-        $sql .= " AND white_label_id IS NULL";
+        // Explicitly fetch global plans (NULL or Empty)
+        $sql .= " AND (white_label_id IS NULL OR white_label_id = '')";
     } elseif ($white_label_id) {
         // Fetch specific WL plans
         $sql .= " AND white_label_id = :wl_id";
@@ -26,18 +26,22 @@ function get_all_subscription_plans($type = null, $white_label_id = null) {
     return $stmt->fetchAll();
 }
 
-function get_active_subscription_plans($white_label_id = null) {
+function get_active_subscription_plans($white_label_id = null, $type = null) {
     $db = get_db_connection();
-    $sql = "SELECT * FROM subscription_plans WHERE status = 'active' AND type = 'PARTNER'";
+    $sql = "SELECT * FROM subscription_plans WHERE status = 'active'";
     $params = [];
 
+    if ($type) {
+        $sql .= " AND type = :type";
+        $params[':type'] = $type;
+    }
+
     if ($white_label_id === 'GLOBAL') {
-        $sql .= " AND white_label_id IS NULL";
+        $sql .= " AND (white_label_id IS NULL OR white_label_id = '')";
     } elseif ($white_label_id) {
         $sql .= " AND white_label_id = :wl_id";
         $params[':wl_id'] = $white_label_id;
     }
-    // If $white_label_id is null, it fetches ALL active partner plans (default behavior for Super Admin initially)
 
     $sql .= " ORDER BY price ASC";
 
