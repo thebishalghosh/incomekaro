@@ -45,12 +45,6 @@ function profile_update() {
             'bank_details' => $bank_details
         ];
 
-        // We need to update the user model to handle profile_image update in update_user
-        // Currently update_user doesn't handle profile_image.
-        // Let's add a quick SQL update for image here or update the model.
-        // Updating model is better.
-
-        // For now, let's just update the basic info using existing function
         if (update_user($data)) {
             // Manually update profile image if changed
             if ($profile_image !== $user['profile_image']) {
@@ -62,6 +56,39 @@ function profile_update() {
             flash('profile_success', 'Profile Updated Successfully');
         } else {
             flash('profile_error', 'Failed to update profile', 'alert alert-danger');
+        }
+
+        redirect('profile/index');
+    }
+}
+
+function profile_change_password() {
+    require_login();
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $current_password = $_POST['current_password'];
+        $new_password = $_POST['new_password'];
+        $confirm_password = $_POST['confirm_password'];
+
+        if ($new_password !== $confirm_password) {
+            flash('profile_error', 'New passwords do not match.', 'alert alert-danger');
+            redirect('profile/index');
+        }
+
+        $user = find_user_by_id($_SESSION['user_id']);
+
+        if (password_verify($current_password, $user['password_hash'])) {
+            $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+
+            $db = get_db_connection();
+            $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+            if ($stmt->execute(['hash' => $new_hash, 'id' => $user['id']])) {
+                flash('profile_success', 'Password changed successfully.');
+            } else {
+                flash('profile_error', 'Failed to update password.', 'alert alert-danger');
+            }
+        } else {
+            flash('profile_error', 'Incorrect current password.', 'alert alert-danger');
         }
 
         redirect('profile/index');

@@ -1,6 +1,6 @@
 <?php view('layouts/header', ['title' => 'My Profile']); ?>
 
-<div class="row justify-content-center">
+<div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold text-dark">My Profile</h2>
@@ -9,7 +9,7 @@
         <?php flash('profile_success'); ?>
         <?php flash('profile_error'); ?>
 
-        <div class="card border-0 shadow-sm rounded-4">
+        <div class="card border-0 shadow-sm rounded-4 mb-5">
             <div class="card-body p-5">
                 <form action="<?php echo url('profile/update'); ?>" method="POST" enctype="multipart/form-data">
 
@@ -79,12 +79,40 @@
                         <input type="text" class="form-control form-control-lg" name="branch" value="<?php echo $user['bank_details']['branch'] ?? ''; ?>">
                     </div>
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-primary btn-lg px-5">Save Changes</button>
                     </div>
                 </form>
             </div>
         </div>
+
+        <!-- Change Password Section -->
+        <div class="card border-0 shadow-sm rounded-4 mb-5">
+            <div class="card-body p-5">
+                <h5 class="fw-bold text-danger mb-4"><i class="fas fa-lock me-2"></i> Security</h5>
+
+                <form action="<?php echo url('profile/change_password'); ?>" method="POST">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Current Password</label>
+                            <input type="password" class="form-control form-control-lg" name="current_password" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">New Password</label>
+                            <input type="password" class="form-control form-control-lg" name="new_password" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Confirm Password</label>
+                            <input type="password" class="form-control form-control-lg" name="confirm_password" required>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-outline-danger btn-lg px-5">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 
