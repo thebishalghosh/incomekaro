@@ -27,7 +27,7 @@
             transition: all 0.3s ease;
         }
         .navbar-brand img {
-            height: 45px;
+            height: 60px; /* Increased from 45px */
             transition: transform 0.3s ease;
         }
         .navbar-brand:hover img {

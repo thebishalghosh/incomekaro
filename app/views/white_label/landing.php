@@ -53,7 +53,8 @@
                 <div class="position-relative d-inline-block">
                     <!-- Glow Effect behind image -->
                     <div class="position-absolute top-50 start-50 translate-middle bg-white opacity-25 rounded-circle" style="width: 120%; height: 120%; filter: blur(60px);"></div>
-                    <img src="<?php echo $hero_image; ?>" alt="Hero Image" class="img-fluid rounded-4 shadow-lg position-relative" style="max-height: 450px; object-fit: cover; transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);">
+                    <!-- Increased max-height from 450px to 600px -->
+                    <img src="<?php echo $hero_image; ?>" alt="Hero Image" class="img-fluid rounded-4 shadow-lg position-relative" style="max-height: 600px; object-fit: cover; transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);">
                 </div>
             </div>
         </div>
@@ -75,7 +76,8 @@
                 <div class="position-relative">
                     <div class="position-absolute top-0 start-0 translate-middle bg-primary opacity-10 rounded-circle" style="width: 200px; height: 200px; z-index: 0;"></div>
                     <div class="position-absolute bottom-0 end-0 translate-middle bg-secondary opacity-10 rounded-circle" style="width: 150px; height: 150px; z-index: 0;"></div>
-                    <img src="<?php echo $about_image; ?>" alt="About Us" class="img-fluid rounded-4 shadow-lg position-relative z-1" style="border-radius: 20px; width: 100%; max-height: 400px; object-fit: cover;">
+                    <!-- Increased max-height from 400px to 600px -->
+                    <img src="<?php echo $about_image; ?>" alt="About Us" class="img-fluid rounded-4 shadow-lg position-relative z-1" style="border-radius: 20px; width: 100%; max-height: 600px; object-fit: cover;">
                 </div>
             </div>
             <div class="col-lg-6 ps-lg-5 reveal-right">

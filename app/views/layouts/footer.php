@@ -54,8 +54,8 @@ if ($is_dashboard && isLoggedIn()):
                 <!-- Brand & About -->
                 <div class="col-lg-4 col-md-6">
                     <div class="mb-4">
-                        <!-- Removed filter to debug, ensure logo is visible -->
-                        <img src="<?php echo $logo_url; ?>" alt="<?php echo $site_name; ?>" style="max-height: 45px;">
+                        <!-- Increased logo size to 60px -->
+                        <img src="<?php echo $logo_url; ?>" alt="<?php echo $site_name; ?>" style="max-height: 60px;">
                     </div>
                     <p class="text-white-50 small mb-4" style="line-height: 1.8;">
                         <?php echo $site_name; ?> is India's leading financial distribution network. We empower partners to earn by distributing financial products like Loans, Credit Cards, and Insurance.
