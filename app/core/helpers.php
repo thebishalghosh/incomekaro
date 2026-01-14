@@ -37,7 +37,7 @@ function asset($path) {
     return URL_ROOT . '/' . ltrim($path, '/');
 }
 
-// Flash Message Helper
+// Flash Message Helper - Updated for Toast Style
 function flash($name = '', $message = '', $class = 'alert alert-success') {
     if (!empty($name)) {
         if (!empty($message) && empty($_SESSION[$name])) {
@@ -51,7 +51,38 @@ function flash($name = '', $message = '', $class = 'alert alert-success') {
             $_SESSION[$name . '_class'] = $class;
         } elseif (empty($message) && !empty($_SESSION[$name])) {
             $class = !empty($_SESSION[$name . '_class']) ? $_SESSION[$name . '_class'] : '';
-            echo '<div class="' . $class . '" id="msg-flash">' . $_SESSION[$name] . '</div>';
+
+            // Toast HTML Structure
+            echo '
+            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050; margin-top: 80px;">
+                <div class="toast show align-items-center text-white ' . (strpos($class, 'danger') !== false ? 'bg-danger' : 'bg-success') . ' border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ' . $_SESSION[$name] . '
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    // Wait a bit to ensure Bootstrap is loaded if it is deferred
+                    setTimeout(function() {
+                        if (typeof bootstrap !== "undefined") {
+                            var toastElList = [].slice.call(document.querySelectorAll(".toast"))
+                            var toastList = toastElList.map(function(toastEl) {
+                                return new bootstrap.Toast(toastEl)
+                            })
+                            // Auto-hide after 5 seconds
+                            setTimeout(function() {
+                                toastList.forEach(toast => toast.hide());
+                            }, 5000);
+                        }
+                    }, 500);
+                });
+            </script>
+            ';
+
             unset($_SESSION[$name]);
             unset($_SESSION[$name . '_class']);
         }

@@ -24,7 +24,7 @@ function auth_login_post() {
             // Check Status
             if ($user['status'] !== 'active') {
                 flash('login_error', 'Your account is inactive or suspended.', 'alert alert-danger');
-                redirect('/?login=true'); // Redirect to home with error
+                redirect('/'); // Changed from /?login=true
                 return;
             }
 
@@ -33,7 +33,7 @@ function auth_login_post() {
 
         } else {
             flash('login_error', 'Invalid email or password.', 'alert alert-danger');
-            redirect('/?login=true'); // Redirect to home with error
+            redirect('/'); // Changed from /?login=true
         }
     }
 }
