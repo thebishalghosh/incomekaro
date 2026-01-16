@@ -10,14 +10,31 @@
         .content { margin-bottom: 40px; text-align: justify; }
         .recipient { margin-bottom: 20px; font-weight: bold; font-size: 14px; }
         .subject { font-weight: bold; text-decoration: underline; margin-bottom: 20px; }
-        .signature-area { margin-top: 60px; }
+        .signature-area { margin-top: 60px; width: 100%; }
+        .sig-col { display: inline-block; width: 45%; vertical-align: top; }
         .footer { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; border-top: 1px solid #ccc; text-align: center; font-size: 10px; color: #666; padding-top: 10px; }
     </style>
 </head>
 <body>
+    <?php
+        // Helper to get base64 image
+        function get_img($path_or_url) {
+            if (strpos($path_or_url, 'http') === 0) return $path_or_url;
+            if (file_exists($path_or_url)) {
+                $type = pathinfo($path_or_url, PATHINFO_EXTENSION);
+                $data = file_get_contents($path_or_url);
+                return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+            return '';
+        }
+
+        $is_white_label = defined('IS_WHITE_LABEL') && IS_WHITE_LABEL;
+        $pratap_sig_path = APP_ROOT . '/public/images/PratapMondal.png';
+        $suraj_sig_path = APP_ROOT . '/public/images/SurajKar.png';
+    ?>
 
     <div class="header">
-        <img src="<?php echo $company['logo']; ?>" class="logo"><br>
+        <img src="<?php echo get_img($company['logo']); ?>" class="logo"><br>
         <h1 class="title">Letter of Authorization</h1>
         <div><?php echo $company['name']; ?></div>
         <div style="font-size: 10px;"><?php echo $company['address']; ?></div>
@@ -59,14 +76,37 @@
     </div>
 
     <div class="signature-area">
-        <div style="height: 60px;">
-            <?php if (!empty($company['signature_url'])): ?>
-                <img src="<?php echo $company['signature_url']; ?>" style="max-height: 60px;">
-            <?php endif; ?>
-        </div>
-        <strong><?php echo $company['signatory_name']; ?></strong><br>
-        <?php echo $company['signatory_designation']; ?><br>
-        <?php echo $company['name']; ?>
+        <?php if (!$is_white_label): ?>
+            <!-- Main Site: 2 Signatures -->
+            <div class="sig-col">
+                <div style="height: 60px;">
+                    <img src="<?php echo get_img($pratap_sig_path); ?>" style="max-height: 60px;">
+                </div>
+                <strong>Pratap Mondal</strong><br>
+                CEO<br>
+                <?php echo $company['name']; ?>
+            </div>
+            <div class="sig-col">
+                <div style="height: 60px;">
+                    <img src="<?php echo get_img($suraj_sig_path); ?>" style="max-height: 60px;">
+                </div>
+                <strong>Suraj Kar</strong><br>
+                CEO<br>
+                <?php echo $company['name']; ?>
+            </div>
+        <?php else: ?>
+            <!-- White Label: 1 Signature -->
+            <div class="sig-col">
+                <div style="height: 60px;">
+                    <?php if (!empty($company['signature_url'])): ?>
+                        <img src="<?php echo get_img($company['signature_url']); ?>" style="max-height: 60px;">
+                    <?php endif; ?>
+                </div>
+                <strong><?php echo $company['signatory_name']; ?></strong><br>
+                <?php echo $company['signatory_designation']; ?><br>
+                <?php echo $company['name']; ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="footer">

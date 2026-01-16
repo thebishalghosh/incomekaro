@@ -70,12 +70,12 @@
         .signatures-table td {
             text-align: center;
             vertical-align: bottom;
-            width: 50%;
-            padding: 0 20px;
+            width: 33%; /* Adjusted for potential 3 columns or spacing */
+            padding: 0 10px;
         }
         .sig-line {
             border-top: 1px solid #333;
-            width: 70%;
+            width: 80%;
             margin: 10px auto 5px auto;
         }
         .sig-name {
@@ -109,6 +109,10 @@
             }
             return '';
         }
+
+        $is_white_label = defined('IS_WHITE_LABEL') && IS_WHITE_LABEL;
+        $pratap_sig_path = APP_ROOT . '/public/images/PratapMondal.png';
+        $suraj_sig_path = APP_ROOT . '/public/images/SurajKar.png';
     ?>
 
     <div class="container">
@@ -131,23 +135,44 @@
 
                 <table class="signatures-table">
                     <tr>
-                        <td>
-                            <div style="height: 50px;">
-                                <?php if (!empty($company['signature_url'])): ?>
-                                    <img src="<?php echo get_img($company['signature_url']); ?>" style="max-height: 50px;">
-                                <?php endif; ?>
-                            </div>
-                            <div class="sig-line"></div>
-                            <div class="sig-name"><?php echo $company['signatory_name']; ?></div>
-                            <div class="sig-title"><?php echo $company['signatory_designation']; ?></div>
-                        </td>
-                        <td>
-                            <div style="height: 50px; padding-top: 20px; font-size: 14px; font-weight: bold; color: #555;">
-                                <?php echo date('d M Y', strtotime($partner['created_at'])); ?>
-                            </div>
-                            <div class="sig-line"></div>
-                            <div class="sig-name">Date of Issue</div>
-                        </td>
+                        <?php if (!$is_white_label): ?>
+                            <!-- Main Site: 2 Signatures -->
+                            <td>
+                                <div style="height: 50px;">
+                                    <img src="<?php echo get_img($pratap_sig_path); ?>" style="max-height: 50px;">
+                                </div>
+                                <div class="sig-line"></div>
+                                <div class="sig-name">Pratap Mondal</div>
+                                <div class="sig-title">CEO</div>
+                            </td>
+                            <td>
+                                <div style="height: 50px;">
+                                    <img src="<?php echo get_img($suraj_sig_path); ?>" style="max-height: 50px;">
+                                </div>
+                                <div class="sig-line"></div>
+                                <div class="sig-name">Suraj Kar</div>
+                                <div class="sig-title">CEO</div>
+                            </td>
+                        <?php else: ?>
+                            <!-- White Label: 1 Signature + Date -->
+                            <td>
+                                <div style="height: 50px;">
+                                    <?php if (!empty($company['signature_url'])): ?>
+                                        <img src="<?php echo get_img($company['signature_url']); ?>" style="max-height: 50px;">
+                                    <?php endif; ?>
+                                </div>
+                                <div class="sig-line"></div>
+                                <div class="sig-name"><?php echo $company['signatory_name']; ?></div>
+                                <div class="sig-title"><?php echo $company['signatory_designation']; ?></div>
+                            </td>
+                            <td>
+                                <div style="height: 50px; padding-top: 20px; font-size: 14px; font-weight: bold; color: #555;">
+                                    <?php echo date('d M Y', strtotime($partner['created_at'])); ?>
+                                </div>
+                                <div class="sig-line"></div>
+                                <div class="sig-name">Date of Issue</div>
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 </table>
 
