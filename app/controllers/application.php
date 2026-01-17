@@ -156,10 +156,16 @@ function application_update($id) {
             }
         }
 
+        // Construct Customer Name
+        $customer_data = $_POST['customer'];
+        if (isset($customer_data['first_name'])) {
+            $customer_data['name'] = trim($customer_data['first_name'] . ' ' . ($customer_data['last_name'] ?? ''));
+        }
+
         $data = [
             'id' => $id,
             'created_by' => $_SESSION['user_id'], // For document upload tracking
-            'customer' => $_POST['customer'],
+            'customer' => $customer_data,
             'meta' => $_POST['meta'],
             'documents' => $documents
         ];
@@ -391,13 +397,19 @@ function application_store() {
 
         $status = empty($documents) ? 'DOCUMENTS_PENDING' : 'FRESH';
 
+        // Construct Customer Name
+        $customer_data = $_POST['customer'];
+        if (isset($customer_data['first_name'])) {
+            $customer_data['name'] = trim($customer_data['first_name'] . ' ' . ($customer_data['last_name'] ?? ''));
+        }
+
         $data = [
             'id' => 'app-' . uniqid(),
             'white_label_id' => $partner['white_label_id'],
             'partner_id' => $partner['id'],
             'service_id' => $_POST['service_id'],
             'created_by' => $_SESSION['user_id'],
-            'customer' => $_POST['customer'],
+            'customer' => $customer_data, // Use the modified array
             'meta' => $_POST['meta'],
             'documents' => $documents,
             'status' => $status
