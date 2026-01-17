@@ -179,16 +179,51 @@ view('layouts/partner_header', ['title' => $title]);
                     <legend class="h5 fw-bold text-primary mb-4 border-bottom pb-2">Document Upload (All Optional)</legend>
                     <div class="row g-3">
                         <?php
+                            // Default Documents
                             $docs = [
                                 'aadhaar_front' => 'Aadhar Card Front',
                                 'aadhaar_back' => 'Aadhar Card Back',
                                 'pan_card' => 'Pan Card',
-                                'passport_photo' => 'Passport Photo',
-                                'salary_slip_1m' => '1 Month Salary Slip',
-                                'salary_slip_2m' => '2 Month Salary Slip',
-                                'salary_slip_3m' => '3 Month Salary Slip',
-                                'bank_statement' => 'Bank Statement'
+                                'passport_photo' => 'Passport Photo'
                             ];
+
+                            // Determine Service Type
+                            $svc_name = strtoupper($service['name']);
+
+                            if (strpos($svc_name, 'PERSONAL LOAN') !== false) {
+                                $docs['salary_slip_1m'] = '1 Month Salary Slip';
+                                $docs['salary_slip_2m'] = '2 Month Salary Slip';
+                                $docs['salary_slip_3m'] = '3 Month Salary Slip';
+                                $docs['bank_statement'] = 'Bank Statement (1 Year)';
+                                $docs['electric_bill'] = 'Electric Bill';
+                            }
+                            elseif (strpos($svc_name, 'BUSINESS LOAN') !== false) {
+                                $docs['itr_file'] = 'ITR File (2 Years)';
+                                $docs['business_proof'] = 'Business Proof (1 Year)';
+                                $docs['electric_bill'] = 'Electric Bill';
+                            }
+                            elseif (strpos($svc_name, 'HOME LOAN') !== false || strpos($svc_name, 'LOAN AGAINST PROPERTY') !== false) {
+                                $docs['salary_slip_1m'] = '1 Month Salary Slip';
+                                $docs['salary_slip_2m'] = '2 Month Salary Slip';
+                                $docs['salary_slip_3m'] = '3 Month Salary Slip';
+                                $docs['bank_statement'] = 'Bank Statement (1 Year)';
+                                $docs['itr_file'] = 'ITR File (3 Years)';
+                                $docs['business_proof'] = 'Business Proof (3 Years)';
+                                $docs['chain_deed'] = 'Complete Chain Deed';
+                                $docs['registration_paper'] = 'Registration Paper';
+                                $docs['side_plan'] = 'Side Plan';
+                                $docs['building_plan'] = 'Building Plan';
+                            }
+                            elseif (strpos($svc_name, 'CAR LOAN') !== false || strpos($svc_name, 'OLD CAR LOAN') !== false) {
+                                // Only basic docs + RC
+                                $docs['rc'] = 'RC';
+                            }
+                            else {
+                                // Fallback for generic private loans
+                                $docs['salary_slip_1m'] = '1 Month Salary Slip';
+                                $docs['bank_statement'] = 'Bank Statement';
+                            }
+
                             foreach ($docs as $key => $label):
                         ?>
                         <div class="col-md-3">
