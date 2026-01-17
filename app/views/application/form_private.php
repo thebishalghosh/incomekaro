@@ -200,6 +200,7 @@ view('layouts/partner_header', ['title' => $title]);
                             elseif (strpos($svc_name, 'BUSINESS LOAN') !== false) {
                                 $docs['itr_file'] = 'ITR File (2 Years)';
                                 $docs['business_proof'] = 'Business Proof (1 Year)';
+                                $docs['bank_statement'] = 'Bank Statement (1 Year)'; // Added this
                                 $docs['electric_bill'] = 'Electric Bill';
                             }
                             elseif (strpos($svc_name, 'HOME LOAN') !== false || strpos($svc_name, 'LOAN AGAINST PROPERTY') !== false) {
