@@ -8,12 +8,121 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?php echo asset('css/style.css'); ?>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         /* Dynamic Theme Color */
         :root {
             --primary-color: <?php echo get_primary_color(); ?>;
             --secondary-color: <?php echo get_secondary_color(); ?>;
         }
+
+        /* User Profile Dropdown Styling */
+        .user-profile {
+            position: relative;
+        }
+
+        .user-profile > div[data-bs-toggle="dropdown"] {
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .user-profile > div[data-bs-toggle="dropdown"]:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-right: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .user-profile > div[data-bs-toggle="dropdown"]:hover .user-avatar {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-profile .fas.fa-chevron-down {
+            font-size: 0.75rem;
+            transition: transform 0.3s ease;
+            color: #9ca3af;
+        }
+
+        .user-profile > div[data-bs-toggle="dropdown"][aria-expanded="true"] .fas.fa-chevron-down {
+            transform: rotate(180deg);
+            color: var(--primary-color);
+        }
+
+        .user-profile .dropdown-menu {
+            margin-top: 8px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-profile .dropdown-item {
+            padding: 10px 16px;
+            color: #0f172a;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .user-profile .dropdown-item:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+            border-left-color: var(--primary-color);
+            padding-left: 19px;
+        }
+
+        .user-profile .dropdown-item i {
+            color: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .user-profile .dropdown-item.text-danger {
+            color: #dc2626;
+        }
+
+        .user-profile .dropdown-item.text-danger:hover {
+            background-color: rgba(220, 38, 38, 0.1);
+            border-left-color: #dc2626;
+        }
+
+        .user-profile .dropdown-item.text-danger i {
+            color: #dc2626;
+        }
+
+        .user-profile .dropdown-divider {
+            margin: 6px 0;
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+        
+
     </style>
 </head>
 <body>
@@ -74,14 +183,14 @@
             </div>
 
             <div class="user-profile dropdown">
-                <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="user-avatar">
                         <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)); ?>
                     </div>
                     <div class="d-none d-md-block">
                         <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
                     </div>
-                    <i class="fas fa-chevron-down ms-2 text-muted small"></i>
+                    <i class="bi bi-chevron-down ms-2 text-muted small"></i>
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
                     <li><a class="dropdown-item" href="<?php echo url('profile/index'); ?>"><i class="fas fa-user me-2"></i> My Profile</a></li>
