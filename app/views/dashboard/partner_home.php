@@ -14,6 +14,12 @@
         return "$r, $g, $b";
     }
     $primary_rgb = hexToRgb(get_primary_color());
+
+    // Determine RM Name
+    $rm_name = 'Not Assigned';
+    if (!empty($partner['rm_first'])) {
+        $rm_name = $partner['rm_first'] . ' ' . ($partner['rm_last'] ?? '');
+    }
 ?>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -642,6 +648,9 @@
                     <span class="d-flex align-items-center"><i class="fas fa-id-badge me-2"></i> <span class="fw-semibold">ID:</span> <?php echo htmlspecialchars($partner['id']); ?></span>
                     <span class="d-none d-sm-inline text-muted">•</span>
                     <span class="d-flex align-items-center"><i class="fas fa-envelope me-2"></i> <?php echo htmlspecialchars($partner['profile']['email']); ?></span>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i class="fas fa-user-tie me-2"></i> Assigned RM: <span class="fw-bold text-dark"><?php echo htmlspecialchars($rm_name); ?></span>
                 </div>
             </div>
             <div class="text-end mt-3 mt-md-0">

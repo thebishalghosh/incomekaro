@@ -62,6 +62,15 @@ function dashboard_partner() {
     $partner = get_partner_by_id($user['partner_id']);
     $stats = get_partner_stats($user['partner_id']);
 
+    // Fetch RM Name if assigned
+    $rm_name = null;
+    if (!empty($partner['rm_id'])) {
+        $rm = find_user_by_id($partner['rm_id']);
+        if ($rm) {
+            $rm_name = $rm['first_name'] . ' ' . $rm['last_name'];
+        }
+    }
+
     // Pass user to view to access wallet_balance
-    view('dashboard/partner_home', ['partner' => $partner, 'stats' => $stats, 'user' => $user]);
+    view('dashboard/partner_home', ['partner' => $partner, 'stats' => $stats, 'user' => $user, 'rm_name' => $rm_name]);
 }
