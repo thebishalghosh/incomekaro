@@ -82,7 +82,8 @@
                                                                         <label class="form-label">Type</label>
                                                                         <select class="form-select" name="type" required>
                                                                             <?php
-                                                                                $types = ['Bank Management', 'Credit Card Management', 'Account open', 'Insurance', 'Policy Management', 'Credit Score', 'Bank Pincode'];
+                                                                                // Removed Policy Management and Bank Pincode from Edit Modal too
+                                                                                $types = ['Bank Management', 'Credit Card Management', 'Account open', 'Insurance', 'Credit Score'];
                                                                                 foreach($types as $t) {
                                                                                     $sel = ($panel['panel_type'] == $t) ? 'selected' : '';
                                                                                     echo "<option value='$t' $sel>$t</option>";
@@ -152,9 +153,7 @@
                             <option value="Credit Card Management">Credit Card Management</option>
                             <option value="Account open">Account open</option>
                             <option value="Insurance">Insurance</option>
-                            <option value="Policy Management">Policy Management</option>
                             <option value="Credit Score">Credit Score</option>
-                            <option value="Bank Pincode">Bank Pincode</option>
                         </select>
                     </div>
                     <div class="mb-3">

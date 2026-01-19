@@ -82,8 +82,8 @@
 // Determine if we are in Dashboard mode
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
-// Added 'profile' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification', 'sales', 'profile'];
+// Added 'policy' to the list of dashboard routes
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification', 'sales', 'profile', 'policy'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
