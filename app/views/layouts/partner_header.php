@@ -121,7 +121,7 @@
             margin: 6px 0;
             border-color: rgba(0, 0, 0, 0.08);
         }
-        
+
 
     </style>
 </head>
@@ -140,7 +140,7 @@
             <a href="<?php echo url('withdrawal/index'); ?>" class="btn btn-outline-success me-2">
                 <i class="fas fa-wallet me-1"></i> Withdrawals
             </a>
-            <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#policyModal">Policy</button>
+            <a href="<?php echo url('policy/list'); ?>" class="btn btn-outline-secondary me-2">Policy</a>
             <a href="<?php echo url('invoice/download'); ?>" class="btn btn-outline-secondary me-3" target="_blank">
                 <i class="fas fa-file-invoice me-1"></i> Invoice
             </a>
@@ -201,31 +201,6 @@
         </div>
     </div>
 </nav>
-
-<!-- Policy Modal -->
-<div class="modal fade" id="policyModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Partner Policy</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <h6>Loan Approval and Rejection Policy</h6>
-        <p class="small text-muted">We adhere to strict guidelines set by our banking partners. Approval is subject to credit checks and document verification.</p>
-
-        <h6 class="mt-4">Code of Conduct</h6>
-        <p class="small text-muted">Partners must not charge any extra fees from customers. Any fraudulent activity will lead to immediate termination.</p>
-
-        <h6 class="mt-4">Data Privacy</h6>
-        <p class="small text-muted">Customer data must be handled with confidentiality and used only for the purpose of loan processing.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Notification Polling Script -->
 <script>

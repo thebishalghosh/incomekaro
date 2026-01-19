@@ -7,6 +7,23 @@ function policy_index() {
     view('policy/index', ['policies' => $policies]);
 }
 
+function policy_list() {
+    require_login();
+    // Allow Partners, RMs, Sales Execs, WL Admins
+    // Basically anyone logged in can view policies
+
+    $policies = get_all_policies();
+
+    // If Partner, use partner layout
+    if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
+        view('policy/list_partner', ['policies' => $policies]);
+    } else {
+        // For others, maybe a generic list or redirect
+        // For now, let's use the same view but header might differ
+        view('policy/list_partner', ['policies' => $policies]);
+    }
+}
+
 function policy_store() {
     require_role('SUPER_ADMIN');
 
