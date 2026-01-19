@@ -9,7 +9,10 @@ function home_index() {
         // Decode landing page data
         $landing = !empty($WL_CONFIG['landing_page_data']) ? json_decode($WL_CONFIG['landing_page_data'], true) : [];
 
-        view('white_label/landing', ['wl' => $WL_CONFIG, 'landing' => $landing]);
+        // Fetch White Label Specific Plans
+        $plans = get_active_subscription_plans($WL_CONFIG['id'], 'PARTNER');
+
+        view('white_label/landing', ['wl' => $WL_CONFIG, 'landing' => $landing, 'plans' => $plans]);
     } else {
         // Load Main Site Landing Page
 

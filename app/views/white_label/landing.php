@@ -144,6 +144,54 @@
 </section>
 <?php endif; ?>
 
+<!-- Pricing Section (Dynamic) -->
+<?php if (!empty($plans)): ?>
+<section class="py-5 bg-white" id="pricing">
+    <div class="container py-5">
+        <div class="text-center mb-5 reveal-up">
+            <h6 class="text-primary fw-bold text-uppercase mb-2 letter-spacing-2">Pricing Plans</h6>
+            <h2 class="fw-bold display-5">Choose Your Plan</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Select the best plan to kickstart your journey with us.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <?php foreach ($plans as $plan): ?>
+                <div class="col-lg-3 col-md-6 reveal-up">
+                    <div class="card h-100 border-0 shadow-lg rounded-4 overflow-hidden hover-scale transition-all d-flex flex-column">
+                        <div class="card-header bg-white border-0 pt-4 pb-0 text-center">
+                            <h5 class="fw-bold text-uppercase text-muted small letter-spacing-1 mb-2"><?php echo $plan['name']; ?></h5>
+                            <h2 class="display-5 fw-bold text-dark mb-0">₹<?php echo number_format($plan['price']); ?></h2>
+                            <small class="text-muted">+ <?php echo $plan['gst_rate']; ?>% GST</small>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <ul class="list-unstyled mb-4 flex-grow-1">
+                                <?php
+                                    // Parse Description
+                                    $desc_points = explode('|', $plan['description']);
+                                    foreach ($desc_points as $point):
+                                        $point = trim($point);
+                                        if (!empty($point)):
+                                ?>
+                                <li class="mb-3 d-flex align-items-start text-muted">
+                                    <i class="fas fa-check-circle text-success me-2 mt-1"></i> <span><?php echo $point; ?></span>
+                                </li>
+                                <?php
+                                        endif;
+                                    endforeach;
+                                ?>
+                            </ul>
+                            <div class="mt-auto w-100">
+                                <a href="<?php echo url('contact/index?subject=Interest in ' . urlencode($plan['name'])); ?>" class="btn btn-outline-primary rounded-pill fw-bold py-2 w-100">Choose Plan</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- Contact Section -->
 <section class="py-5 bg-white" id="contact">
     <div class="container py-5">
