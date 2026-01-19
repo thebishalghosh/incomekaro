@@ -50,7 +50,7 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold">Description</label>
                         <textarea class="form-control" name="description" rows="3"><?php echo isset($plan) ? $plan['description'] : ''; ?></textarea>
-                        <div class="form-text">Features list (one per line recommended).</div>
+                        <div class="form-text">Features list (separate by | to list down).</div>
                     </div>
 
                     <div class="mb-4">

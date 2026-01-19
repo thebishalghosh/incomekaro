@@ -152,9 +152,20 @@
                                 <?php endif; ?>
 
                                 <ul class="list-unstyled text-start small mb-4 flex-grow-1">
-                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Private Bank Loan Panel</li>
-                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i>Government Bank Loan Panel</li>
-                                    <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i><?php echo $plan['description'] ?? 'Standard Features'; ?></li>
+                                    <?php
+                                        // Parse Description
+                                        $desc_points = explode('|', $plan['description']);
+                                        foreach ($desc_points as $point):
+                                            $point = trim($point);
+                                            if (!empty($point)):
+                                    ?>
+                                    <li class="mb-3 d-flex align-items-start text-muted">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i> <span><?php echo $point; ?></span>
+                                    </li>
+                                    <?php
+                                            endif;
+                                        endforeach;
+                                    ?>
                                     <li class="mb-3 text-muted fst-italic"><i class="fas fa-plus-circle text-primary me-2"></i>And many more...</li>
                                 </ul>
 

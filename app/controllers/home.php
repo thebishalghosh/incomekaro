@@ -13,8 +13,8 @@ function home_index() {
     } else {
         // Load Main Site Landing Page
 
-        // Fetch Global Plans for Pricing Section
-        $plans = get_active_subscription_plans('GLOBAL');
+        // Fetch Global Plans for Pricing Section (Only PARTNER plans)
+        $plans = get_active_subscription_plans('GLOBAL', 'PARTNER');
 
         if (file_exists(APP_PATH . '/views/home/index.php')) {
             view('home/index', ['plans' => $plans]);
@@ -22,7 +22,7 @@ function home_index() {
             $data = [
                 'title' => 'Welcome to IncomeKaro',
                 'message' => 'Your white-label financial platform is ready.',
-                'plans' => $plans // <--- ADDED THIS
+                'plans' => $plans
             ];
             view('dashboard/home', $data);
         }
