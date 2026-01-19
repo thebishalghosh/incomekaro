@@ -422,3 +422,11 @@ CREATE TABLE notifications (
                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE policies (
+                          id CHAR(36) PRIMARY KEY,
+                          name VARCHAR(255) NOT NULL,
+                          type ENUM('Bank', 'Credit Card', 'Account Opening', 'Insurance', 'Other') NOT NULL,
+                          file_url TEXT NOT NULL,
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

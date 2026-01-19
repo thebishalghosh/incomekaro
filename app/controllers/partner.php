@@ -171,26 +171,41 @@ function partner_store() {
                 assign_rm_to_partner($data['id'], $_POST['rm_id']);
             }
 
-            // Send Welcome Email
-            $to = $data['profile']['email'];
-            $subject = "Welcome to " . get_site_name() . " - Your Login Credentials";
-            $login_url = url('/'); // Or specific login page
+            // Send Welcome Email (Wrapped in Try-Catch)
+            try {
+                // Determine Branding
+                $site_name = get_site_name(); // Default
+                $login_url = url('/'); // Default
 
-            $message = "
-                <h3>Welcome, {$data['profile']['full_name']}!</h3>
-                <p>Your partner account has been successfully created.</p>
-                <p><strong>Login Details:</strong></p>
-                <ul>
-                    <li><strong>Email:</strong> {$data['profile']['email']}</li>
-                    <li><strong>Password:</strong> {$raw_password}</li>
-                </ul>
-                <p><a href='{$login_url}'>Click here to Login</a></p>
-                <p>Please change your password after your first login.</p>
-                <br>
-                <p>Best Regards,<br>" . get_site_name() . " Team</p>
-            ";
+                if (!empty($white_label_id)) {
+                    $wl = get_white_label_by_id($white_label_id);
+                    if ($wl) {
+                        $site_name = $wl['company_name'];
+                        $login_url = "http://" . $wl['primary_domain']; // Assuming http for dev
+                    }
+                }
 
-            send_email($to, $subject, $message);
+                $to = $data['profile']['email'];
+                $subject = "Welcome to " . $site_name . " - Your Login Credentials";
+
+                $message = "
+                    <h3>Welcome, {$data['profile']['full_name']}!</h3>
+                    <p>Your partner account has been successfully created on <strong>{$site_name}</strong>.</p>
+                    <p><strong>Login Details:</strong></p>
+                    <ul>
+                        <li><strong>Email:</strong> {$data['profile']['email']}</li>
+                        <li><strong>Password:</strong> {$raw_password}</li>
+                    </ul>
+                    <p><a href='{$login_url}'>Click here to Login</a></p>
+                    <p>Please change your password after your first login.</p>
+                    <br>
+                    <p>Best Regards,<br>" . $site_name . " Team</p>
+                ";
+
+                send_email($to, $subject, $message);
+            } catch (Exception $e) {
+                error_log("Failed to send welcome email to partner: " . $e->getMessage());
+            }
 
             flash('ptr_success', 'Partner Created Successfully. Email sent.');
             redirect('partner/index');
