@@ -20,6 +20,9 @@
     if (!empty($partner['rm_first'])) {
         $rm_name = $partner['rm_first'] . ' ' . ($partner['rm_last'] ?? '');
     }
+
+    // Determine State
+    $partner_state = $partner['address_office']['state'] ?? $partner['address_permanent']['state'] ?? 'N/A';
 ?>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -651,6 +654,8 @@
                 </div>
                 <div class="mt-2 text-muted small">
                     <i class="fas fa-user-tie me-2"></i> Assigned RM: <span class="fw-bold text-dark"><?php echo htmlspecialchars($rm_name); ?></span>
+                    <span class="mx-2">|</span>
+                    <i class="fas fa-map-marker-alt me-2"></i> State: <span class="fw-bold text-dark"><?php echo htmlspecialchars($partner_state); ?></span>
                 </div>
             </div>
             <div class="text-end mt-3 mt-md-0">
