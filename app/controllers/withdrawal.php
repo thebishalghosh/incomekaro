@@ -75,23 +75,30 @@ function withdrawal_store() {
             redirect('withdrawal/index');
         }
 
+        // Calculate TDS (2%)
+        $tds_rate = 0.02;
+        $tds_amount = $amount * $tds_rate;
+        $net_amount = $amount - $tds_amount;
+
         // Logic: Deduct Balance & Create Request
         $db = get_db_connection();
         try {
             $db->beginTransaction();
 
-            // 1. Deduct Balance
-            update_wallet_balance($user['id'], $amount, 'debit', 'Withdrawal Request', null);
+            // 1. Deduct Balance (Gross Amount)
+            update_wallet_balance($user['id'], $amount, 'debit', 'Withdrawal Request (TDS: ' . $tds_amount . ')', null);
 
             // 2. Create Withdrawal Record
-            $sql = "INSERT INTO withdrawals (id, user_id, gross_amount, net_amount, status, account_holder_name, bank_name, bank_account_number, ifsc_code)
-                    VALUES (:id, :user_id, :amount, :amount, 'requested', :holder, :bank, :acc_num, :ifsc)";
+            $sql = "INSERT INTO withdrawals (id, user_id, gross_amount, tds_amount, net_amount, status, account_holder_name, bank_name, bank_account_number, ifsc_code)
+                    VALUES (:id, :user_id, :gross, :tds, :net, 'requested', :holder, :bank, :acc_num, :ifsc)";
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
                 'id' => uniqid('wd-'),
                 'user_id' => $user['id'],
-                'amount' => $amount,
+                'gross' => $amount,
+                'tds' => $tds_amount,
+                'net' => $net_amount,
                 'holder' => $bank_details['account_holder_name'],
                 'bank' => $bank_details['bank_name'],
                 'acc_num' => $bank_details['account_number'],
@@ -117,12 +124,12 @@ function withdrawal_store() {
                 create_notification(
                     $admin_id,
                     'New Withdrawal Request',
-                    "User {$user['first_name']} requested a withdrawal of ₹{$amount}.",
+                    "User {$user['first_name']} requested a withdrawal of ₹{$amount} (Net: ₹{$net_amount}).",
                     url('withdrawal/index')
                 );
             }
 
-            flash('withdraw_success', 'Withdrawal request submitted.');
+            flash('withdraw_success', 'Withdrawal request submitted. Net payout: ₹' . number_format($net_amount, 2));
 
         } catch (Exception $e) {
             $db->rollBack();
@@ -144,7 +151,7 @@ function withdrawal_approve($id) {
     $db = get_db_connection();
 
     // Fetch withdrawal details including user's WL ID
-    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code, w.user_id FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
+    $stmt = $db->prepare("SELECT u.white_label_id, r.code as role_code, w.user_id, w.net_amount FROM withdrawals w JOIN users u ON w.user_id = u.id JOIN roles r ON u.role_id = r.id WHERE w.id = :id");
     $stmt->execute(['id' => $id]);
     $result = $stmt->fetch();
     $target_wl_id = $result['white_label_id'];
@@ -171,7 +178,7 @@ function withdrawal_approve($id) {
         create_notification(
             $result['user_id'],
             'Withdrawal Approved',
-            "Your withdrawal request has been approved.",
+            "Your withdrawal request for ₹" . $result['net_amount'] . " has been approved.",
             url('withdrawal/index')
         );
 
@@ -220,7 +227,7 @@ function withdrawal_reject($id) {
             $update = $db->prepare("UPDATE withdrawals SET status = 'rejected' WHERE id = :id");
             $update->execute(['id' => $id]);
 
-            // 2. Refund Balance
+            // 2. Refund Balance (Gross Amount)
             update_wallet_balance($withdrawal['user_id'], $withdrawal['gross_amount'], 'credit', 'Withdrawal Refund', $id);
 
             $db->commit();

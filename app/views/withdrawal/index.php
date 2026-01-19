@@ -32,7 +32,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                             <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
                                 <th class="py-3 text-uppercase small fw-bold text-muted">User</th>
                             <?php endif; ?>
-                            <th class="py-3 text-uppercase small fw-bold text-muted">Amount</th>
+                            <th class="py-3 text-uppercase small fw-bold text-muted">Amount Breakdown</th>
                             <th class="py-3 text-uppercase small fw-bold text-muted">Bank Details</th>
                             <th class="py-3 text-uppercase small fw-bold text-muted">Status</th>
                             <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL'): ?>
@@ -67,7 +67,11 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                                     <?php endif; ?>
 
                                     <td>
-                                        <span class="fw-bold text-dark fs-5">₹<?php echo number_format($wd['net_amount'], 2); ?></span>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold text-success fs-6">Net: ₹<?php echo number_format($wd['net_amount'] ?? 0, 2); ?></span>
+                                            <span class="small text-muted">Gross: ₹<?php echo number_format($wd['gross_amount'] ?? 0, 2); ?></span>
+                                            <span class="small text-danger" style="font-size: 0.7rem;">TDS (2%): -₹<?php echo number_format($wd['tds_amount'] ?? 0, 2); ?></span>
+                                        </div>
                                     </td>
 
                                     <td>
@@ -134,7 +138,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="<?php echo ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL') ? '6' : '4'; ?>" class="text-center py-5">
+                                <td colspan="<?php echo ($_SESSION['role_code'] === 'SUPER_ADMIN' || $_SESSION['role_code'] === 'WHITE_LABEL') ? '6' : '5'; ?>" class="text-center py-5">
                                     <div class="py-5">
                                         <div class="icon-box bg-light text-muted rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                                             <i class="fas fa-wallet fa-3x opacity-50"></i>
@@ -173,13 +177,25 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                 </div>
 
                 <form action="<?php echo url('withdrawal/store'); ?>" method="POST">
-                    <div class="mb-4">
+                    <div class="mb-2">
                         <label class="form-label fw-bold">Amount (₹)</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light border-end-0">₹</span>
-                            <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="amount" max="<?php echo $user['wallet_balance']; ?>" required placeholder="0.00">
+                            <input type="number" step="0.01" class="form-control border-start-0 ps-0" name="amount" id="withdrawAmount" max="<?php echo $user['wallet_balance']; ?>" required placeholder="0.00" oninput="calculateTDS()">
                         </div>
                         <div class="form-text">Max: ₹<?php echo $user['wallet_balance']; ?></div>
+                    </div>
+
+                    <!-- TDS Info -->
+                    <div class="alert alert-light border mb-4 py-2">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">TDS (2%):</span>
+                            <span class="text-danger fw-bold" id="tdsDisplay">-₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-1 border-top pt-1">
+                            <span class="text-dark fw-bold">Net Payout:</span>
+                            <span class="text-success fw-bold" id="netDisplay">₹0.00</span>
+                        </div>
                     </div>
 
                     <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Payout To</h6>
@@ -220,7 +236,7 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                             <i class="fas fa-university fa-2x text-warning mb-2"></i>
                             <p class="text-muted small">No bank details found.</p>
                             <?php if ($_SESSION['role_code'] === 'PARTNER_ADMIN'): ?>
-                                <a href="<?php echo url('dashboard/partner'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
+                                <a href="<?php echo url('profile/index'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
                             <?php else: ?>
                                 <a href="<?php echo url('profile/index'); ?>" class="btn btn-sm btn-outline-primary">Update Profile</a>
                             <?php endif; ?>
@@ -231,6 +247,17 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
         </div>
     </div>
 </div>
+
+<script>
+function calculateTDS() {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    const tds = amount * 0.02;
+    const net = amount - tds;
+
+    document.getElementById('tdsDisplay').textContent = '-₹' + tds.toFixed(2);
+    document.getElementById('netDisplay').textContent = '₹' + net.toFixed(2);
+}
+</script>
 <?php endif; ?>
 
 <?php
