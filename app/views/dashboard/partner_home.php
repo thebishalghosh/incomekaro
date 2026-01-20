@@ -15,10 +15,12 @@
     }
     $primary_rgb = hexToRgb(get_primary_color());
 
-    // Determine RM Name
+    // Determine RM Name and Phone
     $rm_name = 'Not Assigned';
+    $rm_phone = '';
     if (!empty($partner['rm_first'])) {
         $rm_name = $partner['rm_first'] . ' ' . ($partner['rm_last'] ?? '');
+        $rm_phone = $partner['rm_phone'] ?? '';
     }
 
     // Determine State
@@ -654,6 +656,10 @@
                 </div>
                 <div class="mt-2 text-muted small">
                     <i class="fas fa-user-tie me-2"></i> Assigned RM: <span class="fw-bold text-dark"><?php echo htmlspecialchars($rm_name); ?></span>
+                    <?php if (!empty($rm_phone)): ?>
+                        <span class="mx-2">|</span>
+                        <i class="fas fa-phone me-2"></i> RM Phone: <span class="fw-bold text-dark"><?php echo htmlspecialchars($rm_phone); ?></span>
+                    <?php endif; ?>
                     <span class="mx-2">|</span>
                     <i class="fas fa-map-marker-alt me-2"></i> State: <span class="fw-bold text-dark"><?php echo htmlspecialchars($partner_state); ?></span>
                 </div>
