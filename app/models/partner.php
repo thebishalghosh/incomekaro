@@ -335,7 +335,7 @@ function create_full_partner($data) {
         $stmt->execute();
 
         // 3. Insert Permanent Address
-        if (!empty($data['address_permanent'])) {
+        if (!empty($data['address_permanent']['address'])) { // Check if address data is provided
             $sql = "INSERT INTO partner_addresses (id, partner_id, type, address, state, city, pincode)
                     VALUES (:id, :partner_id, 'permanent', :address, :state, :city, :pincode)";
             $stmt = $db->prepare($sql);
@@ -349,7 +349,7 @@ function create_full_partner($data) {
         }
 
         // 4. Insert Office Address
-        if (!empty($data['address_office'])) {
+        if (!empty($data['address_office']['address'])) { // Check if address data is provided
             $sql = "INSERT INTO partner_addresses (id, partner_id, type, address, state, city, pincode)
                     VALUES (:id, :partner_id, 'office', :address, :state, :city, :pincode)";
             $stmt = $db->prepare($sql);
@@ -363,7 +363,8 @@ function create_full_partner($data) {
         }
 
         // 5. Insert Identity
-        if (!empty($data['identity'])) {
+        // Only insert if at least one identity field is provided
+        if (!empty($data['identity']['gst']) || !empty($data['identity']['aadhaar']) || !empty($data['identity']['pan'])) {
             $sql = "INSERT INTO partner_identity (id, partner_id, gst, aadhaar, pan)
                     VALUES (:id, :partner_id, :gst, :aadhaar, :pan)";
             $stmt = $db->prepare($sql);
@@ -376,7 +377,7 @@ function create_full_partner($data) {
         }
 
         // 6. Insert Subscription
-        if (!empty($data['subscription'])) {
+        if (!empty($data['subscription']['plan_name'])) { // Only insert if a plan is selected
             $sql = "INSERT INTO partner_subscriptions (id, partner_id, plan_name, payment_amount, due_amount, payment_mode, transaction_id, status)
                     VALUES (:id, :partner_id, :plan_name, :payment_amount, :due_amount, :payment_mode, :transaction_id, 'active')";
             $stmt = $db->prepare($sql);
@@ -396,6 +397,8 @@ function create_full_partner($data) {
         $role = $role_stmt->fetch();
 
         if (!$role) {
+            // If PARTNER_ADMIN role doesn't exist, create it.
+            // This should ideally be handled during initial setup or migration.
             $db->exec("INSERT INTO roles (code, name) VALUES ('PARTNER_ADMIN', 'Partner Admin')");
             $role_id = $db->lastInsertId();
         } else {
@@ -425,7 +428,8 @@ function create_full_partner($data) {
         $stmt->execute();
 
         // 8. Insert Bank Details (Linked to User)
-        if (!empty($data['bank_details'])) {
+        // Only insert if at least one bank detail field is provided
+        if (!empty($data['bank_details']['account_holder_name']) || !empty($data['bank_details']['bank_name']) || !empty($data['bank_details']['account_number'])) {
             $sql = "INSERT INTO user_bank_details (id, user_id, account_holder_name, bank_name, account_number, ifsc_code, branch)
                     VALUES (:id, :user_id, :account_holder_name, :bank_name, :account_number, :ifsc_code, :branch)";
             $stmt = $db->prepare($sql);
@@ -443,8 +447,8 @@ function create_full_partner($data) {
         return true;
     } catch (Exception $e) {
         $db->rollBack();
-        error_log($e->getMessage());
-        return false;
+        error_log("Partner Creation Error: " . $e->getMessage()); // Log the error
+        return $e->getMessage(); // Return the error message
     }
 }
 
@@ -510,7 +514,7 @@ function update_full_partner($data) {
         $stmt->bindValue(':pincode', $data['address_permanent']['pincode']);
         $stmt->bindValue(':id', $data['id']);
         $stmt->execute();
-        if ($stmt->rowCount() == 0) { // If not exists, insert
+        if ($stmt->rowCount() == 0 && !empty($data['address_permanent']['address'])) { // If not exists, insert
              $sql = "INSERT INTO partner_addresses (id, partner_id, type, address, state, city, pincode) VALUES (:id, :pid, 'permanent', :addr, :st, :ct, :pin)";
              $stmt = $db->prepare($sql);
              $stmt->execute(['id'=>uniqid('pa-'), 'pid'=>$data['id'], 'addr'=>$data['address_permanent']['address'], 'st'=>$data['address_permanent']['state'], 'ct'=>$data['address_permanent']['city'], 'pin'=>$data['address_permanent']['pincode']]);
@@ -532,39 +536,85 @@ function update_full_partner($data) {
         }
 
         // 4. Update Identity
-        $sql = "UPDATE partner_identity SET gst = :gst, aadhaar = :aadhaar, pan = :pan WHERE partner_id = :id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':gst', $data['identity']['gst']);
-        $stmt->bindValue(':aadhaar', $data['identity']['aadhaar']);
-        $stmt->bindValue(':pan', $data['identity']['pan']);
-        $stmt->bindValue(':id', $data['id']);
-        $stmt->execute();
+        // Check if partner_identity record exists, if not, insert. Otherwise update.
+        $identity_exists_stmt = $db->prepare("SELECT COUNT(*) FROM partner_identity WHERE partner_id = :id");
+        $identity_exists_stmt->bindValue(':id', $data['id']);
+        $identity_exists_stmt->execute();
+        $identity_exists = $identity_exists_stmt->fetchColumn();
+
+        if ($identity_exists) {
+            $sql = "UPDATE partner_identity SET gst = :gst, aadhaar = :aadhaar, pan = :pan WHERE partner_id = :id";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':gst', $data['identity']['gst']);
+            $stmt->bindValue(':aadhaar', $data['identity']['aadhaar']);
+            $stmt->bindValue(':pan', $data['identity']['pan']);
+            $stmt->bindValue(':id', $data['id']);
+            $stmt->execute();
+        } elseif (!empty($data['identity']['gst']) || !empty($data['identity']['aadhaar']) || !empty($data['identity']['pan'])) {
+            $sql = "INSERT INTO partner_identity (id, partner_id, gst, aadhaar, pan)
+                    VALUES (:id, :partner_id, :gst, :aadhaar, :pan)";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':id', uniqid('pi-'));
+            $stmt->bindValue(':partner_id', $data['id']);
+            $stmt->bindValue(':gst', $data['identity']['gst']);
+            $stmt->bindValue(':aadhaar', $data['identity']['aadhaar']);
+            $stmt->bindValue(':pan', $data['identity']['pan']);
+            $stmt->execute();
+        }
+
 
         // 5. Update Subscription (Added plan_name update)
-        $sql = "UPDATE partner_subscriptions SET plan_name = :plan_name, payment_amount = :amt, due_amount = :due, payment_mode = :mode, transaction_id = :tid WHERE partner_id = :id ORDER BY created_at DESC LIMIT 1";
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':plan_name', $data['subscription']['plan_name']);
-        $stmt->bindValue(':amt', $data['subscription']['payment_amount']);
-        $stmt->bindValue(':due', $data['subscription']['due_amount']);
-        $stmt->bindValue(':mode', $data['subscription']['payment_mode']);
-        $stmt->bindValue(':tid', $data['subscription']['transaction_id']);
-        $stmt->bindValue(':id', $data['id']);
-        $stmt->execute();
+        // Check if partner_subscriptions record exists, if not, insert. Otherwise update.
+        $subscription_exists_stmt = $db->prepare("SELECT COUNT(*) FROM partner_subscriptions WHERE partner_id = :id");
+        $subscription_exists_stmt->bindValue(':id', $data['id']);
+        $subscription_exists_stmt->execute();
+        $subscription_exists = $subscription_exists_stmt->fetchColumn();
+
+        if ($subscription_exists) {
+            $sql = "UPDATE partner_subscriptions SET plan_name = :plan_name, payment_amount = :amt, due_amount = :due, payment_mode = :mode, transaction_id = :tid WHERE partner_id = :id ORDER BY created_at DESC LIMIT 1";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':plan_name', $data['subscription']['plan_name']);
+            $stmt->bindValue(':amt', $data['subscription']['payment_amount']);
+            $stmt->bindValue(':due', $data['subscription']['due_amount']);
+            $stmt->bindValue(':mode', $data['subscription']['payment_mode']);
+            $stmt->bindValue(':tid', $data['subscription']['transaction_id']);
+            $stmt->bindValue(':id', $data['id']);
+            $stmt->execute();
+        } elseif (!empty($data['subscription']['plan_name'])) {
+            $sql = "INSERT INTO partner_subscriptions (id, partner_id, plan_name, payment_amount, due_amount, payment_mode, transaction_id, status)
+                    VALUES (:id, :partner_id, :plan_name, :payment_amount, :due_amount, :payment_mode, :transaction_id, 'active')";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':id', uniqid('ps-'));
+            $stmt->bindValue(':partner_id', $data['id']);
+            $stmt->bindValue(':plan_name', $data['subscription']['plan_name']);
+            $stmt->bindValue(':payment_amount', $data['subscription']['payment_amount']);
+            $stmt->bindValue(':due_amount', $data['subscription']['due_amount']);
+            $stmt->bindValue(':payment_mode', $data['subscription']['payment_mode']);
+            $stmt->bindValue(':transaction_id', $data['subscription']['transaction_id']);
+            $stmt->execute();
+        }
+
 
         // 6. Update Bank Details (via User)
         $user = $db->query("SELECT id FROM users WHERE partner_id = '" . $data['id'] . "'")->fetch();
         if ($user) {
-            $sql = "UPDATE user_bank_details SET account_holder_name = :holder, bank_name = :bank, account_number = :acc, ifsc_code = :ifsc, branch = :branch WHERE user_id = :uid";
-            $stmt = $db->prepare($sql);
-            $stmt->bindValue(':holder', $data['bank_details']['account_holder_name']);
-            $stmt->bindValue(':bank', $data['bank_details']['bank_name']);
-            $stmt->bindValue(':acc', $data['bank_details']['account_number']);
-            $stmt->bindValue(':ifsc', $data['bank_details']['ifsc_code']);
-            $stmt->bindValue(':branch', $data['bank_details']['branch']);
-            $stmt->bindValue(':uid', $user['id']);
-            $stmt->execute();
+            // Check if user_bank_details record exists, if not, insert. Otherwise update.
+            $bank_details_exists_stmt = $db->prepare("SELECT COUNT(*) FROM user_bank_details WHERE user_id = :uid");
+            $bank_details_exists_stmt->bindValue(':uid', $user['id']);
+            $bank_details_exists_stmt->execute();
+            $bank_details_exists = $bank_details_exists_stmt->fetchColumn();
 
-            if ($stmt->rowCount() == 0) { // Insert if missing
+            if ($bank_details_exists) {
+                $sql = "UPDATE user_bank_details SET account_holder_name = :holder, bank_name = :bank, account_number = :acc, ifsc_code = :ifsc, branch = :branch WHERE user_id = :uid";
+                $stmt = $db->prepare($sql);
+                $stmt->bindValue(':holder', $data['bank_details']['account_holder_name']);
+                $stmt->bindValue(':bank', $data['bank_details']['bank_name']);
+                $stmt->bindValue(':acc', $data['bank_details']['account_number']);
+                $stmt->bindValue(':ifsc', $data['bank_details']['ifsc_code']);
+                $stmt->bindValue(':branch', $data['bank_details']['branch']);
+                $stmt->bindValue(':uid', $user['id']);
+                $stmt->execute();
+            } elseif (!empty($data['bank_details']['account_holder_name']) || !empty($data['bank_details']['bank_name']) || !empty($data['bank_details']['account_number'])) {
                 $sql = "INSERT INTO user_bank_details (id, user_id, account_holder_name, bank_name, account_number, ifsc_code, branch) VALUES (:id, :uid, :holder, :bank, :acc, :ifsc, :branch)";
                 $stmt = $db->prepare($sql);
                 $stmt->execute([

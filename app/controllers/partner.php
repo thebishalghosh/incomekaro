@@ -150,8 +150,8 @@ function partner_store() {
 
             'subscription' => [
                 'plan_name' => $_POST['plan_name'] ?? '',
-                'payment_amount' => $_POST['payment_amount'] ?? 0,
-                'due_amount' => $_POST['due_amount'] ?? 0,
+                'payment_amount' => !empty($_POST['payment_amount']) ? $_POST['payment_amount'] : 0,
+                'due_amount' => !empty($_POST['due_amount']) ? $_POST['due_amount'] : 0,
                 'payment_mode' => $_POST['payment_mode'] ?? 'Cash',
                 'transaction_id' => $_POST['transaction_id'] ?? ''
             ],
@@ -166,7 +166,8 @@ function partner_store() {
             }
         }
 
-        if (create_full_partner($data)) {
+        $result = create_full_partner($data);
+        if ($result === true) {
             if (!empty($_POST['rm_id']) && $_SESSION['role_code'] === 'SUPER_ADMIN') {
                 assign_rm_to_partner($data['id'], $_POST['rm_id']);
             }
@@ -176,33 +177,66 @@ function partner_store() {
                 // Determine Branding
                 $site_name = get_site_name(); // Default
                 $login_url = url('/'); // Default
+                $logo_url = get_logo_url(); // Default logo
+                $support_email = 'support@incomekaro.in'; // Default support email
+                $primary_color = '#0d6efd'; // Default primary color
 
                 if (!empty($white_label_id)) {
                     $wl = get_white_label_by_id($white_label_id);
                     if ($wl) {
                         $site_name = $wl['company_name'];
                         $login_url = "http://" . $wl['primary_domain']; // Assuming http for dev
+                        if (!empty($wl['logo_url'])) {
+                            $logo_url = asset($wl['logo_url']);
+                        }
+                        if (!empty($wl['support_email'])) {
+                            $support_email = $wl['support_email'];
+                        }
+                        if (!empty($wl['primary_color'])) {
+                            $primary_color = $wl['primary_color'];
+                        }
                     }
                 }
 
                 $to = $data['profile']['email'];
                 $subject = "Welcome to " . $site_name . " - Your Login Credentials";
 
+                // HTML Email Template
                 $message = "
-                    <h3>Welcome, {$data['profile']['full_name']}!</h3>
-                    <p>Your partner account has been successfully created on <strong>{$site_name}</strong>.</p>
-                    <p><strong>Login Details:</strong></p>
-                    <ul>
-                        <li><strong>Email:</strong> {$data['profile']['email']}</li>
-                        <li><strong>Password:</strong> {$raw_password}</li>
-                    </ul>
-                    <p><a href='{$login_url}'>Click here to Login</a></p>
-                    <p>Please change your password after your first login.</p>
-                    <br>
-                    <p>Best Regards,<br>" . $site_name . " Team</p>
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+                    <div style='background-color: {$primary_color}; padding: 20px; text-align: center;'>
+                        <img src='{$logo_url}' alt='{$site_name}' style='max-height: 50px; background: white; padding: 5px; border-radius: 4px;'>
+                    </div>
+                    <div style='padding: 30px; background-color: #ffffff;'>
+                        <h2 style='color: #333; margin-top: 0;'>Welcome, {$data['profile']['full_name']}!</h2>
+                        <p style='color: #555; line-height: 1.6;'>Your partner account has been successfully created on <strong>{$site_name}</strong>. We are excited to have you on board!</p>
+
+                        <div style='background-color: #f8f9fa; border-left: 4px solid {$primary_color}; padding: 15px; margin: 20px 0;'>
+                            <p style='margin: 0 0 10px 0;'><strong>Login Details:</strong></p>
+                            <ul style='margin: 0; padding-left: 20px; color: #555;'>
+                                <li style='margin-bottom: 5px;'><strong>Email:</strong> {$data['profile']['email']}</li>
+                                <li><strong>Password:</strong> {$raw_password}</li>
+                            </ul>
+                        </div>
+
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{$login_url}' style='background-color: {$primary_color}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Login to Dashboard</a>
+                        </div>
+
+                        <p style='color: #777; font-size: 14px;'>Please change your password after your first login for security purposes.</p>
+                    </div>
+                    <div style='background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
+                        <p style='margin: 0;'>&copy; " . date('Y') . " {$site_name}. All rights reserved.</p>
+                        <p style='margin: 5px 0 0 0;'>Need help? Contact us at <a href='mailto:{$support_email}' style='color: {$primary_color};'>{$support_email}</a></p>
+                    </div>
+                </div>
                 ";
 
+                // Send using the configured mailer
+                // Note: send_email function signature might need to support HTML or headers if not already
+                // Assuming send_email handles basic HTML content type
                 send_email($to, $subject, $message);
+
             } catch (Exception $e) {
                 error_log("Failed to send welcome email to partner: " . $e->getMessage());
             }
@@ -210,7 +244,9 @@ function partner_store() {
             flash('ptr_success', 'Partner Created Successfully. Email sent.');
             redirect('partner/index');
         } else {
-            flash('ptr_error', 'Failed to create partner', 'alert alert-danger');
+            // Display the specific error message returned from the model
+            $error_msg = is_string($result) ? $result : 'Failed to create partner';
+            flash('ptr_error', $error_msg, 'alert alert-danger');
             redirect('partner/create');
         }
     }

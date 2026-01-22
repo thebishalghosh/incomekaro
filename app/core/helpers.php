@@ -94,6 +94,13 @@ function isLoggedIn() {
 }
 
 function get_email_template($content) {
+    // This function is now deprecated for custom HTML emails
+    // But kept for backward compatibility if needed.
+    // However, if the content itself is a full HTML page (starts with <!DOCTYPE or <html>), return it as is.
+    if (stripos(trim($content), '<!DOCTYPE') === 0 || stripos(trim($content), '<html') === 0) {
+        return $content;
+    }
+
     $logo_url = asset('images/logo.png'); // Ensure this is an absolute URL in production
     $site_name = SITE_NAME;
     $year = date('Y');
@@ -143,7 +150,10 @@ HTML;
 
 // Email Function using PHPMailer
 function send_email($to, $subject, $body, $is_html = true) {
-    if ($is_html) {
+    // Check if the body is already a full HTML document
+    if ($is_html && (stripos(trim($body), '<!DOCTYPE') === 0 || stripos(trim($body), '<html') === 0 || stripos(trim($body), '<div style=') === 0)) {
+        // Do not wrap in default template
+    } else if ($is_html) {
         $body = get_email_template($body);
     }
 
@@ -166,7 +176,15 @@ function send_email($to, $subject, $body, $is_html = true) {
             }
 
             // Recipients
-            $mail->setFrom(getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in', getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
+            // Use dynamic From Name if possible, but env vars are static.
+            // Ideally, we should pass from_name/from_email as args, but to keep signature compatible:
+            $from_name = getenv('SMTP_FROM_NAME') ?: 'IncomeKaro';
+
+            // If the body contains specific branding (hacky check), we might want to adjust the From Name?
+            // But PHPMailer setFrom is usually fixed by SMTP server policy.
+            // Let's stick to the configured sender.
+
+            $mail->setFrom(getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in', $from_name);
             $mail->addAddress($to);
 
             // Content
