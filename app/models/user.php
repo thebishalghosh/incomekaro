@@ -1,6 +1,8 @@
 <?php
-function get_all_users() {
+function get_all_users($page = 1, $limit = 10, $search = '', $role_filter = '') {
     $db = get_db_connection();
+    $offset = ($page - 1) * $limit;
+
     $sql = "SELECT u.*, r.name as role_name, wl.company_name as wl_name, p.name as partner_name,
             ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
             (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
@@ -9,9 +11,53 @@ function get_all_users() {
             LEFT JOIN white_label_clients wl ON u.white_label_id = wl.id
             LEFT JOIN partners p ON u.partner_id = p.id
             LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
-            ORDER BY u.created_at DESC";
-    $stmt = $db->query($sql);
+            WHERE 1=1";
+
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR u.phone LIKE :search)";
+        $params[':search'] = "%$search%";
+    }
+
+    if (!empty($role_filter)) {
+        $sql .= " AND r.id = :role_filter";
+        $params[':role_filter'] = $role_filter;
+    }
+
+    $sql .= " ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll();
+}
+
+function get_total_users_count($search = '', $role_filter = '') {
+    $db = get_db_connection();
+    $sql = "SELECT COUNT(*) FROM users u JOIN roles r ON u.role_id = r.id WHERE 1=1";
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR u.phone LIKE :search)";
+        $params[':search'] = "%$search%";
+    }
+
+    if (!empty($role_filter)) {
+        $sql .= " AND r.id = :role_filter";
+        $params[':role_filter'] = $role_filter;
+    }
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    return $stmt->fetchColumn();
 }
 
 function find_user_by_email($email) {

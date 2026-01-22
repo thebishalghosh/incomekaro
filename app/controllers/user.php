@@ -5,8 +5,34 @@ require_once APP_PATH . '/core/database.php'; // Ensure DB connection is availab
 
 function user_index() {
     require_role('SUPER_ADMIN');
-    $users = get_all_users();
-    view('dashboard/users_list', ['users' => $users]);
+
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $role_filter = isset($_GET['role']) ? trim($_GET['role']) : '';
+
+        $users = get_all_users($page, $limit, $search, $role_filter);
+        $total_users = get_total_users_count($search, $role_filter);
+        $total_pages = ceil($total_users / $limit);
+
+        // Return JSON for AJAX
+        header('Content-Type: application/json');
+        echo json_encode([
+            'users' => $users,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_users
+            ]
+        ]);
+        exit;
+    }
+
+    // Initial Load (Non-AJAX)
+    $roles = get_all_roles();
+    view('dashboard/users_list', ['roles' => $roles]);
 }
 
 function user_create() {
