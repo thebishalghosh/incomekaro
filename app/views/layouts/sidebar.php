@@ -64,6 +64,11 @@
                 </a>
             </li>
             <li>
+                <a href="<?php echo url('bank/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'bank') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-university"></i> Bank Management
+                </a>
+            </li>
+            <li>
                 <a href="<?php echo url('policy/index'); ?>" class="<?php echo (strpos($_GET['url'] ?? '', 'policy') !== false) ? 'active' : ''; ?>">
                     <i class="fas fa-file-contract"></i> Policy Management
                 </a>

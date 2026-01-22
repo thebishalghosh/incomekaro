@@ -1,8 +1,8 @@
 <?php
 $url = $_GET['url'] ?? 'home';
 $is_dashboard = false;
-// Added 'inquiry', 'notification', 'sales', 'profile', and 'policy' to the list of dashboard routes
-$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification', 'sales', 'profile', 'policy'];
+// Added 'inquiry', 'notification', 'sales', 'profile', 'policy', and 'bank' to the list of dashboard routes
+$dashboard_routes = ['dashboard', 'white_label', 'partner', 'user', 'service', 'application', 'report', 'settings', 'withdrawal', 'subscription', 'rm', 'instant_panel', 'inquiry', 'notification', 'sales', 'profile', 'policy', 'bank'];
 
 foreach ($dashboard_routes as $route) {
     if (strpos($url, $route) === 0) {
@@ -35,7 +35,7 @@ if ($is_dashboard && isLoggedIn()):
         // Default Contact Info
         $contact_email = 'support@incomekaro.in';
         $contact_phone = '+91 786-4951-543';
-        $contact_address = 'Astra Tower, New Town, Kolkata, 700181';
+        $contact_address = 'Astra Tower, Unit No. ASO-303, 3rd Floor, New Town, Kolkata, 700181';
 
         // Override if White Label
         if (defined('IS_WHITE_LABEL') && IS_WHITE_LABEL && $WL_CONFIG) {

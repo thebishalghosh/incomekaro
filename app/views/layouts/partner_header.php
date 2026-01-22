@@ -134,6 +134,11 @@
         </a>
 
         <div class="d-flex align-items-center">
+            <!-- Bank Search Button -->
+            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#bankSearchModal">
+                <i class="fas fa-search-location me-1"></i> Check Serviceability
+            </button>
+
             <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary me-2">
                 <i class="fas fa-file-alt me-1"></i> My Applications
             </a>
@@ -202,6 +207,34 @@
     </div>
 </nav>
 
+<!-- Bank Search Modal -->
+<div class="modal fade" id="bankSearchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Check Serviceability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-4">
+                    <input type="text" class="form-control form-control-lg" id="partnerPincodeSearch" placeholder="Enter Pincode (e.g. 700001)">
+                    <button class="btn btn-primary btn-lg" type="button" onclick="searchPartnerBanks()">
+                        <i class="fas fa-search me-2"></i> Search
+                    </button>
+                </div>
+
+                <div id="partnerBankResults" class="row g-3">
+                    <!-- Results will appear here -->
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="fas fa-map-marker-alt fa-3x mb-3 text-secondary opacity-50"></i>
+                        <p>Enter a pincode to see available banks.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Notification Polling Script -->
 <script>
     setInterval(function() {
@@ -218,6 +251,64 @@
             })
             .catch(error => console.error('Error polling notifications:', error));
     }, 30000); // Poll every 30 seconds
+
+    function searchPartnerBanks() {
+        const pincode = document.getElementById('partnerPincodeSearch').value;
+        const resultsDiv = document.getElementById('partnerBankResults');
+
+        if (!pincode) {
+            alert('Please enter a pincode');
+            return;
+        }
+
+        resultsDiv.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Searching serviceable banks...</p></div>';
+
+        fetch('<?php echo url('bank/search'); ?>?pincode=' + pincode)
+            .then(response => response.json())
+            .then(data => {
+                resultsDiv.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(bank => {
+                        const card = `
+                            <div class="col-md-4 col-sm-6">
+                                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                                    <div class="card-body text-center p-4">
+                                        <div class="avatar-circle bg-light text-primary mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                            <i class="fas fa-university fa-lg"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1">${bank}</h6>
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3">Serviceable</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        resultsDiv.innerHTML += card;
+                    });
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="text-danger mb-3"><i class="fas fa-times-circle fa-3x"></i></div>
+                            <h5 class="text-muted">No banks found</h5>
+                            <p class="small text-muted">We currently do not have service in this pincode.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error searching banks. Please try again.</div>';
+            });
+    }
 </script>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+</style>
 
 <div class="container-fluid p-4">
