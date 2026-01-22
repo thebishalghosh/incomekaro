@@ -61,8 +61,12 @@
 </div>
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-    <div class="card-header bg-white border-0 py-3">
+    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0">Registered Banks</h5>
+        <div class="input-group w-auto">
+            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" class="form-control border-start-0 ps-0" id="bankSearch" placeholder="Search banks...">
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive" style="max-height: 500px;">
@@ -73,22 +77,24 @@
                         <th>ID</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php if (!empty($banks)): ?>
-                        <?php foreach ($banks as $bank): ?>
-                            <tr>
-                                <td class="ps-4 fw-bold"><?php echo $bank['name']; ?></td>
-                                <td class="text-muted small"><?php echo $bank['id']; ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="2" class="text-center py-5 text-muted">No banks found. Import a CSV file.</td>
-                        </tr>
-                    <?php endif; ?>
+                <tbody id="banksTableBody">
+                    <!-- Data loaded via AJAX -->
+                    <tr>
+                        <td colspan="2" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Loading banks...</p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
+    </div>
+    <div class="card-footer bg-white border-top-0 py-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-end mb-0" id="pagination">
+                <!-- Pagination links -->
+            </ul>
+        </nav>
     </div>
 </div>
 
@@ -123,6 +129,97 @@
 </div>
 
 <script>
+let currentPage = 1;
+let searchTimeout;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadBanks();
+
+    document.getElementById('bankSearch').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadBanks();
+        }, 500);
+    });
+});
+
+function loadBanks() {
+    const search = document.getElementById('bankSearch').value;
+    const tbody = document.getElementById('banksTableBody');
+
+    fetch(`<?php echo url('bank/index'); ?>?ajax=1&page=${currentPage}&search=${encodeURIComponent(search)}`)
+        .then(response => response.json())
+        .then(data => {
+            renderTable(data.banks);
+            renderPagination(data.pagination);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-4">Error loading data.</td></tr>';
+        });
+}
+
+function renderTable(banks) {
+    const tbody = document.getElementById('banksTableBody');
+    tbody.innerHTML = '';
+
+    if (banks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-5 text-muted">No banks found. Import a CSV file.</td></tr>';
+        return;
+    }
+
+    banks.forEach(bank => {
+        const row = `
+            <tr>
+                <td class="ps-4 fw-bold">${bank.name}</td>
+                <td class="text-muted small">${bank.id}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function renderPagination(pagination) {
+    const ul = document.getElementById('pagination');
+    ul.innerHTML = '';
+
+    if (pagination.total_pages <= 1) return;
+
+    // Previous
+    ul.innerHTML += `
+        <li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${pagination.current_page - 1}); return false;">Previous</a>
+        </li>
+    `;
+
+    // Pages
+    for (let i = 1; i <= pagination.total_pages; i++) {
+        if (i === 1 || i === pagination.total_pages || (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+             ul.innerHTML += `
+                <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
+            ul.innerHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    // Next
+    ul.innerHTML += `
+        <li class="page-item ${pagination.current_page === pagination.total_pages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${pagination.current_page + 1}); return false;">Next</a>
+        </li>
+    `;
+}
+
+function changePage(page) {
+    if (page < 1) return;
+    currentPage = page;
+    loadBanks();
+}
+
 function searchBanks() {
     const pincode = document.getElementById('testPincode').value;
     const resultsDiv = document.getElementById('searchResults');

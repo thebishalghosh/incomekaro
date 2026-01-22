@@ -1,8 +1,44 @@
 <?php
-function get_all_banks() {
+function get_all_banks($page = 1, $limit = 10, $search = '') {
     $db = get_db_connection();
-    $stmt = $db->query("SELECT * FROM banks ORDER BY name ASC");
+    $offset = ($page - 1) * $limit;
+
+    $sql = "SELECT * FROM banks WHERE 1=1";
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND name LIKE :search";
+        $params[':search'] = "%$search%";
+    }
+
+    $sql .= " ORDER BY name ASC LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll();
+}
+
+function get_total_banks_count($search = '') {
+    $db = get_db_connection();
+    $sql = "SELECT COUNT(*) FROM banks WHERE 1=1";
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND name LIKE :search";
+        $params[':search'] = "%$search%";
+    }
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    return $stmt->fetchColumn();
 }
 
 function get_banks_by_pincode($pincode) {

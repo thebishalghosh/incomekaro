@@ -3,8 +3,32 @@ require_once APP_PATH . '/models/bank.php';
 
 function bank_index() {
     require_role('SUPER_ADMIN');
-    $banks = get_all_banks();
-    view('bank/index', ['banks' => $banks]);
+
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+        $banks = get_all_banks($page, $limit, $search);
+        $total_banks = get_total_banks_count($search);
+        $total_pages = ceil($total_banks / $limit);
+
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'banks' => $banks,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_banks
+            ]
+        ]);
+        exit;
+    }
+
+    // Initial Load
+    view('bank/index');
 }
 
 function bank_import() {
