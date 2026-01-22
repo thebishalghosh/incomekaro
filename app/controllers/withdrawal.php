@@ -2,52 +2,49 @@
 require_once APP_PATH . '/models/user.php'; // For wallet functions
 require_once APP_PATH . '/core/database.php';
 require_once APP_PATH . '/models/notification.php'; // Include Notification Model
+require_once APP_PATH . '/models/withdrawal.php'; // Include Withdrawal Model
 
 function withdrawal_index() {
     require_login();
 
-    $db = get_db_connection();
-    $withdrawals = [];
-    $user = null;
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
 
-    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
-        // Admin sees all, fetch white_label_id and role_code to distinguish
-        $sql = "SELECT w.*, u.first_name, u.last_name, u.email, u.white_label_id, r.code as role_code
-                FROM withdrawals w
-                JOIN users u ON w.user_id = u.id
-                JOIN roles r ON u.role_id = r.id
-                ORDER BY w.created_at DESC";
-        $stmt = $db->query($sql);
-        $withdrawals = $stmt->fetchAll();
-
-    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
-        // White Label Admin sees withdrawals from their partners
-        $current_user = find_user_by_id($_SESSION['user_id']);
-        $wl_id = $current_user['white_label_id'];
-
-        $sql = "SELECT w.*, u.first_name, u.last_name, u.email
-                FROM withdrawals w
-                JOIN users u ON w.user_id = u.id
-                WHERE u.white_label_id = :wl_id
-                ORDER BY w.created_at DESC";
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['wl_id' => $wl_id]);
-        $withdrawals = $stmt->fetchAll();
-
-    } else {
-        // Partner sees own
+        $role_code = $_SESSION['role_code'];
         $user_id = $_SESSION['user_id'];
+        $wl_id = null;
 
-        // Fetch user details for the modal (balance & bank)
-        $user = find_user_by_id($user_id);
+        if ($role_code === 'WHITE_LABEL') {
+            $current_user = find_user_by_id($user_id);
+            $wl_id = $current_user['white_label_id'];
+        }
 
-        $sql = "SELECT * FROM withdrawals WHERE user_id = :id ORDER BY created_at DESC";
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['id' => $user_id]);
-        $withdrawals = $stmt->fetchAll();
+        $withdrawals = get_all_withdrawals($page, $limit, $role_code, $user_id, $wl_id);
+        $total_withdrawals = get_total_withdrawals_count($role_code, $user_id, $wl_id);
+        $total_pages = ceil($total_withdrawals / $limit);
+
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'withdrawals' => $withdrawals,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_withdrawals
+            ]
+        ]);
+        exit;
     }
 
-    view('withdrawal/index', ['withdrawals' => $withdrawals, 'user' => $user]);
+    // Initial Load
+    $user = null;
+    if ($_SESSION['role_code'] !== 'SUPER_ADMIN' && $_SESSION['role_code'] !== 'WHITE_LABEL') {
+        $user = find_user_by_id($_SESSION['user_id']);
+    }
+
+    view('withdrawal/index', ['user' => $user]);
 }
 
 function withdrawal_store() {
