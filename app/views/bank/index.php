@@ -18,6 +18,18 @@
 <?php flash('bank_success'); ?>
 <?php flash('bank_error'); ?>
 
+<div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4">
+    <div class="d-flex">
+        <div class="me-3">
+            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-1">Important Note</h6>
+            <p class="mb-0 small">Please ensure you <strong>Clear Data</strong> before importing a new CSV file to avoid duplicate entries and data inconsistencies. The system will attempt to merge data, but a fresh import is recommended for accuracy.</p>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm rounded-4 h-100">
