@@ -1,43 +1,42 @@
 <?php
 require_once APP_PATH . '/core/database.php';
 require_once APP_PATH . '/models/user.php'; // Need to fetch user details
+require_once APP_PATH . '/models/inquiry.php'; // Include the new model
 
 function inquiry_index() {
     require_login();
 
-    $db = get_db_connection();
-    $inquiries = [];
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
-        // Super Admin sees ALL inquiries
-        $sql = "SELECT c.*, wl.company_name as wl_name
-                FROM contact_inquiries c
-                LEFT JOIN white_label_clients wl ON c.white_label_id = wl.id
-                ORDER BY c.created_at DESC";
-        $stmt = $db->query($sql);
-        $inquiries = $stmt->fetchAll();
-
-    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
-        // White Label Admin sees ONLY their inquiries
-        $user = find_user_by_id($_SESSION['user_id']);
-        if (empty($user['white_label_id'])) {
-            die('Error: User not linked to White Label.');
+        $wl_id = null;
+        if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+            $user = find_user_by_id($_SESSION['user_id']);
+            $wl_id = $user['white_label_id'];
         }
 
-        $sql = "SELECT c.*, wl.company_name as wl_name
-                FROM contact_inquiries c
-                LEFT JOIN white_label_clients wl ON c.white_label_id = wl.id
-                WHERE c.white_label_id = :wl_id
-                ORDER BY c.created_at DESC";
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['wl_id' => $user['white_label_id']]);
-        $inquiries = $stmt->fetchAll();
+        $inquiries = get_all_inquiries($page, $limit, $status_filter, $wl_id);
+        $total_inquiries = get_total_inquiries_count($status_filter, $wl_id);
+        $total_pages = ceil($total_inquiries / $limit);
 
-    } else {
-        die('Access Denied');
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'inquiries' => $inquiries,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_inquiries
+            ]
+        ]);
+        exit;
     }
 
-    view('dashboard/inquiries_list', ['inquiries' => $inquiries]);
+    // Initial Load
+    view('dashboard/inquiries_list');
 }
 
 function inquiry_view($id) {
