@@ -268,7 +268,7 @@ if ($is_dashboard && isLoggedIn()):
                             <input class="form-check-input" type="checkbox" id="rememberMe">
                             <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
                         </div>
-                        <a href="#" class="small text-decoration-none">Forgot Password?</a>
+                        <a href="<?php echo url('auth/forgot_password'); ?>" class="small text-decoration-none">Forgot Password?</a>
                     </div>
 
                     <div class="d-grid gap-2">

@@ -299,6 +299,66 @@
 </section>
 <?php endif; ?>
 
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-6 bg-primary text-white p-5 d-flex flex-column justify-content-center align-items-center text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-user-circle fa-4x"></i>
+                        </div>
+                        <h4 class="fw-bold">Welcome Back!</h4>
+                        <p class="small opacity-75">Login to access your dashboard and manage your business.</p>
+                    </div>
+                    <div class="col-md-6 p-5 bg-white">
+                        <div class="text-end">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-4">Login</h4>
+
+                        <?php flash('login_error'); ?>
+                        <?php flash('login_success'); ?>
+
+                        <form action="<?php echo url('auth/login_post'); ?>" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Email Address</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Password</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="remember">
+                                    <label class="form-check-label small text-muted" for="remember">Remember me</label>
+                                </div>
+                                <a href="<?php echo url('auth/forgot_password'); ?>" class="small text-decoration-none">Forgot Password?</a>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Login</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-open login modal if URL has ?login=true
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('login')) {
+            var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }
+    });
+</script>
+
 <style>
     .shadow-hover { transition: all 0.3s ease; }
     .shadow-hover:hover { transform: translateY(-5px); box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }

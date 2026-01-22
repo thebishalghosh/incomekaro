@@ -30,11 +30,14 @@ function dd($data) {
 }
 
 function url($path) {
-    return URL_ROOT . '/' . ltrim($path, '/');
+    // Ensure URL_ROOT doesn't have a trailing slash
+    $root = rtrim(URL_ROOT, '/');
+    return $root . '/' . ltrim($path, '/');
 }
 
 function asset($path) {
-    return URL_ROOT . '/' . ltrim($path, '/');
+    $root = rtrim(URL_ROOT, '/');
+    return $root . '/' . ltrim($path, '/');
 }
 
 // Flash Message Helper - Updated for Toast Style

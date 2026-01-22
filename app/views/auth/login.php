@@ -21,7 +21,7 @@
                         </div>
 
                         <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                            <a class="small text-decoration-none" href="#">Forgot Password?</a>
+                            <a class="small text-decoration-none" href="<?php echo url('auth/forgot_password'); ?>">Forgot Password?</a>
                             <button type="submit" class="btn btn-primary px-4">Login</button>
                         </div>
                     </form>
