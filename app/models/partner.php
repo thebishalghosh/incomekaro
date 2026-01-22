@@ -12,17 +12,73 @@ function get_platform_partners() {
     return $stmt->fetchAll();
 }
 
-function get_all_partners_for_admin() {
+function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_filter = '', $wl_filter = '') {
     $db = get_db_connection();
+    $offset = ($page - 1) * $limit;
+
     $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
             u.id as user_id, u.wallet_balance
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
             LEFT JOIN users u ON u.partner_id = p.id
-            ORDER BY p.created_at DESC";
-    $stmt = $db->query($sql);
+            WHERE 1=1";
+
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND (p.name LIKE :search OR p.email LIKE :search OR p.phone LIKE :search OR pp.full_name LIKE :search)";
+        $params[':search'] = "%$search%";
+    }
+
+    if (!empty($type_filter)) {
+        $sql .= " AND p.partner_type = :type_filter";
+        $params[':type_filter'] = $type_filter;
+    }
+
+    if (!empty($wl_filter)) {
+        $sql .= " AND p.white_label_id = :wl_filter";
+        $params[':wl_filter'] = $wl_filter;
+    }
+
+    $sql .= " ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll();
+}
+
+function get_total_partners_count($search = '', $type_filter = '', $wl_filter = '') {
+    $db = get_db_connection();
+    $sql = "SELECT COUNT(*) FROM partners p LEFT JOIN partner_profiles pp ON p.id = pp.partner_id WHERE 1=1";
+    $params = [];
+
+    if (!empty($search)) {
+        $sql .= " AND (p.name LIKE :search OR p.email LIKE :search OR p.phone LIKE :search OR pp.full_name LIKE :search)";
+        $params[':search'] = "%$search%";
+    }
+
+    if (!empty($type_filter)) {
+        $sql .= " AND p.partner_type = :type_filter";
+        $params[':type_filter'] = $type_filter;
+    }
+
+    if (!empty($wl_filter)) {
+        $sql .= " AND p.white_label_id = :wl_filter";
+        $params[':wl_filter'] = $wl_filter;
+    }
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    return $stmt->fetchColumn();
 }
 
 function get_partners_by_rm($rm_id) {

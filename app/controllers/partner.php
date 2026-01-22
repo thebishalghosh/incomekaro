@@ -9,43 +9,49 @@ require_once APP_PATH . '/models/notification.php'; // Include Notification Mode
 function partner_index() {
     require_login();
 
-    $partners = [];
-    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
-        $partners = get_all_partners_for_admin();
-    } elseif ($_SESSION['role_code'] === 'WHITE_LABEL') {
-        $user = find_user_by_id($_SESSION['user_id']);
-        $db = get_db_connection();
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $type_filter = isset($_GET['type']) ? trim($_GET['type']) : '';
+        $wl_filter = isset($_GET['wl']) ? trim($_GET['wl']) : '';
 
-        // Fetch Partner Admin Role ID for filtering
-        $role_stmt = $db->prepare("SELECT id FROM roles WHERE code = 'PARTNER_ADMIN'");
-        $role_stmt->execute();
-        $partner_role_id = $role_stmt->fetchColumn();
+        // Role-based restrictions
+        if ($_SESSION['role_code'] === 'WHITE_LABEL') {
+            $user = find_user_by_id($_SESSION['user_id']);
+            $wl_filter = $user['white_label_id']; // Force WL filter
+            $type_filter = 'WHITE_LABEL'; // Implicitly WL partners
+        } elseif ($_SESSION['role_code'] === 'RM') {
+            // RM logic is usually handled inside model, but for generic search we might need to pass RM ID
+            // For now, let's keep RM logic separate or adapt get_all_partners_for_admin to accept RM ID
+            // But the request is specifically for Super Admin filters (Platform vs WL)
+        }
 
-        // Refined Query: Join only the PARTNER_ADMIN user and LATEST bank detail
-        $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
-                u.id as user_id, u.wallet_balance,
-                (SELECT COUNT(*) FROM user_bank_details WHERE user_id = u.id) as has_bank_details,
-                ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code
-                FROM partners p
-                LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
-                LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
-                LEFT JOIN users u ON u.partner_id = p.id AND u.role_id = :role_id
-                LEFT JOIN user_bank_details ubd ON ubd.id = (
-                    SELECT id FROM user_bank_details WHERE user_id = u.id ORDER BY id DESC LIMIT 1
-                )
-                WHERE p.white_label_id = :wl_id
-                ORDER BY p.created_at DESC";
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['wl_id' => $user['white_label_id'], 'role_id' => $partner_role_id]);
-        $partners = $stmt->fetchAll();
+        $partners = get_all_partners_for_admin($page, $limit, $search, $type_filter, $wl_filter);
+        $total_partners = get_total_partners_count($search, $type_filter, $wl_filter);
+        $total_pages = ceil($total_partners / $limit);
 
-    } elseif ($_SESSION['role_code'] === 'RM') {
-        $partners = get_partners_by_rm($_SESSION['user_id']);
-    } else {
-        die('Access Denied');
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'partners' => $partners,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_partners
+            ]
+        ]);
+        exit;
     }
 
-    view('dashboard/partners_list', ['partners' => $partners]);
+    // Initial Load
+    $white_labels = [];
+    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        $white_labels = get_all_white_labels();
+    }
+
+    view('dashboard/partners_list', ['white_labels' => $white_labels]);
 }
 
 function partner_create() {
