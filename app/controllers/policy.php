@@ -3,8 +3,32 @@ require_once APP_PATH . '/models/policy.php';
 
 function policy_index() {
     require_role('SUPER_ADMIN');
-    $policies = get_all_policies();
-    view('policy/index', ['policies' => $policies]);
+
+    // Handle AJAX Search & Pagination
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $type_filter = isset($_GET['type']) ? trim($_GET['type']) : '';
+
+        $policies = get_all_policies($page, $limit, $type_filter);
+        $total_policies = get_total_policies_count($type_filter);
+        $total_pages = ceil($total_policies / $limit);
+
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'policies' => $policies,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_records' => $total_policies
+            ]
+        ]);
+        exit;
+    }
+
+    // Initial Load
+    view('policy/index');
 }
 
 function policy_list() {
@@ -12,7 +36,10 @@ function policy_list() {
     // Allow Partners, RMs, Sales Execs, WL Admins
     // Basically anyone logged in can view policies
 
-    $policies = get_all_policies();
+    // For now, list view doesn't have pagination/ajax requested, keeping it simple or can be upgraded later
+    // But get_all_policies now requires arguments or defaults.
+    // Let's fetch all for list view (limit 100 or so)
+    $policies = get_all_policies(1, 100);
 
     // If Partner, use partner layout
     if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {

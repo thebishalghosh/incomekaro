@@ -1,8 +1,44 @@
 <?php
-function get_all_policies() {
+function get_all_policies($page = 1, $limit = 10, $type_filter = '') {
     $db = get_db_connection();
-    $stmt = $db->query("SELECT * FROM policies ORDER BY created_at DESC");
+    $offset = ($page - 1) * $limit;
+
+    $sql = "SELECT * FROM policies WHERE 1=1";
+    $params = [];
+
+    if (!empty($type_filter)) {
+        $sql .= " AND type = :type";
+        $params[':type'] = $type_filter;
+    }
+
+    $sql .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll();
+}
+
+function get_total_policies_count($type_filter = '') {
+    $db = get_db_connection();
+    $sql = "SELECT COUNT(*) FROM policies WHERE 1=1";
+    $params = [];
+
+    if (!empty($type_filter)) {
+        $sql .= " AND type = :type";
+        $params[':type'] = $type_filter;
+    }
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    return $stmt->fetchColumn();
 }
 
 function create_policy($data) {
