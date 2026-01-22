@@ -2,6 +2,7 @@
 require_once APP_PATH . '/core/database.php';
 require_once APP_PATH . '/models/user.php'; // Need to fetch user details
 require_once APP_PATH . '/models/inquiry.php'; // Include the new model
+require_once APP_PATH . '/models/white_label.php'; // For dropdown
 
 function inquiry_index() {
     require_login();
@@ -11,6 +12,7 @@ function inquiry_index() {
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = 10;
         $status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $source_filter = isset($_GET['source']) ? trim($_GET['source']) : '';
 
         $wl_id = null;
         if ($_SESSION['role_code'] === 'WHITE_LABEL') {
@@ -18,8 +20,8 @@ function inquiry_index() {
             $wl_id = $user['white_label_id'];
         }
 
-        $inquiries = get_all_inquiries($page, $limit, $status_filter, $wl_id);
-        $total_inquiries = get_total_inquiries_count($status_filter, $wl_id);
+        $inquiries = get_all_inquiries($page, $limit, $status_filter, $wl_id, $source_filter);
+        $total_inquiries = get_total_inquiries_count($status_filter, $wl_id, $source_filter);
         $total_pages = ceil($total_inquiries / $limit);
 
         // Return JSON
@@ -36,7 +38,12 @@ function inquiry_index() {
     }
 
     // Initial Load
-    view('dashboard/inquiries_list');
+    $white_labels = [];
+    if ($_SESSION['role_code'] === 'SUPER_ADMIN') {
+        $white_labels = get_all_white_labels();
+    }
+
+    view('dashboard/inquiries_list', ['white_labels' => $white_labels]);
 }
 
 function inquiry_view($id) {

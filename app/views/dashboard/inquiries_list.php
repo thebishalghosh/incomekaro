@@ -21,6 +21,21 @@
                     <option value="replied">Replied</option>
                 </select>
             </div>
+
+            <?php if ($_SESSION['role_code'] === 'SUPER_ADMIN'): ?>
+            <div class="col-md-3">
+                <select class="form-select" id="sourceFilter">
+                    <option value="">All Sources</option>
+                    <option value="MAIN_SITE">Main Site</option>
+                    <?php if (!empty($white_labels)): ?>
+                        <?php foreach ($white_labels as $wl): ?>
+                            <option value="<?php echo $wl['id']; ?>"><?php echo $wl['company_name']; ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
             <div class="col-md-2">
                 <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">Reset</button>
             </div>
@@ -103,19 +118,28 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPage = 1;
         loadInquiries();
     });
+
+    if (document.getElementById('sourceFilter')) {
+        document.getElementById('sourceFilter').addEventListener('change', function() {
+            currentPage = 1;
+            loadInquiries();
+        });
+    }
 });
 
 function resetFilters() {
     document.getElementById('statusFilter').value = '';
+    if (document.getElementById('sourceFilter')) document.getElementById('sourceFilter').value = '';
     currentPage = 1;
     loadInquiries();
 }
 
 function loadInquiries() {
     const status = document.getElementById('statusFilter').value;
+    const source = document.getElementById('sourceFilter') ? document.getElementById('sourceFilter').value : '';
     const tbody = document.getElementById('inquiriesTableBody');
 
-    fetch(`<?php echo url('inquiry/index'); ?>?ajax=1&page=${currentPage}&status=${status}`)
+    fetch(`<?php echo url('inquiry/index'); ?>?ajax=1&page=${currentPage}&status=${status}&source=${source}`)
         .then(response => response.json())
         .then(data => {
             renderTable(data.inquiries);

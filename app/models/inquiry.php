@@ -1,5 +1,5 @@
 <?php
-function get_all_inquiries($page = 1, $limit = 10, $status_filter = '', $wl_id = null) {
+function get_all_inquiries($page = 1, $limit = 10, $status_filter = '', $wl_id = null, $source_filter = '') {
     $db = get_db_connection();
     $offset = ($page - 1) * $limit;
 
@@ -15,9 +15,20 @@ function get_all_inquiries($page = 1, $limit = 10, $status_filter = '', $wl_id =
         $params[':status'] = $status_filter;
     }
 
+    // wl_id is for role-based restriction (e.g. WL admin sees only their own)
     if ($wl_id !== null) {
         $sql .= " AND c.white_label_id = :wl_id";
         $params[':wl_id'] = $wl_id;
+    }
+
+    // source_filter is for Super Admin to filter by specific WL or Main Site
+    if (!empty($source_filter)) {
+        if ($source_filter === 'MAIN_SITE') {
+            $sql .= " AND c.white_label_id IS NULL";
+        } else {
+            $sql .= " AND c.white_label_id = :source_filter";
+            $params[':source_filter'] = $source_filter;
+        }
     }
 
     $sql .= " ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset";
@@ -32,7 +43,7 @@ function get_all_inquiries($page = 1, $limit = 10, $status_filter = '', $wl_id =
     return $stmt->fetchAll();
 }
 
-function get_total_inquiries_count($status_filter = '', $wl_id = null) {
+function get_total_inquiries_count($status_filter = '', $wl_id = null, $source_filter = '') {
     $db = get_db_connection();
     $sql = "SELECT COUNT(*) FROM contact_inquiries c WHERE 1=1";
     $params = [];
@@ -45,6 +56,15 @@ function get_total_inquiries_count($status_filter = '', $wl_id = null) {
     if ($wl_id !== null) {
         $sql .= " AND c.white_label_id = :wl_id";
         $params[':wl_id'] = $wl_id;
+    }
+
+    if (!empty($source_filter)) {
+        if ($source_filter === 'MAIN_SITE') {
+            $sql .= " AND c.white_label_id IS NULL";
+        } else {
+            $sql .= " AND c.white_label_id = :source_filter";
+            $params[':source_filter'] = $source_filter;
+        }
     }
 
     $stmt = $db->prepare($sql);
