@@ -5,6 +5,11 @@
 $WL_CONFIG = null;
 $domain = $_SERVER['HTTP_HOST'];
 
+// Fix: Remove www. prefix if present to ensure matching with database
+if (substr($domain, 0, 4) === 'www.') {
+    $domain = substr($domain, 4);
+}
+
 // Load all white label clients from a cached file or database
 // For simplicity, let's assume a function get_all_wl_domains() exists
 // This should be optimized in a real application (e.g., using a cache)
