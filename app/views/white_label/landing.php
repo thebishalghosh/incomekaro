@@ -181,7 +181,7 @@
                                 ?>
                             </ul>
                             <div class="mt-auto w-100">
-                                <a href="<?php echo url('contact/index?subject=Interest in ' . urlencode($plan['name'])); ?>" class="btn btn-outline-primary rounded-pill fw-bold py-2 w-100">Choose Plan</a>
+                                <a href="#contact" data-subject="Interest in <?php echo htmlspecialchars($plan['name']); ?>" class="btn btn-outline-primary rounded-pill fw-bold py-2 w-100 choose-plan-btn">Choose Plan</a>
                             </div>
                         </div>
                     </div>
@@ -365,6 +365,17 @@
         window.addEventListener('scroll', revealOnScroll);
         // Trigger once on load
         revealOnScroll();
+
+        // Handle Choose Plan Click
+        document.querySelectorAll('.choose-plan-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const subject = this.getAttribute('data-subject');
+                const subjectInput = document.getElementById('subject');
+                if (subjectInput) {
+                    subjectInput.value = subject;
+                }
+            });
+        });
     });
 </script>
 
