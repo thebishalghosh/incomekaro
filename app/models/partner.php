@@ -12,7 +12,7 @@ function get_platform_partners() {
     return $stmt->fetchAll();
 }
 
-function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_filter = '', $wl_filter = '') {
+function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_filter = '', $wl_filter = '', $creator_id = null) {
     $db = get_db_connection();
     $offset = ($page - 1) * $limit;
 
@@ -41,6 +41,11 @@ function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_
         $params[':wl_filter'] = $wl_filter;
     }
 
+    if (!empty($creator_id)) {
+        $sql .= " AND p.created_by = :creator_id";
+        $params[':creator_id'] = $creator_id;
+    }
+
     $sql .= " ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
 
     $stmt = $db->prepare($sql);
@@ -53,7 +58,7 @@ function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_
     return $stmt->fetchAll();
 }
 
-function get_total_partners_count($search = '', $type_filter = '', $wl_filter = '') {
+function get_total_partners_count($search = '', $type_filter = '', $wl_filter = '', $creator_id = null) {
     $db = get_db_connection();
     $sql = "SELECT COUNT(*) FROM partners p LEFT JOIN partner_profiles pp ON p.id = pp.partner_id WHERE 1=1";
     $params = [];
@@ -71,6 +76,11 @@ function get_total_partners_count($search = '', $type_filter = '', $wl_filter = 
     if (!empty($wl_filter)) {
         $sql .= " AND p.white_label_id = :wl_filter";
         $params[':wl_filter'] = $wl_filter;
+    }
+
+    if (!empty($creator_id)) {
+        $sql .= " AND p.created_by = :creator_id";
+        $params[':creator_id'] = $creator_id;
     }
 
     $stmt = $db->prepare($sql);

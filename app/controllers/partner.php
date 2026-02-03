@@ -16,6 +16,7 @@ function partner_index() {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $type_filter = isset($_GET['type']) ? trim($_GET['type']) : '';
         $wl_filter = isset($_GET['wl']) ? trim($_GET['wl']) : '';
+        $creator_id = null;
 
         // Role-based restrictions
         if ($_SESSION['role_code'] === 'WHITE_LABEL') {
@@ -26,10 +27,12 @@ function partner_index() {
             // RM logic is usually handled inside model, but for generic search we might need to pass RM ID
             // For now, let's keep RM logic separate or adapt get_all_partners_for_admin to accept RM ID
             // But the request is specifically for Super Admin filters (Platform vs WL)
+        } elseif ($_SESSION['role_code'] === 'SALES_EXEC') {
+            $creator_id = $_SESSION['user_id'];
         }
 
-        $partners = get_all_partners_for_admin($page, $limit, $search, $type_filter, $wl_filter);
-        $total_partners = get_total_partners_count($search, $type_filter, $wl_filter);
+        $partners = get_all_partners_for_admin($page, $limit, $search, $type_filter, $wl_filter, $creator_id);
+        $total_partners = get_total_partners_count($search, $type_filter, $wl_filter, $creator_id);
         $total_pages = ceil($total_partners / $limit);
 
         // Return JSON
