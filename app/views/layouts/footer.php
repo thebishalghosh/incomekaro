@@ -69,7 +69,7 @@ if ($is_dashboard && isLoggedIn()):
                 </div>
 
                 <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6">
+                <div class="col-lg-4 col-md-6">
                     <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Quick Links</h6>
                     <ul class="list-unstyled footer-links">
                         <li><a href="<?php echo url('/'); ?>">Home</a></li>
@@ -83,17 +83,6 @@ if ($is_dashboard && isLoggedIn()):
                         <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
                             <li><a href="<?php echo url('contact/index'); ?>">Contact Support</a></li>
                         <?php endif; ?>
-                    </ul>
-                </div>
-
-                <!-- Legal -->
-                <div class="col-lg-2 col-md-6">
-                    <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Legal</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Refund Policy</a></li>
-                        <li><a href="#">Compliance</a></li>
                     </ul>
                 </div>
 
