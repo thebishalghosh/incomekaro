@@ -123,13 +123,22 @@
 
                         <h5 class="fw-bold text-primary mb-4">Permanent Address</h5>
                         <address class="mb-4">
-                            <?php echo $partner['address_permanent']['address']; ?><br>
-                            <?php echo $partner['address_permanent']['city'] . ', ' . $partner['address_permanent']['state'] . ' - ' . $partner['address_permanent']['pincode']; ?>
+                            <?php if (!empty($partner['address_permanent'])): ?>
+                                <?php echo $partner['address_permanent']['address']; ?><br>
+                                <?php echo $partner['address_permanent']['city'] . ', ' . $partner['address_permanent']['state'] . ' - ' . $partner['address_permanent']['pincode']; ?>
+                            <?php else: ?>
+                                <span class="text-muted">Not provided</span>
+                            <?php endif; ?>
                         </address>
 
                         <h5 class="fw-bold text-primary mt-4 mb-4">Office Address</h5>
                         <address class="mb-4">
-                            <?php echo $partner['address_office']['address'] ? ($partner['address_office']['address'] . '<br>' . $partner['address_office']['city'] . ', ' . $partner['address_office']['state'] . ' - ' . $partner['address_office']['pincode']) : 'Same as permanent address'; ?>
+                            <?php if (!empty($partner['address_office']) && !empty($partner['address_office']['address'])): ?>
+                                <?php echo $partner['address_office']['address']; ?><br>
+                                <?php echo $partner['address_office']['city'] . ', ' . $partner['address_office']['state'] . ' - ' . $partner['address_office']['pincode']; ?>
+                            <?php else: ?>
+                                <span class="text-muted">Same as permanent address</span>
+                            <?php endif; ?>
                         </address>
 
                         <h5 class="fw-bold text-primary mt-4 mb-4">Identity</h5>
