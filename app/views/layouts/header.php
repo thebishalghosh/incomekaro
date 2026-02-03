@@ -276,9 +276,6 @@ if ($is_dashboard && isLoggedIn()):
                     </div>
                 </form>
 
-                <div class="text-center mt-4">
-                    <p class="small text-muted">Don't have an account? <a href="<?php echo url('contact/index'); ?>" class="text-decoration-none fw-bold">Contact Us</a></p>
-                </div>
             </div>
           </div>
         </div>
