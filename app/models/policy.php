@@ -1,5 +1,5 @@
 <?php
-function get_all_policies($page = 1, $limit = 10, $type_filter = '') {
+function get_all_policies($page = 1, $limit = 10, $type_filter = '', $search = '') {
     $db = get_db_connection();
     $offset = ($page - 1) * $limit;
 
@@ -9,6 +9,11 @@ function get_all_policies($page = 1, $limit = 10, $type_filter = '') {
     if (!empty($type_filter)) {
         $sql .= " AND type = :type";
         $params[':type'] = $type_filter;
+    }
+
+    if (!empty($search)) {
+        $sql .= " AND name LIKE :search";
+        $params[':search'] = "%$search%";
     }
 
     $sql .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
@@ -23,7 +28,7 @@ function get_all_policies($page = 1, $limit = 10, $type_filter = '') {
     return $stmt->fetchAll();
 }
 
-function get_total_policies_count($type_filter = '') {
+function get_total_policies_count($type_filter = '', $search = '') {
     $db = get_db_connection();
     $sql = "SELECT COUNT(*) FROM policies WHERE 1=1";
     $params = [];
@@ -31,6 +36,11 @@ function get_total_policies_count($type_filter = '') {
     if (!empty($type_filter)) {
         $sql .= " AND type = :type";
         $params[':type'] = $type_filter;
+    }
+
+    if (!empty($search)) {
+        $sql .= " AND name LIKE :search";
+        $params[':search'] = "%$search%";
     }
 
     $stmt = $db->prepare($sql);

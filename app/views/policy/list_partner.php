@@ -110,8 +110,39 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
         <p class="text-muted">Access all important policy documents and guidelines.</p>
     </div>
 
-    <?php if (!empty($policies)): ?>
-        <div class="row g-4">
+    <!-- Filter Section -->
+    <div class="row justify-content-center mb-5 animate-in" style="animation-delay: 0.1s;">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm p-3 rounded-4">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="policySearch" placeholder="Search policies...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="Bank">Bank</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Account Opening">Account Opening</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                            <i class="fas fa-undo me-2"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="policyGrid">
+        <?php if (!empty($policies)): ?>
             <?php foreach ($policies as $index => $policy): ?>
                 <div class="col-xl-3 col-lg-4 col-md-6 animate-in" style="animation-delay: <?php echo $index * 0.1; ?>s;">
                     <div class="policy-card">
@@ -126,16 +157,96 @@ if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
                     </div>
                 </div>
             <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <div class="text-center py-5 animate-in">
-            <div class="mb-3">
-                <i class="fas fa-folder-open fa-4x text-muted opacity-25"></i>
+        <?php else: ?>
+            <div class="col-12 text-center py-5 animate-in">
+                <div class="mb-3">
+                    <i class="fas fa-folder-open fa-4x text-muted opacity-25"></i>
+                </div>
+                <h5 class="text-muted">No policies available at the moment.</h5>
             </div>
-            <h5 class="text-muted">No policies available at the moment.</h5>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
+
+<script>
+    const assetBaseUrl = "<?php echo asset(''); ?>";
+    let searchTimeout;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('policySearch');
+        const typeSelect = document.getElementById('typeFilter');
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadPolicies, 500);
+        });
+
+        typeSelect.addEventListener('change', loadPolicies);
+    });
+
+    function resetFilters() {
+        document.getElementById('policySearch').value = '';
+        document.getElementById('typeFilter').value = '';
+        loadPolicies();
+    }
+
+    function loadPolicies() {
+        const search = document.getElementById('policySearch').value;
+        const type = document.getElementById('typeFilter').value;
+        const grid = document.getElementById('policyGrid');
+
+        // Show loading state (optional, but good UX)
+        grid.style.opacity = '0.5';
+
+        fetch(`<?php echo url('policy/list'); ?>?ajax=1&search=${encodeURIComponent(search)}&type=${encodeURIComponent(type)}`)
+            .then(response => response.json())
+            .then(data => {
+                renderPolicies(data.policies);
+                grid.style.opacity = '1';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                grid.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading policies.</div>';
+                grid.style.opacity = '1';
+            });
+    }
+
+    function renderPolicies(policies) {
+        const grid = document.getElementById('policyGrid');
+        grid.innerHTML = '';
+
+        if (policies.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5 animate-in">
+                    <div class="mb-3">
+                        <i class="fas fa-search fa-4x text-muted opacity-25"></i>
+                    </div>
+                    <h5 class="text-muted">No policies found matching your criteria.</h5>
+                </div>
+            `;
+            return;
+        }
+
+        policies.forEach((policy, index) => {
+            const delay = index * 0.1;
+            const card = `
+                <div class="col-xl-3 col-lg-4 col-md-6 animate-in" style="animation-delay: ${delay}s;">
+                    <div class="policy-card">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="policy-type">${policy.type}</div>
+                        <h5 class="policy-title">${policy.name}</h5>
+                        <a href="${assetBaseUrl}${policy.file_url}" target="_blank" class="btn-view">
+                            View Document <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+            grid.innerHTML += card;
+        });
+    }
+</script>
 
 <?php
 if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {

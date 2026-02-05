@@ -9,9 +9,11 @@ function policy_index() {
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = 10;
         $type_filter = isset($_GET['type']) ? trim($_GET['type']) : '';
+        // Added search support for admin as well
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-        $policies = get_all_policies($page, $limit, $type_filter);
-        $total_policies = get_total_policies_count($type_filter);
+        $policies = get_all_policies($page, $limit, $type_filter, $search);
+        $total_policies = get_total_policies_count($type_filter, $search);
         $total_pages = ceil($total_policies / $limit);
 
         // Return JSON
@@ -33,20 +35,32 @@ function policy_index() {
 
 function policy_list() {
     require_login();
-    // Allow Partners, RMs, Sales Execs, WL Admins
-    // Basically anyone logged in can view policies
 
-    // For now, list view doesn't have pagination/ajax requested, keeping it simple or can be upgraded later
-    // But get_all_policies now requires arguments or defaults.
-    // Let's fetch all for list view (limit 100 or so)
+    // Handle AJAX Search & Filtering
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 100; // Keep limit high for partner list view as requested, or implement pagination later
+        $type_filter = isset($_GET['type']) ? trim($_GET['type']) : '';
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+        $policies = get_all_policies($page, $limit, $type_filter, $search);
+
+        // Return JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'policies' => $policies
+        ]);
+        exit;
+    }
+
+    // Initial Load
     $policies = get_all_policies(1, 100);
 
     // If Partner, use partner layout
     if ($_SESSION['role_code'] === 'PARTNER_ADMIN') {
         view('policy/list_partner', ['policies' => $policies]);
     } else {
-        // For others, maybe a generic list or redirect
-        // For now, let's use the same view but header might differ
+        // For others, use the same view
         view('policy/list_partner', ['policies' => $policies]);
     }
 }
