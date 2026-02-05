@@ -124,17 +124,18 @@
         width: 100%;
         aspect-ratio: 1 / 1;
         overflow: hidden;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+        background: white; /* Changed to white for cleaner logo display */
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        padding: 20px; /* Added padding */
     }
 
     .panel-image-wrapper img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain; /* Changed to contain */
         object-position: center;
         transition: var(--transition);
     }
