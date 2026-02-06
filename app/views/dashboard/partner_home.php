@@ -790,6 +790,36 @@
                 $parent_services = array_filter($partner['subscription']['services'], function($svc) {
                     return empty($svc['parent_id']);
                 });
+
+                // Custom Sorting Logic
+                $order_map = [
+                    'LOAN' => 1,
+                    'CREDIT CARD' => 2,
+                    'TAX' => 3,
+                    'INSURANCE' => 4,
+                    'INSTANT' => 5,
+                    'SMART' => 6,
+                    'CIBIL' => 7
+                ];
+
+                usort($parent_services, function($a, $b) use ($order_map) {
+                    $a_str = strtoupper($a['name'] . ' ' . $a['category']);
+                    $b_str = strtoupper($b['name'] . ' ' . $b['category']);
+
+                    $pos_a = 999;
+                    $pos_b = 999;
+
+                    foreach ($order_map as $key => $pos) {
+                        if (strpos($a_str, $key) !== false && $pos_a === 999) {
+                            $pos_a = $pos;
+                        }
+                        if (strpos($b_str, $key) !== false && $pos_b === 999) {
+                            $pos_b = $pos;
+                        }
+                    }
+
+                    return $pos_a - $pos_b;
+                });
             ?>
             <?php foreach ($parent_services as $index => $svc): ?>
                 <?php
