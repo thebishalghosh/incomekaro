@@ -177,22 +177,89 @@ if ($is_dashboard && isLoggedIn()):
             </div>
         </header>
 
-        <!-- Notification Polling Script -->
+        <!-- Optimized Notification Polling Script -->
         <script>
-            setInterval(function() {
-                fetch('<?php echo url('notification/count'); ?>')
-                    .then(response => response.json())
-                    .then(data => {
-                        const badge = document.getElementById('notification-badge');
-                        if (data.count > 0) {
-                            badge.textContent = data.count;
-                            badge.style.display = 'inline-block';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    })
-                    .catch(error => console.error('Error polling notifications:', error));
-            }, 30000); // Poll every 30 seconds
+            (function() {
+                let pollTimer = null;
+                let baseInterval = 60000; // 60 seconds
+                let currentInterval = baseInterval;
+                let isRequestPending = false;
+
+                function pollNotifications() {
+                    // Stop if tab is hidden
+                    if (document.hidden) {
+                        return;
+                    }
+
+                    // Prevent duplicate requests
+                    if (isRequestPending) {
+                        return;
+                    }
+
+                    isRequestPending = true;
+
+                    // Timeout protection (10 seconds)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    fetch('<?php echo url('notification/count'); ?>', { signal: controller.signal })
+                        .then(response => {
+                            clearTimeout(timeoutId);
+                            if (response.status === 429) {
+                                // Rate limited: Backoff
+                                throw new Error('Rate limited');
+                            }
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const badge = document.getElementById('notification-badge');
+                            if (data.count > 0) {
+                                badge.textContent = data.count;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                            // Success: Reset interval
+                            currentInterval = baseInterval;
+                        })
+                        .catch(error => {
+                            if (error.name === 'AbortError') {
+                                console.warn('Notification poll timed out');
+                            } else {
+                                console.warn('Notification poll failed:', error);
+                            }
+                            // Exponential backoff: double interval, max 5 mins
+                            currentInterval = Math.min(currentInterval * 2, 300000);
+                        })
+                        .finally(() => {
+                            isRequestPending = false;
+                            // Schedule next poll
+                            if (!document.hidden) {
+                                clearTimeout(pollTimer);
+                                pollTimer = setTimeout(pollNotifications, currentInterval);
+                            }
+                        });
+                }
+
+                // Start polling
+                pollTimer = setTimeout(pollNotifications, baseInterval);
+
+                // Handle visibility change
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        // Reset and poll immediately when tab becomes active
+                        currentInterval = baseInterval;
+                        clearTimeout(pollTimer);
+                        pollNotifications();
+                    } else {
+                        // Stop polling when hidden
+                        clearTimeout(pollTimer);
+                    }
+                });
+            })();
         </script>
 
         <div class="container-fluid p-4">
