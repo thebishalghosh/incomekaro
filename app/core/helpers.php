@@ -152,7 +152,7 @@ HTML;
 }
 
 // Email Function using PHPMailer
-function send_email($to, $subject, $body, $is_html = true) {
+function send_email($to, $subject, $body, $is_html = true, $headers = []) {
     // Check if the body is already a full HTML document
     if ($is_html && (stripos(trim($body), '<!DOCTYPE') === 0 || stripos(trim($body), '<html') === 0 || stripos(trim($body), '<div style=') === 0)) {
         // Do not wrap in default template
@@ -179,16 +179,38 @@ function send_email($to, $subject, $body, $is_html = true) {
             }
 
             // Recipients
-            // Use dynamic From Name if possible, but env vars are static.
-            // Ideally, we should pass from_name/from_email as args, but to keep signature compatible:
-            $from_name = getenv('SMTP_FROM_NAME') ?: 'IncomeKaro';
+            $from_email = !empty($headers['from_email']) ? $headers['from_email'] : (getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in');
+            $from_name = !empty($headers['from_name']) ? $headers['from_name'] : (getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
 
-            // If the body contains specific branding (hacky check), we might want to adjust the From Name?
-            // But PHPMailer setFrom is usually fixed by SMTP server policy.
-            // Let's stick to the configured sender.
-
-            $mail->setFrom(getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in', $from_name);
+            $mail->setFrom($from_email, $from_name);
             $mail->addAddress($to);
+
+            // CC
+            if (!empty($headers['cc'])) {
+                if (is_array($headers['cc'])) {
+                    foreach ($headers['cc'] as $cc_email) {
+                        $mail->addCC($cc_email);
+                    }
+                } else {
+                    $mail->addCC($headers['cc']);
+                }
+            }
+
+            // BCC
+            if (!empty($headers['bcc'])) {
+                if (is_array($headers['bcc'])) {
+                    foreach ($headers['bcc'] as $bcc_email) {
+                        $mail->addBCC($bcc_email);
+                    }
+                } else {
+                    $mail->addBCC($headers['bcc']);
+                }
+            }
+
+            // Reply-To
+            if (!empty($headers['reply_to'])) {
+                $mail->addReplyTo($headers['reply_to']);
+            }
 
             // Content
             $mail->isHTML($is_html);

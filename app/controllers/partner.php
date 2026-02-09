@@ -190,6 +190,9 @@ function partner_store() {
                 $support_email = 'support@incomekaro.in'; // Default support email
                 $primary_color = '#0d6efd'; // Default primary color
 
+                // Prepare Email Headers
+                $email_headers = [];
+
                 if (!empty($white_label_id)) {
                     $wl = get_white_label_by_id($white_label_id);
                     if ($wl) {
@@ -204,6 +207,12 @@ function partner_store() {
                         if (!empty($wl['primary_color'])) {
                             $primary_color = $wl['primary_color'];
                         }
+
+                        // Set Custom Headers for White Label
+                        $email_headers['from_email'] = $wl['support_email'];
+                        $email_headers['from_name'] = $wl['company_name'];
+                        $email_headers['reply_to'] = $wl['support_email'];
+                        $email_headers['cc'] = $wl['support_email'];
                     }
                 }
 
@@ -241,10 +250,8 @@ function partner_store() {
                 </div>
                 ";
 
-                // Send using the configured mailer
-                // Note: send_email function signature might need to support HTML or headers if not already
-                // Assuming send_email handles basic HTML content type
-                send_email($to, $subject, $message);
+                // Send using the configured mailer with custom headers
+                send_email($to, $subject, $message, true, $email_headers);
 
             } catch (Exception $e) {
                 error_log("Failed to send welcome email to partner: " . $e->getMessage());
