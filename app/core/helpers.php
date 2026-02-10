@@ -96,23 +96,29 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
-function get_email_template($content) {
-    // This function is now deprecated for custom HTML emails
-    // But kept for backward compatibility if needed.
-    // However, if the content itself is a full HTML page (starts with <!DOCTYPE or <html>), return it as is.
+function get_email_template($content, $branding = null) {
+    // If the content itself is a full HTML page (starts with <!DOCTYPE or <html>), return it as is.
     if (stripos(trim($content), '<!DOCTYPE') === 0 || stripos(trim($content), '<html') === 0) {
         return $content;
     }
 
+    // Default Branding
     $logo_url = asset('images/logo.png'); // Ensure this is an absolute URL in production
     $site_name = SITE_NAME;
     $year = date('Y');
     $url_root = URL_ROOT;
-
-    // Lavender Theme Colors
     $primary_color = '#6A5ACD'; // SlateBlue
     $accent_color = '#E6E6FA'; // Lavender
     $bg_color = '#F8F9FD';
+
+    // Override with Custom Branding if provided
+    if ($branding) {
+        if (!empty($branding['site_name'])) $site_name = $branding['site_name'];
+        if (!empty($branding['logo_url'])) $logo_url = $branding['logo_url'];
+        if (!empty($branding['primary_color'])) $primary_color = $branding['primary_color'];
+        if (!empty($branding['url_root'])) $url_root = $branding['url_root'];
+        // Add other overrides as needed
+    }
 
     return <<<HTML
 <!DOCTYPE html>
@@ -157,7 +163,9 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
     if ($is_html && (stripos(trim($body), '<!DOCTYPE') === 0 || stripos(trim($body), '<html') === 0 || stripos(trim($body), '<div style=') === 0)) {
         // Do not wrap in default template
     } else if ($is_html) {
-        $body = get_email_template($body);
+        // Extract branding if available
+        $branding = isset($headers['branding']) ? $headers['branding'] : null;
+        $body = get_email_template($body, $branding);
     }
 
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
