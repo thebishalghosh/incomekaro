@@ -4,6 +4,7 @@ use Dompdf\Options;
 
 require_once APP_PATH . '/models/partner.php';
 require_once APP_PATH . '/models/user.php';
+require_once APP_PATH . '/models/white_label.php'; // Include White Label Model
 require_once APP_PATH . '/core/mailer.php'; // Ensure mailer is included
 
 function agreement_index() {
@@ -39,7 +40,23 @@ function agreement_accept() {
 
                 // Send confirmation email
                 $partner = get_partner_by_id($user['partner_id']);
+
+                // Determine Branding & Headers
                 $company_name = get_site_name();
+                $email_headers = [];
+
+                if (!empty($partner['white_label_id'])) {
+                    $wl = get_white_label_by_id($partner['white_label_id']);
+                    if ($wl) {
+                        $company_name = $wl['company_name'];
+
+                        // Set Custom Headers for White Label
+                        // Note: We keep the system 'from_email' to avoid SPF/DKIM "via" warnings
+                        $email_headers['from_name'] = $wl['company_name'];
+                        $email_headers['reply_to'] = $wl['support_email'];
+                        $email_headers['cc'] = $wl['support_email'];
+                    }
+                }
 
                 $email_body = "<p>Hello <b>" . $partner['profile']['full_name'] . "</b>,</p>";
                 $email_body .= "<p>Thank you for accepting the Business Partnership Agreement with <b>" . $company_name . "</b>.</p>";
@@ -49,7 +66,7 @@ function agreement_accept() {
                 $email_body .= "</div>";
                 $email_body .= "<p>We are excited to have you on board!</p>";
 
-                send_email($partner['profile']['email'], 'Agreement Accepted - Welcome to ' . $company_name, $email_body);
+                send_email($partner['profile']['email'], 'Agreement Accepted - Welcome to ' . $company_name, $email_body, true, $email_headers);
 
                 redirect('dashboard/partner');
             } else {
