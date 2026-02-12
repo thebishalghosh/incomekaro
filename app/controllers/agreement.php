@@ -50,17 +50,22 @@ function agreement_accept() {
                     if ($wl) {
                         $company_name = $wl['company_name'];
 
-                        // Set Custom Headers for White Label
-                        $email_headers['from_name'] = $wl['company_name'];
-                        $email_headers['reply_to'] = $wl['support_email'];
-                        $email_headers['cc'] = $wl['support_email'];
+                        // Set Custom Headers for White Label with Validation
+                        if (!empty($wl['company_name'])) {
+                            $email_headers['from_name'] = $wl['company_name'];
+                        }
+
+                        if (!empty($wl['support_email']) && filter_var($wl['support_email'], FILTER_VALIDATE_EMAIL)) {
+                            $email_headers['reply_to'] = $wl['support_email'];
+                            $email_headers['cc'] = $wl['support_email'];
+                        }
 
                         // Pass branding for the template
                         $email_headers['branding'] = [
                             'site_name' => $wl['company_name'],
-                            'logo_url' => asset($wl['logo_url']),
-                            'primary_color' => $wl['primary_color'],
-                            'url_root' => 'http://' . $wl['primary_domain']
+                            'logo_url' => !empty($wl['logo_url']) ? asset($wl['logo_url']) : asset('images/logo.png'),
+                            'primary_color' => !empty($wl['primary_color']) ? $wl['primary_color'] : '#6A5ACD',
+                            'url_root' => !empty($wl['primary_domain']) ? 'http://' . $wl['primary_domain'] : url('/')
                         ];
                     }
                 }
