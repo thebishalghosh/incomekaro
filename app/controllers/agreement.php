@@ -56,6 +56,7 @@ function agreement_accept() {
                         }
 
                         if (!empty($wl['support_email']) && filter_var($wl['support_email'], FILTER_VALIDATE_EMAIL)) {
+                            $email_headers['from_email'] = $wl['support_email']; // Set From Email to WL Support Email
                             $email_headers['reply_to'] = $wl['support_email'];
                             $email_headers['cc'] = $wl['support_email'];
                         }
