@@ -3,12 +3,18 @@
 // This file is included very early, so we need to be careful with dependencies.
 
 $WL_CONFIG = null;
-$domain = $_SERVER['HTTP_HOST'];
+$domain = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? null;
+
+if (!$domain && defined('APP_URL')) {
+    $domain = parse_url(APP_URL, PHP_URL_HOST) ?: null;
+}
+
+if (!$domain) {
+    $domain = 'localhost';
+}
 
 // Fix: Remove www. prefix if present to ensure matching with database
-if (substr($domain, 0, 4) === 'www.') {
-    $domain = substr($domain, 4);
-}
+$domain = preg_replace('/^www\./i', '', $domain);
 
 // Load all white label clients from a cached file or database
 // For simplicity, let's assume a function get_all_wl_domains() exists

@@ -366,7 +366,11 @@ function openRevokeModal(id, name) {
     if (existingModal) existingModal.remove();
 
     let html = document.getElementById('revokeModalTemplate').innerHTML;
-    html = html.replace(/__ID__/g, id).replace(/__NAME__/g, name).replace('revokeModal__ID__', 'dynamicRevokeModal');
+
+    // Fix: Replace ID first, then the rest
+    html = html.replace('revokeModal__ID__', 'dynamicRevokeModal');
+    html = html.replace(/__ID__/g, id);
+    html = html.replace(/__NAME__/g, name);
 
     const div = document.createElement('div');
     div.innerHTML = html;
