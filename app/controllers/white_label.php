@@ -40,16 +40,11 @@ function white_label_store() {
             }
         }
 
-        $error = null;
-        if (create_white_label($data, $error)) {
+        if (create_white_label($data)) {
             flash('wl_success', 'White Label Client Created Successfully');
             redirect('white_label/index');
         } else {
-            $message = 'Failed to create client';
-            if (!empty($error)) {
-                $message .= ': ' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8');
-            }
-            flash('wl_error', $message, 'alert alert-danger');
+            flash('wl_error', 'Failed to create client', 'alert alert-danger');
             redirect('white_label/create');
         }
     }
