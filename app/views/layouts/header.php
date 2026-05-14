@@ -325,9 +325,12 @@ if ($is_dashboard && isLoggedIn()):
                         <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
                         <label for="email">Email address</label>
                     </div>
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
-                        <label for="password">Password</label>
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="password" class="form-control pe-5" id="loginPassword" name="password" placeholder="Password" required>
+                        <label for="loginPassword">Password</label>
+                        <button type="button" class="password-toggle btn btn-link p-0" data-target="loginPassword" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -348,6 +351,27 @@ if ($is_dashboard && isLoggedIn()):
         </div>
       </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggle = document.querySelector('.password-toggle');
+            if (!toggle) return;
+            toggle.addEventListener('click', function () {
+                var input = document.getElementById(this.dataset.target);
+                if (!input) return;
+                var icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+    </script>
 
     <!-- Main Content Wrapper -->
     <div style="margin-top: 80px;">

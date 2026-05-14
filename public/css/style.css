@@ -219,6 +219,36 @@ body {
 }
 
 
+/* Password toggle */
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    color: #6c757d;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.05rem;
+    height: 1.9rem;
+    width: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+.password-toggle i {
+    line-height: 1;
+}
+.password-toggle:hover,
+.password-toggle:focus {
+    color: #4b0082;
+    text-decoration: none;
+}
+.password-toggle:focus {
+    outline: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {
