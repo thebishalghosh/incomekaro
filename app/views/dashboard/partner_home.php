@@ -601,18 +601,145 @@
     }
 
     /* Responsive Improvements */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
         .dashboard-container {
-            padding: 24px 16px;
+            max-width: 100%;
+            padding: 30px 18px;
         }
 
         .hero-card {
-            padding: 24px;
+            padding: 28px;
         }
 
         .stat-card,
-        .action-card {
+        .action-card,
+        .chart-card {
             padding: 24px;
+        }
+
+        .hero-card .d-flex {
+            flex-wrap: wrap;
+        }
+
+        .hero-card .me-4 {
+            margin-right: 0 !important;
+        }
+
+        .hero-card .text-end {
+            width: 100%;
+            text-align: left !important;
+            margin-top: 18px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 22px 14px;
+        }
+
+        .hero-card {
+            padding: 22px;
+        }
+
+        .hero-card .profile-avatar {
+            width: 90px;
+            height: 90px;
+            margin-bottom: 14px;
+        }
+
+        .hero-card h2 {
+            font-size: 1.6rem;
+        }
+
+        .hero-card .d-flex.align-items-center {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .hero-card .d-flex.align-items-center > div {
+            width: 100%;
+        }
+
+        .hero-card .d-flex.align-items-center .text-muted.small {
+            display: block;
+        }
+
+        .hero-card .text-end {
+            margin-top: 12px;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .stat-card,
+        .action-card,
+        .chart-card {
+            padding: 22px;
+        }
+
+        .service-card {
+            min-height: auto;
+        }
+
+        .service-img-wrapper {
+            height: 160px;
+        }
+
+        #serviceChart,
+        #statusChart {
+            height: 240px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-container {
+            padding: 18px 12px;
+        }
+
+        .hero-card {
+            padding: 20px;
+        }
+
+        .hero-card h2 {
+            font-size: 1.4rem;
+        }
+
+        .hero-card .profile-avatar {
+            width: 80px;
+            height: 80px;
+        }
+
+        .stat-card,
+        .action-card,
+        .chart-card {
+            padding: 20px;
+        }
+
+        .action-icon-circle {
+            width: 70px;
+            height: 70px;
+            font-size: 1.6rem;
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            font-size: 1.45rem;
+        }
+
+        .service-card h6 {
+            font-size: 0.9rem;
+        }
+
+        .service-card span {
+            font-size: 0.7rem;
+        }
+
+        .section-header {
+            gap: 10px;
         }
     }
 
