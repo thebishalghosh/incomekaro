@@ -50,9 +50,9 @@ if ($is_dashboard && isLoggedIn()):
     <!-- Footer -->
     <footer class="text-white pt-5 pb-3 mt-auto" style="background-color: #0f172a;" id="contact">
         <div class="container">
-            <div class="row g-5">
+            <div class="row g-4">
                 <!-- Brand & About -->
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
                     <div class="mb-4">
                         <!-- Increased logo size to 60px -->
                         <img src="<?php echo $logo_url; ?>" alt="<?php echo $site_name; ?>" style="max-height: 60px;">
@@ -69,7 +69,7 @@ if ($is_dashboard && isLoggedIn()):
                 </div>
 
                 <!-- Quick Links -->
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-2 col-md-6">
                     <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Quick Links</h6>
                     <ul class="list-unstyled footer-links">
                         <li><a href="<?php echo url('/'); ?>">Home</a></li>
@@ -83,11 +83,37 @@ if ($is_dashboard && isLoggedIn()):
                         <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
                             <li><a href="<?php echo url('contact/index'); ?>">Contact Support</a></li>
                         <?php endif; ?>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('documents/index'); ?>">Company Documents</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+
+                <!-- Policies -->
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Policies</h6>
+                    <ul class="list-unstyled footer-links">
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('terms/index'); ?>">Terms & Conditions</a></li>
+                        <?php endif; ?>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('privacy/index'); ?>">Privacy Policy</a></li>
+                        <?php endif; ?>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('refund/index'); ?>">Refund & Returns</a></li>
+                        <?php endif; ?>
+
+                        <?php if (!defined('IS_WHITE_LABEL') || !IS_WHITE_LABEL): ?>
+                            <li><a href="<?php echo url('dsa_return/index'); ?>">DSA Return & Refund</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
                 <!-- Contact Info -->
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
                     <h6 class="fw-bold text-white mb-4 text-uppercase small letter-spacing-1">Get in Touch</h6>
                     <div class="text-white-50 small">
                         <p class="mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i> <?php echo $contact_address; ?></p>
