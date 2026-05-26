@@ -122,6 +122,65 @@
             border-color: rgba(0, 0, 0, 0.08);
         }
 
+        .navbar-toggler {
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        @media (max-width: 992px) {
+            .navbar-collapse {
+                border-top: 1px solid rgba(0,0,0,0.05);
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+
+            .navbar-collapse .btn,
+            .navbar-collapse .dropdown,
+            .navbar-collapse .user-profile {
+                width: 100%;
+            }
+
+            .navbar-collapse .dropdown,
+            .navbar-collapse .user-profile {
+                display: flex;
+                justify-content: flex-start;
+            }
+
+            .navbar-collapse .dropdown > a,
+            .navbar-collapse .user-profile > div {
+                width: 100%;
+            }
+
+            .navbar-collapse .dropdown {
+                margin-bottom: 0.75rem;
+            }
+
+            .navbar-collapse .btn {
+                white-space: normal;
+            }
+
+            .navbar-collapse .btn + .btn {
+                margin-top: 0.75rem;
+            }
+
+            .navbar-collapse .dropdown-menu {
+                width: auto !important;
+                max-width: 100% !important;
+            }
+
+            .navbar-collapse .d-flex.flex-lg-row {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .navbar-collapse .text-muted.position-relative {
+                display: inline-flex;
+                justify-content: space-between;
+            }
+        }
 
     </style>
 </head>
@@ -133,75 +192,83 @@
             <img src="<?php echo get_logo_url(); ?>" alt="<?php echo get_site_name(); ?>" style="max-height: 60px;">
         </a>
 
-        <div class="d-flex align-items-center">
-            <!-- Bank Search Button -->
-            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#bankSearchModal">
-                <i class="fas fa-search-location me-1"></i> Check Serviceability
-            </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#partnerNavbarNav" aria-controls="partnerNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary me-2">
-                <i class="fas fa-file-alt me-1"></i> My Applications
-            </a>
-            <a href="<?php echo url('withdrawal/index'); ?>" class="btn btn-outline-success me-2">
-                <i class="fas fa-wallet me-1"></i> Withdrawals
-            </a>
-            <a href="<?php echo url('policy/list'); ?>" class="btn btn-outline-secondary me-2">Policy</a>
-            <a href="<?php echo url('invoice/download'); ?>" class="btn btn-outline-secondary me-3" target="_blank">
-                <i class="fas fa-file-invoice me-1"></i> Invoice
-            </a>
+        <div class="collapse navbar-collapse" id="partnerNavbarNav">
+            <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center w-100">
+                <div class="d-flex flex-column flex-lg-row flex-wrap align-items-start align-items-lg-center gap-2 mb-3 mb-lg-0">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bankSearchModal">
+                        <i class="fas fa-search-location me-1"></i> Check Serviceability
+                    </button>
 
-            <!-- Notification Bell -->
-            <div class="dropdown me-3">
-                <a href="#" class="text-muted position-relative" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-bell fa-lg"></i>
-                    <?php $unread_count = get_my_unread_count(); ?>
-                    <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; <?php echo $unread_count > 0 ? '' : 'display: none;'; ?>">
-                        <?php echo $unread_count; ?>
-                    </span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 350px;">
-                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-                        <h6 class="mb-0 fw-bold">Notifications</h6>
-                        <a href="<?php echo url('notification/mark_all_read'); ?>" class="small text-decoration-none">Mark all as read</a>
-                    </div>
-                    <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
-                        <?php $notifications = get_my_notifications(); ?>
-                        <?php if (empty($notifications)): ?>
-                            <div class="text-center p-4 text-muted">
-                                <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                <p>No new notifications.</p>
+                    <a href="<?php echo url('application/index'); ?>" class="btn btn-outline-primary">
+                        <i class="fas fa-file-alt me-1"></i> My Applications
+                    </a>
+                    <a href="<?php echo url('withdrawal/index'); ?>" class="btn btn-outline-success">
+                        <i class="fas fa-wallet me-1"></i> Withdrawals
+                    </a>
+                    <a href="<?php echo url('policy/list'); ?>" class="btn btn-outline-secondary">Policy</a>
+                    <a href="<?php echo url('invoice/download'); ?>" class="btn btn-outline-secondary" target="_blank">
+                        <i class="fas fa-file-invoice me-1"></i> Invoice
+                    </a>
+                </div>
+
+                <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-2 ms-lg-auto">
+                    <div class="dropdown">
+                        <a href="#" class="text-muted position-relative d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell fa-lg"></i>
+                            <?php $unread_count = get_my_unread_count(); ?>
+                            <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; <?php echo $unread_count > 0 ? '' : 'display: none;'; ?>">
+                                <?php echo $unread_count; ?>
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 350px;">
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <a href="<?php echo url('notification/mark_all_read'); ?>" class="small text-decoration-none">Mark all as read</a>
                             </div>
-                        <?php else: ?>
-                            <?php foreach ($notifications as $notif): ?>
-                                <a href="<?php echo url('notification/read/' . $notif['id']); ?>" class="list-group-item list-group-item-action <?php echo $notif['is_read'] ? '' : 'bg-light'; ?>">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 fw-bold small"><?php echo $notif['title']; ?></h6>
-                                        <small class="text-muted"><?php echo date('d M', strtotime($notif['created_at'])); ?></small>
+                            <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                                <?php $notifications = get_my_notifications(); ?>
+                                <?php if (empty($notifications)): ?>
+                                    <div class="text-center p-4 text-muted">
+                                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                        <p>No new notifications.</p>
                                     </div>
-                                    <p class="mb-1 small text-muted"><?php echo $notif['message']; ?></p>
-                                </a>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                                <?php else: ?>
+                                    <?php foreach ($notifications as $notif): ?>
+                                        <a href="<?php echo url('notification/read/' . $notif['id']); ?>" class="list-group-item list-group-item-action <?php echo $notif['is_read'] ? '' : 'bg-light'; ?>">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1 fw-bold small"><?php echo $notif['title']; ?></h6>
+                                                <small class="text-muted"><?php echo date('d M', strtotime($notif['created_at'])); ?></small>
+                                            </div>
+                                            <p class="mb-1 small text-muted"><?php echo $notif['message']; ?></p>
+                                        </a>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            <a href="<?php echo url('notification/index'); ?>" class="dropdown-item text-center small py-2">View All Notifications</a>
+                        </div>
                     </div>
-                    <a href="<?php echo url('notification/index'); ?>" class="dropdown-item text-center small py-2">View All Notifications</a>
-                </div>
-            </div>
 
-            <div class="user-profile dropdown">
-                <div class="d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="user-avatar">
-                        <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)); ?>
+                    <div class="user-profile dropdown">
+                        <div class="d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar">
+                                <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)); ?>
+                            </div>
+                            <div class="d-none d-md-block">
+                                <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
+                            </div>
+                            <i class="bi bi-chevron-down ms-2 text-muted small"></i>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                            <li><a class="dropdown-item" href="<?php echo url('profile/index'); ?>"><i class="fas fa-user me-2"></i> My Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
                     </div>
-                    <div class="d-none d-md-block">
-                        <div class="fw-bold text-dark"><?php echo $_SESSION['user_name'] ?? 'User'; ?></div>
-                    </div>
-                    <i class="bi bi-chevron-down ms-2 text-muted small"></i>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                    <li><a class="dropdown-item" href="<?php echo url('profile/index'); ?>"><i class="fas fa-user me-2"></i> My Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                </ul>
             </div>
         </div>
     </div>
