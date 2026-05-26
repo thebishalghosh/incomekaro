@@ -31,6 +31,10 @@ function auth_login_post() {
     auth_login_session($user);
 }
 
+function auth_logout() {
+    auth_logout_session();
+}
+
 function auth_suspended() {
     view('errors/suspended');
 }
