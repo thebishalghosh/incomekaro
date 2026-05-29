@@ -73,7 +73,8 @@ function auth_send_reset_link() {
             $email_headers = []; // Initialize headers array
 
             // Use site name as default sender name; actual sender email assigned after WL overrides
-            $email_headers['from_name'] = $site_name;
+            $email_headers['from_name'] = (string)$site_name;
+            $email_headers['from_email'] = (string)$support_email;
 
             if (!empty($user['white_label_id'])) {
                 $wl = get_white_label_by_id($user['white_label_id']);
@@ -88,21 +89,25 @@ function auth_send_reset_link() {
                     }
 
                     // Set Custom Headers for White Label
-                    $email_headers['from_name'] = $wl['company_name'];
-                    $email_headers['reply_to'] = $support_email;
+                    $email_headers['from_name'] = (string)$wl['company_name'];
+                    $email_headers['reply_to'] = (string)$support_email;
+                    $email_headers['from_email'] = (string)$support_email;
 
                     // Pass branding for the template
+                    // Temporarily bypassed for testing
+                    /*
                     $email_headers['branding'] = [
                         'site_name' => $wl['company_name'],
                         'logo_url' => !empty($wl['logo_url']) ? asset($wl['logo_url']) : asset('images/logo.png'),
                         'primary_color' => $wl['primary_color'],
                         'url_root' => $base_url
                     ];
+                    */
                 }
             }
 
             if (empty($email_headers['reply_to'])) {
-                $email_headers['reply_to'] = $support_email;
+                $email_headers['reply_to'] = (string)$support_email;
             }
 
             // Send Email
@@ -127,7 +132,12 @@ function auth_send_reset_link() {
             ";
 
             // Pass headers to send_email
-            send_email($email, $subject, $message, true, $email_headers);
+            $email_sent = send_email($email, $subject, $message, true, $email_headers);
+
+            if (!$email_sent) {
+                error_log("Forgot password email failed to send to: " . $email);
+                // We shouldn't change the user experience per security practices, but logging is fine.
+            }
         }
 
         // Always show success message to prevent email enumeration
