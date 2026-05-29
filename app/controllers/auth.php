@@ -46,14 +46,11 @@ function auth_forgot_password() {
 }
 
 function auth_send_reset_link() {
-    error_log("auth_send_reset_link called.");
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-        error_log("Email from POST: " . $email);
         $user = find_user_by_email($email);
 
         if ($user) {
-            error_log("User found in database.");
             // Generate Token
             $token = bin2hex(random_bytes(32));
             $token_hash = password_hash($token, PASSWORD_DEFAULT);
@@ -144,21 +141,15 @@ function auth_send_reset_link() {
             // Save the exact HTML that will be sent for debugging
             try {
                 file_put_contents(APP_ROOT . '/last_reset_email.html', $message);
-                error_log("Successfully wrote last_reset_email.html");
             } catch (Exception $e) {
                 error_log('Unable to write last_reset_email.html: ' . $e->getMessage());
             }
 
-            error_log("Calling send_email...");
             // Pass headers to send_email and log any failure for troubleshooting
             $email_sent = send_email($email, $subject, $message, true, $email_headers);
             if (!$email_sent) {
                 error_log("Forgot-password email failed to send to {$email}.");
-            } else {
-                error_log("send_email returned true.");
             }
-        } else {
-             error_log("User NOT found in database.");
         }
 
         // Always show success message to prevent email enumeration
