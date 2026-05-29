@@ -159,6 +159,11 @@ HTML;
 
 // Email Function using PHPMailer
 function send_email($to, $subject, $body, $is_html = true, $headers = []) {
+    $debug_log = __DIR__ . '/../../debug_send_email.txt';
+    file_put_contents($debug_log, "\n\n--- [" . date('Y-m-d H:i:s') . "] Attempting to send email to $to ---\n", FILE_APPEND);
+    file_put_contents($debug_log, "Subject: $subject\n", FILE_APPEND);
+    file_put_contents($debug_log, "Headers passed: " . print_r($headers, true) . "\n", FILE_APPEND);
+
     // Check if the body is already a full HTML document
     if ($is_html && (stripos(trim($body), '<!DOCTYPE') === 0 || stripos(trim($body), '<html') === 0 || stripos(trim($body), '<div style=') === 0)) {
         // Do not wrap in default template
@@ -169,15 +174,30 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
     }
 
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+        file_put_contents($debug_log, "PHPMailer class EXISTS. Proceeding with SMTP.\n", FILE_APPEND);
         $mail = new PHPMailer(true);
         try {
             // Server settings
             $mail->isSMTP();
-            $mail->Host       = getenv('SMTP_HOST') ?: 'localhost';
-            $mail->SMTPAuth   = !empty(getenv('SMTP_USER'));
-            $mail->Username   = getenv('SMTP_USER');
-            $mail->Password   = getenv('SMTP_PASS');
-            $mail->Port       = getenv('SMTP_PORT') ?: 1025;
+
+            $smtp_host = getenv('SMTP_HOST');
+            $smtp_user = getenv('SMTP_USER');
+            $smtp_pass = getenv('SMTP_PASS');
+            $smtp_port = getenv('SMTP_PORT') ?: 1025;
+
+            file_put_contents($debug_log, "SMTP Config - Host: $smtp_host, Port: $smtp_port, User: " . (!empty($smtp_user) ? 'SET' : 'EMPTY') . "\n", FILE_APPEND);
+
+            $mail->Host       = $smtp_host ?: 'localhost';
+            $mail->SMTPAuth   = !empty($smtp_user);
+            $mail->Username   = $smtp_user;
+            $mail->Password   = $smtp_pass;
+            $mail->Port       = $smtp_port;
+
+            // Enable detailed SMTP debug output to our file
+            $mail->SMTPDebug = 2; // 2 = Client and Server messages
+            $mail->Debugoutput = function($str, $level) use ($debug_log) {
+                file_put_contents($debug_log, "SMTP Debug [$level]: " . trim($str) . "\n", FILE_APPEND);
+            };
 
             // SSL/TLS settings (Auto-detect based on port)
             if ($mail->Port == 465) {
@@ -190,6 +210,8 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
             $from_email = !empty($headers['from_email']) ? $headers['from_email'] : (getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in');
             $from_name = !empty($headers['from_name']) ? $headers['from_name'] : (getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
 
+            file_put_contents($debug_log, "From: $from_name <$from_email>\n", FILE_APPEND);
+
             $mail->CharSet = 'UTF-8';
             $mail->setFrom($from_email, $from_name);
             $mail->addAddress($to);
@@ -197,9 +219,7 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
             // CC
             if (!empty($headers['cc'])) {
                 if (is_array($headers['cc'])) {
-                    foreach ($headers['cc'] as $cc_email) {
-                        $mail->addCC($cc_email);
-                    }
+                    foreach ($headers['cc'] as $cc_email) $mail->addCC($cc_email);
                 } else {
                     $mail->addCC($headers['cc']);
                 }
@@ -208,15 +228,13 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
             // BCC
             if (!empty($headers['bcc'])) {
                 if (is_array($headers['bcc'])) {
-                    foreach ($headers['bcc'] as $bcc_email) {
-                        $mail->addBCC($bcc_email);
-                    }
+                    foreach ($headers['bcc'] as $bcc_email) $mail->addBCC($bcc_email);
                 } else {
                     $mail->addBCC($headers['bcc']);
                 }
             }
 
-            // Reply-To (support both string email and ['email'=>'...','name'=>'...'])
+            // Reply-To
             if (!empty($headers['reply_to'])) {
                 if (is_array($headers['reply_to'])) {
                     $rEmail = $headers['reply_to']['email'] ?? null;
@@ -234,20 +252,21 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
             // Strip tags for plain text version
             $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $body));
 
+            file_put_contents($debug_log, "Attempting \$mail->send()...\n", FILE_APPEND);
             $mail->send();
+            file_put_contents($debug_log, "SUCCESS! Email sent to $to\n", FILE_APPEND);
             return true;
         } catch (Exception $e) {
-            // Log error to a file for debugging
-            $log_file = APP_ROOT . '/debug_mail_error.txt';
-            $log_entry = date('Y-m-d H:i:s') . " - Error sending to $to: " . $mail->ErrorInfo . "\n";
-            file_put_contents($log_file, $log_entry, FILE_APPEND);
+            file_put_contents($debug_log, "EXCEPTION CAUGHT: " . $e->getMessage() . "\n", FILE_APPEND);
+            file_put_contents($debug_log, "Mailer Error Info: " . $mail->ErrorInfo . "\n", FILE_APPEND);
 
             error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
             return false;
         }
     } else {
+        file_put_contents($debug_log, "PHPMailer class DOES NOT EXIST. Falling back to text file.\n", FILE_APPEND);
         // Fallback to logging
-        $log_file = APP_ROOT . '/email_log.txt';
+        $log_file = __DIR__ . '/../../email_log.txt';
         $log_entry = "To: $to\nSubject: $subject\nDate: " . date('Y-m-d H:i:s') . "\nBody:\n$body\n-------------------\n";
         file_put_contents($log_file, $log_entry, FILE_APPEND);
         return true;
