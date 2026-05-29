@@ -190,14 +190,6 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
             $from_email = !empty($headers['from_email']) ? $headers['from_email'] : (getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in');
             $from_name = !empty($headers['from_name']) ? $headers['from_name'] : (getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
 
-            // Detailed logging for debugging deliverability
-            $log_message = "Sending email to: $to | Subject: $subject | From: $from_name <$from_email>";
-            if (!empty($headers['reply_to'])) {
-                $reply_to_log = is_array($headers['reply_to']) ? ($headers['reply_to']['email'] ?? 'invalid_array') : $headers['reply_to'];
-                $log_message .= " | Reply-To: " . $reply_to_log;
-            }
-            error_log($log_message);
-
             $mail->CharSet = 'UTF-8';
             $mail->setFrom($from_email, $from_name);
             $mail->addAddress($to);
