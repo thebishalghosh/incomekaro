@@ -103,8 +103,9 @@ function auth_send_reset_link() {
                 }
             }
 
-            // Finalize sender headers (use WL support email if provided)
-            $email_headers['from_email'] = $support_email;
+            // Finalize sender headers. The 'From' email MUST be the one authorized by the SMTP provider.
+            // We comment out the line that was overriding it, but we keep the Reply-To header.
+            // $email_headers['from_email'] = $support_email;
             if (empty($email_headers['reply_to'])) {
                 $email_headers['reply_to'] = $support_email;
             }
