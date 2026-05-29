@@ -64,14 +64,44 @@
 <section class="py-5 bg-white border-bottom">
     <div class="container text-center">
         <p class="text-muted fw-bold text-uppercase mb-4 small letter-spacing-2">Trusted by Top Financial Institutions</p>
-        <div class="d-flex justify-content-center flex-wrap align-items-center gap-5 opacity-50 grayscale-hover">
-            <!-- Placeholder for Logos - Using Text for now but styled -->
-            <h4 class="fw-bold text-dark m-0">HDFC Bank</h4>
-            <h4 class="fw-bold text-dark m-0">SBI</h4>
-            <h4 class="fw-bold text-dark m-0">ICICI Bank</h4>
-            <h4 class="fw-bold text-dark m-0">Axis Bank</h4>
-            <h4 class="fw-bold text-dark m-0">Kotak</h4>
+        <div class="trusted-carousel overflow-hidden position-relative">
+            <div class="trusted-carousel-track d-flex align-items-center gap-5" style="animation: trusted-scroll 18s linear infinite;">
+                <img src="<?php echo asset('images/'.rawurlencode('HDFC Bank.avif')); ?>" alt="HDFC Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/sbi.png'); ?>" alt="SBI" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/icici.png'); ?>" alt="ICICI Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/axis-bank.png'); ?>" alt="Axis Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/kotak.png'); ?>" alt="Kotak" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/'.rawurlencode('HDFC Bank.avif')); ?>" alt="HDFC Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/sbi.png'); ?>" alt="SBI" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/icici.png'); ?>" alt="ICICI Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/axis-bank.png'); ?>" alt="Axis Bank" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+                <img src="<?php echo asset('images/kotak.png'); ?>" alt="Kotak" class="img-fluid" style="max-height: 110px; width: auto; opacity: .9; filter: grayscale(30%); transition: filter .3s ease, opacity .3s ease;" loading="lazy">
+            </div>
         </div>
+        <style>
+            @keyframes trusted-scroll {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+            .trusted-carousel {
+                width: 100%;
+            }
+            .trusted-carousel-track {
+                min-width: 200%;
+            }
+            .trusted-carousel img:hover {
+                filter: none;
+                opacity: 1;
+            }
+            @media (max-width: 767px) {
+                .trusted-carousel-track {
+                    animation-duration: 24s;
+                }
+                .trusted-carousel img {
+                    max-height: 90px;
+                }
+            }
+        </style>
     </div>
 </section>
 
