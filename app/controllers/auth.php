@@ -65,78 +65,74 @@ function auth_send_reset_link() {
             $stmt = $db->prepare("INSERT INTO password_resets (email, token, created_at) VALUES (:email, :token, NOW())");
             $stmt->execute(['email' => $email, 'token' => $token_hash]);
 
-            // Determine Branding
-            $site_name = get_site_name();
-            $primary_color = get_primary_color();
-            $support_email = 'support@incomekaro.in';
-            $base_url = url('/'); // Default base URL
-            $email_headers = []; // Initialize headers array
+            try {
+                // Determine Branding
+                $site_name = get_site_name();
+                $base_url = url('/'); // Default base URL
+                $logo_url = asset('images/logo.png'); // Default logo
+                $support_email = 'support@incomekaro.in';
+                $primary_color = get_primary_color();
+                $email_headers = [];
 
-            // Use site name as default sender name; actual sender email assigned after WL overrides
-            $email_headers['from_name'] = (string)$site_name;
-            $email_headers['from_email'] = (string)$support_email;
-
-            if (!empty($user['white_label_id'])) {
-                $wl = get_white_label_by_id($user['white_label_id']);
-                if ($wl) {
-                    $site_name = $wl['company_name'];
-                    if (!empty($wl['primary_color'])) $primary_color = $wl['primary_color'];
-                    if (!empty($wl['support_email'])) $support_email = $wl['support_email'];
-
-                    // Use WL domain for the link if available
-                    if (!empty($wl['primary_domain'])) {
-                        $base_url = "https://" . $wl['primary_domain']; // Use https for WL domain
-                    }
-
-                    // Set Custom Headers for White Label
-                    $email_headers['from_name'] = (string)$wl['company_name'];
-                    $email_headers['reply_to'] = (string)$support_email;
-                    $email_headers['from_email'] = (string)$support_email;
-
-                    // Pass branding for the template
-                    // Temporarily bypassed for testing
-                    /*
-                    $email_headers['branding'] = [
-                        'site_name' => $wl['company_name'],
-                        'logo_url' => !empty($wl['logo_url']) ? asset($wl['logo_url']) : asset('images/logo.png'),
-                        'primary_color' => $wl['primary_color'],
-                        'url_root' => $base_url
-                    ];
-                    */
-                }
-            }
-
-            if (empty($email_headers['reply_to'])) {
+                // Use site name as default sender name; actual sender email assigned after WL overrides
+                $email_headers['from_name'] = (string)$site_name;
+                $email_headers['from_email'] = (string)$support_email;
                 $email_headers['reply_to'] = (string)$support_email;
-            }
 
-            // Send Email
-            // Construct the full URL manually to ensure it points to the correct domain
-            $reset_link = rtrim($base_url, '/') . '/auth/reset_password?token=' . $token . '&email=' . urlencode($email);
+                if (!empty($user['white_label_id'])) {
+                    $wl = get_white_label_by_id($user['white_label_id']);
+                    if ($wl) {
+                        $site_name = $wl['company_name'];
+                        if (!empty($wl['primary_color'])) $primary_color = $wl['primary_color'];
+                        if (!empty($wl['support_email'])) $support_email = $wl['support_email'];
 
-            $subject = "Reset Your Password - " . $site_name;
+                        if (!empty($wl['primary_domain'])) {
+                            $base_url = "https://" . $wl['primary_domain'];
+                        }
+                        if (!empty($wl['logo_url'])) {
+                            $logo_url = asset($wl['logo_url']);
+                        }
 
-            // We use standard HTML inside so that `send_email` automatically wraps it in the `get_email_template`
-            // which adds the proper <!DOCTYPE>, <html>, and <body> tags.
-            // Previously it was starting with <div style=...> which bypassed the wrapper and caused spam filters to drop it.
-            $message = "
-            <h2>Password Reset Request</h2>
-            <p>We received a request to reset your password for your <strong>{$site_name}</strong> account.</p>
+                        $email_headers['from_name'] = (string)$wl['company_name'];
+                        $email_headers['from_email'] = (string)$support_email;
+                        $email_headers['reply_to'] = (string)$support_email;
+                        $email_headers['cc'] = (string)$support_email; // Added CC exactly like partner
+                    }
+                }
 
-            <div style='margin: 30px 0;'>
-                <a href='{$reset_link}' style='background-color: {$primary_color}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Reset Password</a>
-            </div>
+                $reset_link = rtrim($base_url, '/') . '/auth/reset_password?token=' . $token . '&email=' . urlencode($email);
+                $to = $email;
+                $subject = "Reset Your Password - " . $site_name;
 
-            <p style='color: #777; font-size: 14px;'>If you did not request a password reset, please ignore this email. This link will expire in 60 minutes.</p>
-            <p style='font-size:13px; color:#555; word-break:break-all; margin-top:14px;'>Or copy/paste this link into your browser:<br><a href='{$reset_link}' style='color: {$primary_color};'>{$reset_link}</a></p>
-            ";
+                // Match exact inline HTML structure from partner email to bypass get_email_template
+                $message = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+                    <div style='background-color: {$primary_color}; padding: 20px; text-align: center;'>
+                        <img src='{$logo_url}' alt='{$site_name}' style='max-height: 50px; background: white; padding: 5px; border-radius: 4px;'>
+                    </div>
+                    <div style='padding: 30px; background-color: #ffffff;'>
+                        <h2 style='color: #333; margin-top: 0;'>Password Reset Request</h2>
+                        <p style='color: #555; line-height: 1.6;'>We received a request to reset your password for your <strong>{$site_name}</strong> account.</p>
 
-            // Pass headers to send_email
-            $email_sent = send_email($email, $subject, $message, true, $email_headers);
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{$reset_link}' style='background-color: {$primary_color}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Reset Password</a>
+                        </div>
 
-            if (!$email_sent) {
-                error_log("Forgot password email failed to send to: " . $email);
-                // We shouldn't change the user experience per security practices, but logging is fine.
+                        <p style='color: #777; font-size: 14px;'>If you did not request a password reset, please ignore this email. This link will expire in 60 minutes.</p>
+                        <p style='font-size:13px; color:#555; word-break:break-all; margin-top:14px;'>Or copy/paste this link into your browser:<br><a href='{$reset_link}' style='color: {$primary_color};'>{$reset_link}</a></p>
+                    </div>
+                    <div style='background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
+                        <p style='margin: 0;'>&copy; " . date('Y') . " {$site_name}. All rights reserved.</p>
+                        <p style='margin: 5px 0 0 0;'>Need help? Contact us at <a href='mailto:{$support_email}' style='color: {$primary_color};'>{$support_email}</a></p>
+                    </div>
+                </div>
+                ";
+
+                // Pass headers to send_email
+                send_email($to, $subject, $message, true, $email_headers);
+
+            } catch (Exception $e) {
+                error_log("Failed to send reset email: " . $e->getMessage());
             }
         }
 
