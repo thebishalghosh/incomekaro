@@ -105,7 +105,6 @@ function invoice_download() {
                         <div class="company-name">' . $company['name'] . '</div>
                         ' . nl2br($company['address']) . '<br>
                         ' . $company['email'] . '<br>
-                        ' . ($company['gstin'] ? 'GSTIN: ' . $company['gstin'] : '') . '
                     </td>
                 </tr>
             </table>
@@ -118,7 +117,6 @@ function invoice_download() {
                         ' . ($partner['address_office']['address'] ?? $partner['address_permanent']['address']) . '<br>
                         ' . ($partner['address_office']['city'] ?? '') . ', ' . ($partner['address_office']['state'] ?? '') . ' - ' . ($partner['address_office']['pincode'] ?? '') . '<br>
                         Phone: ' . $partner['profile']['mobile'] . '<br>
-                        ' . (!empty($partner['identity']['gst']) ? 'GSTIN: ' . $partner['identity']['gst'] : '') . '
                     </td>
                     <td class="invoice-details">
                         <div class="invoice-title">INVOICE</div>
