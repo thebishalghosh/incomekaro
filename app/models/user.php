@@ -3,7 +3,8 @@ function get_all_users($page = 1, $limit = 10, $search = '', $role_filter = '') 
     $db = get_db_connection();
     $offset = ($page - 1) * $limit;
 
-    $sql = "SELECT u.*, r.name as role_name, wl.company_name as wl_name, p.name as partner_name,
+    $sql = "SELECT DISTINCT u.id, u.white_label_id, u.partner_id, u.role_id, u.first_name, u.last_name, u.email, u.phone, u.password_hash, u.profile_image, u.status, u.created_at, u.wallet_balance,
+            r.name as role_name, wl.company_name as wl_name, p.name as partner_name,
             ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
             (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM users u

@@ -17,7 +17,7 @@ function auth_login_post() {
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
         flash('login_error', 'Invalid email or password.', 'alert alert-danger');
-        redirect('auth/login');
+        redirect('');
         return;
     }
 

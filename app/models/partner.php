@@ -1,11 +1,15 @@
 <?php
 function get_platform_partners() {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image,
-            u.id as user_id, u.wallet_balance
+    $sql = "SELECT DISTINCT p.id, p.white_label_id, p.partner_type, p.name, p.email, p.phone, p.status, p.created_at, p.created_by, p.rm_id, p.kyc_status, p.agreement_accepted_at,
+            pp.full_name, pp.mobile, pp.profile_image,
+            u.id as user_id, u.wallet_balance,
+            ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
+            (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN users u ON u.partner_id = p.id
+            LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
             WHERE p.partner_type = 'PLATFORM'
             ORDER BY p.created_at DESC";
     $stmt = $db->query($sql);
@@ -16,12 +20,16 @@ function get_all_partners_for_admin($page = 1, $limit = 10, $search = '', $type_
     $db = get_db_connection();
     $offset = ($page - 1) * $limit;
 
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
-            u.id as user_id, u.wallet_balance
+    $sql = "SELECT DISTINCT p.id, p.white_label_id, p.partner_type, p.name, p.email, p.phone, p.status, p.created_at, p.created_by, p.rm_id, p.kyc_status, p.agreement_accepted_at,
+            pp.full_name, pp.mobile, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance,
+            ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
+            (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
             LEFT JOIN users u ON u.partner_id = p.id
+            LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
             WHERE 1=1";
 
     $params = [];
@@ -93,12 +101,16 @@ function get_total_partners_count($search = '', $type_filter = '', $wl_filter = 
 
 function get_partners_by_rm($rm_id) {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
-            u.id as user_id, u.wallet_balance
+    $sql = "SELECT DISTINCT p.id, p.white_label_id, p.partner_type, p.name, p.email, p.phone, p.status, p.created_at, p.created_by, p.rm_id, p.kyc_status, p.agreement_accepted_at,
+            pp.full_name, pp.mobile, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance,
+            ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
+            (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
             LEFT JOIN users u ON u.partner_id = p.id
+            LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
             WHERE p.rm_id = :rm_id
             ORDER BY p.created_at DESC";
     $stmt = $db->prepare($sql);
@@ -109,12 +121,16 @@ function get_partners_by_rm($rm_id) {
 
 function get_partners_by_creator($creator_id) {
     $db = get_db_connection();
-    $sql = "SELECT p.*, pp.full_name, pp.mobile, pp.email, pp.profile_image, wl.company_name as white_label_name,
-            u.id as user_id, u.wallet_balance
+    $sql = "SELECT DISTINCT p.id, p.white_label_id, p.partner_type, p.name, p.email, p.phone, p.status, p.created_at, p.created_by, p.rm_id, p.kyc_status, p.agreement_accepted_at,
+            pp.full_name, pp.mobile, pp.profile_image, wl.company_name as white_label_name,
+            u.id as user_id, u.wallet_balance,
+            ubd.account_holder_name, ubd.bank_name, ubd.account_number, ubd.ifsc_code,
+            (CASE WHEN ubd.id IS NOT NULL THEN 1 ELSE 0 END) as has_bank_details
             FROM partners p
             LEFT JOIN partner_profiles pp ON p.id = pp.partner_id
             LEFT JOIN white_label_clients wl ON p.white_label_id = wl.id
             LEFT JOIN users u ON u.partner_id = p.id
+            LEFT JOIN user_bank_details ubd ON u.id = ubd.user_id
             WHERE p.created_by = :creator_id
             ORDER BY p.created_at DESC";
     $stmt = $db->prepare($sql);
