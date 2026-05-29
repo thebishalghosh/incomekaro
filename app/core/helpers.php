@@ -186,10 +186,11 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             }
 
-            // Recipients
+            // Recipients and encoding
             $from_email = !empty($headers['from_email']) ? $headers['from_email'] : (getenv('SMTP_FROM_EMAIL') ?: 'noreply@incomekaro.in');
             $from_name = !empty($headers['from_name']) ? $headers['from_name'] : (getenv('SMTP_FROM_NAME') ?: 'IncomeKaro');
 
+            $mail->CharSet = 'UTF-8';
             $mail->setFrom($from_email, $from_name);
             $mail->addAddress($to);
 
@@ -215,9 +216,15 @@ function send_email($to, $subject, $body, $is_html = true, $headers = []) {
                 }
             }
 
-            // Reply-To
+            // Reply-To (support both string email and ['email'=>'...','name'=>'...'])
             if (!empty($headers['reply_to'])) {
-                $mail->addReplyTo($headers['reply_to']);
+                if (is_array($headers['reply_to'])) {
+                    $rEmail = $headers['reply_to']['email'] ?? null;
+                    $rName = $headers['reply_to']['name'] ?? $from_name;
+                    if ($rEmail) $mail->addReplyTo($rEmail, $rName);
+                } else {
+                    $mail->addReplyTo($headers['reply_to'], $from_name);
+                }
             }
 
             // Content
