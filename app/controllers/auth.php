@@ -23,8 +23,9 @@ function auth_login_post() {
 
     // Block inactive users
     if (isset($user['status']) && $user['status'] === 'inactive') {
-        redirect('auth/suspended');
-        return;
+                    $email_headers['from_email'] = $support_email;
+                    $email_headers['from_name'] = $wl['company_name'];
+                    $email_headers['reply_to'] = $support_email; // Use resolved support email (fallback handled above)
     }
 
     // Successful login: establish session and redirect by role
@@ -54,7 +55,10 @@ function auth_send_reset_link() {
             // Generate Token
             $token = bin2hex(random_bytes(32));
             $token_hash = password_hash($token, PASSWORD_DEFAULT);
-
+            $email_sent = send_email($email, $subject, $message, true, $email_headers);
+            if (!$email_sent) {
+                error_log("Forgot-password email failed to send to {$email}.");
+            }
             // Save to DB
             $db = get_db_connection();
 
@@ -73,6 +77,10 @@ function auth_send_reset_link() {
             $support_email = 'support@incomekaro.in';
             $base_url = url('/'); // Default base URL
             $email_headers = []; // Initialize headers array
+
+            // Use support email as the default sender for password reset emails.
+            $email_headers['from_email'] = $support_email;
+            $email_headers['from_name'] = $site_name;
 
             if (!empty($user['white_label_id'])) {
                 $wl = get_white_label_by_id($user['white_label_id']);
@@ -128,8 +136,11 @@ function auth_send_reset_link() {
             </div>
             ";
 
-            // Pass headers to send_email
-            send_email($email, $subject, $message, true, $email_headers);
+            // Pass headers to send_email and log any failure for troubleshooting
+            $email_sent = send_email($email, $subject, $message, true, $email_headers);
+            if (!$email_sent) {
+                error_log("Forgot-password email failed to send to {$email}.");
+            }
         }
 
         // Always show success message to prevent email enumeration
