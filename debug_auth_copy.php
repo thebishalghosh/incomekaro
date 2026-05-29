@@ -23,8 +23,9 @@ function auth_login_post() {
 
     // Block inactive users
     if (isset($user['status']) && $user['status'] === 'inactive') {
-        redirect('auth/suspended');
-        return;
+                    $email_headers['from_email'] = $support_email;
+                    $email_headers['from_name'] = $wl['company_name'];
+                    $email_headers['reply_to'] = $support_email; // Use resolved support email (fallback handled above)
     }
 
     // Successful login: establish session and redirect by role
@@ -54,6 +55,10 @@ function auth_send_reset_link() {
             // Generate Token
             $token = bin2hex(random_bytes(32));
             $token_hash = password_hash($token, PASSWORD_DEFAULT);
+            $email_sent = send_email($email, $subject, $message, true, $email_headers);
+            if (!$email_sent) {
+                error_log("Forgot-password email failed to send to {$email}.");
+            }
             // Save to DB
             $db = get_db_connection();
 
@@ -73,7 +78,8 @@ function auth_send_reset_link() {
             $base_url = url('/'); // Default base URL
             $email_headers = []; // Initialize headers array
 
-            // Use site name as default sender name; actual sender email assigned after WL overrides
+            // Use support email as the default sender for password reset emails.
+            $email_headers['from_email'] = $support_email;
             $email_headers['from_name'] = $site_name;
 
             if (!empty($user['white_label_id'])) {
@@ -89,7 +95,7 @@ function auth_send_reset_link() {
                         $base_url = "https://" . $wl['primary_domain']; // Use https for WL domain
                     }
 
-                    // Set Custom Headers for White Label (name and reply-to will be finalized below)
+                    // Set Custom Headers for White Label
                     $email_headers['from_name'] = $wl['company_name'];
                     $email_headers['reply_to'] = $support_email; // Use resolved support email (fallback handled above)
 
@@ -101,12 +107,6 @@ function auth_send_reset_link() {
                         'url_root' => $base_url
                     ];
                 }
-            }
-
-            // Finalize sender headers (use WL support email if provided)
-            $email_headers['from_email'] = $support_email;
-            if (empty($email_headers['reply_to'])) {
-                $email_headers['reply_to'] = $support_email;
             }
 
             // Send Email
@@ -128,7 +128,6 @@ function auth_send_reset_link() {
                     </div>
 
                     <p style='color: #777; font-size: 14px;'>If you did not request a password reset, please ignore this email. This link will expire in 60 minutes.</p>
-                    <p style='font-size:13px; color:#555; word-break:break-all; margin-top:14px;'>Or copy/paste this link into your browser:<br><a href='{$reset_link}' style='color: {$primary_color};'>{$reset_link}</a></p>
                 </div>
                 <div style='background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
                     <p style='margin: 0;'>&copy; " . date('Y') . " {$site_name}. All rights reserved.</p>
